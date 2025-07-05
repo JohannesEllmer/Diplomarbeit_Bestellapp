@@ -1,0 +1,5 @@
+backend auf proxmox oder local hosten
+Überlegen wo seite deployed werden kann ohne kosten und beide Seiten zugreifen können
+
+gutes Styling z.B. Tailwind css
+
