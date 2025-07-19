@@ -6,30 +6,33 @@
 
   <div class="card-content">
     <div class="card-header">
-      <h3>{{item.title}}</h3>
+      <h3>{{ item.title }}</h3>
       <div class="tags">
-        <span class="category-tag">{{item.category}}</span>
+        <span class="category-tag">{{ item.category }}</span>
         <span class="vegetarian-tag" *ngIf="item.vegetarian">Vegetarisch</span>
       </div>
     </div>
 
-    <p class="description">{{item.description}}</p>
+    <p class="description">{{ item.description }}</p>
 
-    <div class="allergens">
-      <strong>Allergene:</strong> {{item.allergens.join(', ')}}
+    <div class="allergens" *ngIf="item.allergens?.length">
+      <strong>Allergene:</strong> {{ item.allergens.join(', ') }}
     </div>
 
     <div class="note-input" *ngIf="showNoteInput">
       <textarea [(ngModel)]="note" placeholder="Bemerkung (z.B. keine Zwiebeln)"></textarea>
-      <button class="confirm-btn" (click)="addToOrder()">Bestätigen</button>
+      <div class="note-actions">
+        <button class="confirm-btn" (click)="addToOrder()">Mit Bemerkung hinzufügen</button>
+        <button class="cancel-btn" (click)="toggleNoteInput()">Abbrechen</button>
+      </div>
     </div>
 
     <div class="card-footer">
-      <span class="price">{{item.price | currency:'EUR'}}</span>
-      <button class="add-btn" 
+      <span class="price">{{ item.price | currency: 'EUR' }}</span>
+      <button class="add-btn"
               (click)="showNoteInput ? addToOrder() : toggleNoteInput()"
               [disabled]="!item.available">
-        {{showNoteInput ? 'Ohne Bemerkung' : 'Hinzufügen'}}
+        {{ showNoteInput ? 'Ohne Bemerkung' : 'Hinzufügen' }}
       </button>
     </div>
   </div>

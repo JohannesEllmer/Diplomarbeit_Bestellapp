@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
-import { MenuPlanComponent } from './menu-plan-component/menu-plan-component';
+import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, MenuPlanComponent],
-  template: '<app-menu-plan></app-menu-plan>',
+  imports: [CommonModule, RouterOutlet],
+  template: '<router-outlet></router-outlet>',
   styleUrls: ['./app.css']
 })
 export class AppComponent {}

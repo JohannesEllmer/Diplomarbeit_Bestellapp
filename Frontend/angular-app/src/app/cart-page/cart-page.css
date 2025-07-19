@@ -1,0 +1,283 @@
+/* Basis-Layout */
+.menu-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-header {
+  background: #0ea5e9;
+  color: white;
+  padding: 1.5rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.menu-header h1 {
+  margin: 0;
+  font-size: 1.75rem;
+}
+
+/* Filter-Leiste */
+.filter-container {
+  display: flex;
+  gap: 2rem;
+  padding: 1rem 0;
+  background: #f8fafc;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.filter-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.filter-group span {
+  font-weight: 500;
+}
+
+.filter-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 20px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.filter-btn.active {
+  background: #0ea5e9;
+  color: white;
+  border-color: #0ea5e9;
+}
+
+/* Menü-Items Grid */
+.menu-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 2rem;
+  padding: 2rem 0;
+  flex: 1;
+}
+
+/* Footer - Überarbeitete Version */
+.menu-footer {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  padding: 1rem 0;
+  position: sticky;
+  bottom: 0;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 gleich große Spalten */
+  gap: 1.5rem; /* Gleichmäßiger Abstand */
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  align-items: center;
+}
+
+.footer-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: white;
+  padding: 0.5rem 0;
+  justify-content: center; /* Zentrierter Inhalt */
+}
+
+.footer-item .icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.footer-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.footer-text span {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.footer-text strong {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* Checkout Button - Zentriert mit Badge */
+.checkout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: white;
+  color: #0ea5e9;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  width: 100%;
+  max-width: 220px; /* Maximalbreite für Button */
+  margin: 0 auto; /* Zentrierung */
+  position: relative;
+}
+
+.checkout-btn .badge {
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+  position: absolute;
+  top: -8px;
+  right: -8px;
+}
+
+.checkout-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.checkout-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Responsive Anpassungen */
+@media (max-width: 768px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .footer-item {
+    justify-content: center;
+  }
+  
+  .checkout-btn {
+    max-width: 100%;
+    order: 3; /* Button nach unten verschieben */
+  }
+  .cart-item {
+  display: flex;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  padding: 1rem;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.cart-item img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.item-details {
+  flex: 1;
+}
+
+.sum {
+  margin-top: 0.5rem;
+  color: #0284c7;
+  font-weight: bold;
+}
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.quantity-controls button {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #f1f5f9;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+input {
+  padding: 0.3rem 0.5rem;
+  margin-top: 0.25rem;
+  width: 100%;
+  max-width: 300px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.9rem;
+}
+
+.remove-btn {
+  margin-top: 0.5rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.footer-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.back-btn {
+  background: #e5e7eb;
+  color: #1f2937;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.back-btn:hover {
+  background: #d1d5db;
+}
+
+.checkout-btn {
+  background: #0ea5e9;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.2rem;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.checkout-btn:hover {
+  background: #0284c7;
+}
+
+
+
+}

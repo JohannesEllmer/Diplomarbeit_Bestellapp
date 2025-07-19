@@ -13,4 +13,5 @@ export interface MenuItem {
 export interface OrderItem {
   menuItem: MenuItem;
   note: string;
+  quantity: number;
 }

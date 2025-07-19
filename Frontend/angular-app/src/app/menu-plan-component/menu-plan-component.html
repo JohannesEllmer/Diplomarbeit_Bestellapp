@@ -11,7 +11,7 @@
           class="filter-btn"
           [class.active]="activeCategory === category"
           (click)="activeCategory = category">
-          {{category}}
+          {{ category }}
         </button>
       }
     </div>
@@ -23,7 +23,7 @@
           class="filter-btn"
           [class.active]="activeFilter === filter"
           (click)="activeFilter = filter">
-          {{filter}}
+          {{ filter }}
         </button>
       }
     </div>
@@ -33,37 +33,37 @@
     @for (item of filteredItems; track item.id) {
       <app-menu-item 
         [item]="item"
-        (addItem)="addToOrder($event)">
+        (addItem)="addToOrder(item, $event)">
       </app-menu-item>
     }
   </main>
 
-<footer class="menu-footer">
-  <div class="footer-grid">
-    <div class="footer-item">
-      <i class="icon-wallet"></i>
-      <div class="footer-text">
-        <span>Guthaben</span>
-        <strong>{{balance | currency:'EUR'}}</strong>
+  <footer class="menu-footer">
+    <div class="footer-grid">
+      <div class="footer-item">
+        <i class="icon-wallet"></i>
+        <div class="footer-text">
+          <span>Guthaben</span>
+          <strong>{{ balance | currency: 'EUR' }}</strong>
+        </div>
       </div>
-    </div>
-    
-    <div class="footer-item">
-      <i class="icon-receipt"></i>
-      <div class="footer-text">
-        <span>Summe</span>
-        <strong>{{totalCost | currency:'EUR'}}</strong>
+
+      <div class="footer-item">
+        <i class="icon-receipt"></i>
+        <div class="footer-text">
+          <span>Summe</span>
+          <strong>{{ totalCost | currency: 'EUR' }}</strong>
+        </div>
       </div>
+
+      <button class="checkout-btn"
+              (click)="navigateToCart()"
+              [disabled]="cartItemCount === 0"
+              [class.pulse]="cartItemCount > 0">
+        <i class="icon-shopping-cart"></i>
+        <span>Bestellen</span>
+        <div class="badge">{{ cartItemCount }}</div>
+      </button>
     </div>
-    
-    <button class="checkout-btn" 
-            (click)="checkout()"
-            [disabled]="selectedItems.length === 0"
-            [class.pulse]="selectedItems.length > 0">
-      <i class="icon-shopping-cart"></i>
-      <span>Bestellen</span>
-      <div class="badge">{{selectedItems.length}}</div>
-    </button>
-  </div>
-</footer>
+  </footer>
 </div>

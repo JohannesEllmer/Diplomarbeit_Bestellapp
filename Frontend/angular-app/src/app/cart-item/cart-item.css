@@ -1,66 +1,58 @@
-/* Basis-Styling */
-.menu-card {
+.cart-card {
+  display: flex;
+  flex-direction: row;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   overflow: hidden;
   background: white;
   transition: all 0.3s;
+  margin-bottom: 1rem;
 }
 
-.menu-card:not(.unavailable):hover {
+.cart-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
 
-/* Nicht verfügbare Items */
-.menu-card.unavailable {
-  opacity: 0.7;
-  background: #f8fafc;
-}
-
-.unavailable-label {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: #ef4444;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-weight: bold;
-}
-
-/* Bild-Bereich */
-.card-image {
-  height: 180px;
+.cart-image {
+  flex: 0 0 200px;
+  height: 140px;
   overflow: hidden;
   position: relative;
 }
 
-.card-image img {
+.cart-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
 }
 
-/* Inhaltsbereich */
-.card-content {
+.cart-content {
+  flex: 1;
   padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
-.card-header {
+.cart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 0.5rem;
 }
 
-.card-header h3 {
+.cart-header h3 {
   margin: 0;
   font-size: 1.25rem;
 }
 
-/* Tags */
 .tags {
   display: flex;
   gap: 0.5rem;
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 .category-tag {
@@ -79,14 +71,12 @@
   font-size: 0.75rem;
 }
 
-/* Allergene */
 .allergens {
   font-size: 0.85rem;
   color: #64748b;
   margin: 0.5rem 0;
 }
 
-/* Bemerkungsfeld */
 .note-input {
   margin: 0.5rem 0;
 }
@@ -98,58 +88,62 @@
   border-radius: 4px;
   min-height: 60px;
   resize: vertical;
+  font-family: inherit;
+  font-size: 0.95rem;
 }
 
-.confirm-btn {
-  background: #0ea5e9;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  margin-top: 0.5rem;
-  cursor: pointer;
-}
-
-.cancel-btn {
-  background: #e92b0e;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  margin-left: 0.5rem;
-  margin-top: 0.5rem;
-  cursor: pointer;
-}
-
-/* Footer mit Preis und Button */
-.card-footer {
+.quantity-control {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-top: 1rem;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 }
 
-.price {
-  font-weight: bold;
-  font-size: 1.1rem;
-  color: #0f172a;
-}
-
-.add-btn {
-  background: #0ea5e9;
-  color: white;
+.quantity-control button {
+  background: #e2e8f0;
   border: none;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.8rem;
   border-radius: 4px;
+  font-size: 1rem;
   cursor: pointer;
   transition: background 0.2s;
 }
 
-.add-btn:disabled {
+.quantity-control button:hover {
   background: #cbd5e1;
-  cursor: not-allowed;
 }
 
-.add-btn:hover:not(:disabled) {
-  background: #0284c7;
+.quantity-control span {
+  font-size: 1rem;
+  min-width: 24px;
+  text-align: center;
+}
+
+.cart-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.price-each {
+  font-size: 0.95rem;
+  color: #334155;
+}
+
+.remove-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.2s;
+}
+
+.remove-btn:hover {
+  background: #dc2626;
 }

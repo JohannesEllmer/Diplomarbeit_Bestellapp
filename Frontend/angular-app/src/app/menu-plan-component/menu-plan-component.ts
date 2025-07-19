@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { MenuItem, OrderItem } from '../../models/menu-item.model';
 import { MenuItemComponent } from '../menu-item-component/menu-item-component';
 
@@ -14,11 +15,11 @@ export class MenuPlanComponent {
   activeCategory: string = 'Alle';
   activeFilter: string = 'Alle';
   balance: number = 14.00;
-  
-  categories = ['Alle', 'Vorspeisen', 'Hauptgerichte', 'Desserts', 'Getränke'];
-  filters = ['Alle', 'Vegetarisch'];
 
-  menuItems: MenuItem[] = [
+  readonly categories = ['Alle', 'Vorspeisen', 'Hauptgerichte', 'Desserts', 'Getränke'];
+  readonly filters = ['Alle', 'Vegetarisch'];
+
+  readonly menuItems: MenuItem[] = [
     {
       id: 1,
       title: 'Kürbiscremesuppe',
@@ -40,50 +41,73 @@ export class MenuPlanComponent {
       vegetarian: false,
       allergens: ['G', 'E', 'M'],
       imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
-    },
-    {
-      id: 3,
-      title: 'Tiramisu',
-      description: 'Klassisches italienisches Dessert',
-      price: 5.20,
-      category: 'Desserts',
-      available: false,
-      vegetarian: true,
-      allergens: ['G', 'E', 'M'],
-      imageUrl: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=600'
     }
   ];
 
-  selectedItems: OrderItem[] = [];
+  orderItems: (OrderItem & { quantity: number })[] = [];
+
+  constructor(private router: Router) {}
 
   get filteredItems(): MenuItem[] {
-    let items = this.menuItems;
-    
-    if (this.activeCategory !== 'Alle') {
-      items = items.filter(item => item.category === this.activeCategory);
+    return this.menuItems.filter(item => {
+      const categoryMatch = this.activeCategory === 'Alle' || item.category === this.activeCategory;
+      const filterMatch = this.activeFilter !== 'Vegetarisch' || item.vegetarian;
+      return categoryMatch && filterMatch;
+    });
+  }
+
+  addToOrder(menuItem: MenuItem, note: string = ''): void {
+    const existing = this.orderItems.find(
+      item => item.menuItem.id === menuItem.id && item.note === note
+    );
+
+    if (existing) {
+      existing.quantity += 1;
+    } else {
+      this.orderItems.push({ menuItem, note, quantity: 1 });
     }
-    
-    if (this.activeFilter === 'Vegetarisch') {
-      items = items.filter(item => item.vegetarian);
+  }
+
+  removeFromOrder(menuItem: MenuItem, note: string = ''): void {
+    const index = this.orderItems.findIndex(
+      item => item.menuItem.id === menuItem.id && item.note === note
+    );
+
+    if (index !== -1) {
+      this.orderItems.splice(index, 1);
     }
-    
-    return items;
   }
 
-  addToOrder(orderItem: OrderItem): void {
-    this.selectedItems.push(orderItem);
+  updateNote(menuItem: MenuItem, oldNote: string, newNote: string): void {
+    const item = this.orderItems.find(
+      i => i.menuItem.id === menuItem.id && i.note === oldNote
+    );
+    if (item) {
+      item.note = newNote;
+    }
   }
 
-  removeItem(index: number): void {
-    this.selectedItems.splice(index, 1);
+  changeQuantity(menuItem: MenuItem, note: string, delta: number): void {
+    const item = this.orderItems.find(
+      i => i.menuItem.id === menuItem.id && i.note === note
+    );
+    if (item) {
+      item.quantity = Math.max(1, item.quantity + delta);
+    }
   }
 
-  checkout(): void {
-    alert(`Bestellung abgeschlossen!\nGesamtbetrag: €${this.totalCost.toFixed(2)}`);
-    this.selectedItems = [];
+  get cartItemCount(): number {
+    return this.orderItems.reduce((sum, item) => sum + item.quantity, 0);
   }
 
   get totalCost(): number {
-    return this.selectedItems.reduce((sum, item) => sum + item.menuItem.price, 0);
+    return this.orderItems.reduce((total, item) => {
+      return total + item.menuItem.price * item.quantity;
+    }, 0);
+  }
+
+  navigateToCart(): void {
+    localStorage.setItem('cartItems', JSON.stringify(this.orderItems));
+    this.router.navigate(['/warenkorb']);
   }
 }
