@@ -5,52 +5,46 @@
 
   <div class="menu-items">
     @for (item of cartItems; track item.menuItem.id; let i = $index) {
-      <div class="cart-item">
-        <img [src]="item.menuItem.imageUrl" [alt]="item.menuItem.title" />
-        <div class="item-details">
-          <h3>{{ item.menuItem.title }}</h3>
-          <p><strong>Allergene:</strong> {{ getAllergens(item.menuItem.allergens) }}</p>
-          <p><strong>Einzelpreis:</strong> {{ item.menuItem.price | currency:'EUR' }}</p>
-          <label>
-            <strong>Anmerkung:</strong>
-            <input [(ngModel)]="item.note" (blur)="updateNote(i, item.note)" />
-          </label>
-
-          <div class="quantity-controls">
-            <strong>Menge:</strong>
-            <button (click)="decreaseQuantity(i)">−</button>
-            <span>{{ item.quantity }}</span>
-            <button (click)="increaseQuantity(i)">+</button>
-          </div>
-
-          <p class="sum"><strong>Summe:</strong> {{ item.menuItem.price * item.quantity | currency:'EUR' }}</p>
-
-          <button (click)="removeItem(i)" class="remove-btn">Entfernen</button>
-        </div>
-      </div>
+      <app-cart-item
+        [item]="item"
+        (increase)="increaseQuantity(i)"
+        (decrease)="decreaseQuantity(i)"
+        (remove)="removeItem(i)">
+      </app-cart-item>
     }
+  </div>
+
+  <div class="order-summary">
+    <div class="summary-title">Bestellübersicht</div>
+    <div class="summary-items">
+      @for (item of cartItems; track item.menuItem.id) {
+        <div class="summary-line">
+          <span class="item-name">{{ item.menuItem.title }}</span>
+          <span class="item-quantity">x{{ item.quantity }}</span>
+          <span class="item-price">{{ item.menuItem.price * item.quantity | currency:'EUR' }}</span>
+        </div>
+      }
+    </div>
+    <div class="summary-total">Gesamt: {{ getTotal() | currency:'EUR' }}</div>
+    <span>Guthaben</span>
   </div>
 
   <div class="menu-footer">
     <div class="footer-grid">
       <div class="footer-item">
+       <i class="icon-wallet"></i>
         <div class="footer-text">
-          <strong>Bestellübersicht</strong>
-          @for (item of cartItems; track item.menuItem.id) {
-            <span>{{ item.menuItem.title }} x{{ item.quantity }} – {{ item.menuItem.price * item.quantity | currency:'EUR' }}</span>
-          }
-          <hr style="margin: 0.5rem 0;" />
-          <strong>Gesamt: {{ getTotal() | currency:'EUR' }}</strong>
-        </div>
+          <span>Guthaben</span>
+          <!-- <strong>{{ balance | currency: 'EUR' }}</strong> -->
+        </div> 
       </div>
 
       <div class="footer-item">
-    <div class="footer-buttons">
-        <button class="back-btn" (click)="navigateBack()">Zurück zum Menüplan</button>
-        <button class="checkout-btn">Jetzt bestellen</button>
-    </div>
-    </div>
-
+        <div class="footer-buttons">
+          <button class="checkout-btn">Jetzt bestellen</button>
+          <button class="back-btn" (click)="navigateBack()">Zurück zum Menüplan</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>

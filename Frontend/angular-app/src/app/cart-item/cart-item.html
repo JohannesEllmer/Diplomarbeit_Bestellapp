@@ -12,7 +12,9 @@
           <span class="vegetarian-tag" *ngIf="item.menuItem.vegetarian">Vegetarisch</span>
         </div>
       </div>
-      <div class="price">{{ item.menuItem.price * item.quantity | currency:'EUR' }}</div>
+      <div class="price">
+        {{ item.menuItem.price * item.quantity | currency:'EUR' }}
+      </div>
     </div>
 
     <div class="allergens">

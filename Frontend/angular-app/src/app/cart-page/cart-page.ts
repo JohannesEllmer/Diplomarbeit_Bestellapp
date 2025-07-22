@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { OrderItem } from '../../models/menu-item.model';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { CartItemComponent } from '../cart-item/cart-item';
 
 @Component({
   selector: 'app-cart-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CartItemComponent],
   templateUrl: './cart-page.html',
   styleUrls: ['./cart-page.css']
 })
@@ -48,11 +49,12 @@ export class CartPageComponent implements OnInit {
   }
 
   getAllergens(allergens: string[] | undefined): string {
-  return allergens?.join(', ') || '-';
-}
-navigateBack() {
-  this.router.navigate(['/']);
-}
+    return allergens?.join(', ') || '-';
+  }
+
+  navigateBack() {
+    this.router.navigate(['/']);
+  }
 
   getTotal(): number {
     return this.cartItems.reduce(

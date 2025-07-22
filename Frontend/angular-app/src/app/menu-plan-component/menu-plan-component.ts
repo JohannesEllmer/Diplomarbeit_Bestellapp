@@ -41,6 +41,28 @@ export class MenuPlanComponent {
       vegetarian: false,
       allergens: ['G', 'E', 'M'],
       imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
+    },
+     {
+      id: 3,
+      title: 'Kalbs Schnitzel',
+      description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
+      price: 12.50,
+      category: 'Hauptgerichte',
+      available: true,
+      vegetarian: false,
+      allergens: ['G', 'E', 'M'],
+      imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
+    },
+     {
+      id: 4,
+      title: 'Cola',
+      description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
+      price: 3.50,
+      category: 'Getränke',
+      available: true,
+      vegetarian: false,
+      allergens: ['G', 'E', 'M'],
+      imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
     }
   ];
 
