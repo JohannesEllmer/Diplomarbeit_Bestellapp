@@ -13,9 +13,13 @@ import { CartItemComponent } from '../cart-item/cart-item';
   styleUrls: ['./cart-page.css']
 })
 export class CartPageComponent implements OnInit {
+  cartItems: OrderItem[] = [];
+  deliveryTimeOptions: string[] = ['11:30', '12:00', '12:30', '13:00'];
+  selectedTime: string = '';
+  timeError: string = '';
+  balance: number = 30.00; // Beispiel-Guthaben, könnte später aus User-State geladen werden
 
   constructor(private router: Router) {}
-  cartItems: OrderItem[] = [];
 
   ngOnInit(): void {
     const stored = localStorage.getItem('cartItems');
@@ -52,14 +56,51 @@ export class CartPageComponent implements OnInit {
     return allergens?.join(', ') || '-';
   }
 
-  navigateBack() {
-    this.router.navigate(['/']);
-  }
-
   getTotal(): number {
     return this.cartItems.reduce(
       (sum, item) => sum + item.menuItem.price * item.quantity,
       0
     );
+  }
+
+  isValidTimeFormat(time: string): boolean {
+    return /^\d{2}:\d{2}$/.test(time) && !isNaN(Date.parse(`1970-01-01T${time}:00`));
+  }
+
+  onOrder(): void {
+    if (!this.isValidTimeFormat(this.selectedTime)) {
+      this.timeError = 'Bitte gib eine gültige Uhrzeit im Format HH:mm ein.';
+      return;
+    }
+
+    this.timeError = '';
+
+    const bestellung = {
+      zeit: this.selectedTime,
+      gesamtbetrag: this.getTotal(),
+      guthaben: this.balance,
+      positionen: this.cartItems.map(item => ({
+        gericht: item.menuItem.title,
+        menge: item.quantity,
+        einzelpreis: item.menuItem.price,
+        gesamtpreis: item.menuItem.price * item.quantity,
+        anmerkung: item.note || ''
+      }))
+    };
+
+    console.log('Bestellung als JSON:', bestellung);
+
+    alert('Bestellung erfolgreich übermittelt.\nDetails siehe Konsole.');
+
+    // hier API call
+
+    // Clear cart
+    this.cartItems = [];
+    localStorage.removeItem('cartItems');
+    this.selectedTime = '';
+  }
+
+  navigateBack() {
+    this.router.navigate(['/']);
   }
 }

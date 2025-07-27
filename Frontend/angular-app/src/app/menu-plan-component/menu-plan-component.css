@@ -1,11 +1,11 @@
-/* Basis-Layout */
 .menu-container {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 20px;
-  min-height: 100vh;
+  height: 100vh; 
   display: flex;
   flex-direction: column;
+  overflow: hidden; 
 }
 
 .menu-header {
@@ -14,6 +14,7 @@
   padding: 1.5rem;
   text-align: center;
   margin-bottom: 1rem;
+  flex-shrink: 0;
 }
 
 .menu-header h1 {
@@ -31,6 +32,7 @@
   top: 0;
   z-index: 50;
   border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
 }
 
 .filter-group {
@@ -59,28 +61,30 @@
   border-color: #0ea5e9;
 }
 
-/* Menü-Items Grid */
+/* Menü-Items Grid – SCROLLBAR BEREICH */
 .menu-items {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 2rem;
   padding: 2rem 0;
-  flex: 1;
+  flex-grow: 1;
+  overflow-y: auto; /* <-- hier ist der Scroll */
 }
 
-/* Footer - Überarbeitete Version */
+/* Footer */
 .menu-footer {
   background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
   padding: 1rem 0;
   position: sticky;
   bottom: 0;
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
 }
 
 .footer-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3 gleich große Spalten */
-  gap: 1.5rem; /* Gleichmäßiger Abstand */
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 2rem;
@@ -93,7 +97,7 @@
   gap: 0.75rem;
   color: white;
   padding: 0.5rem 0;
-  justify-content: center; /* Zentrierter Inhalt */
+  justify-content: center;
 }
 
 .footer-item .icon {
@@ -117,7 +121,7 @@
   font-weight: 600;
 }
 
-/* Checkout Button - Zentriert mit Badge */
+/* Checkout Button */
 .checkout-btn {
   display: flex;
   align-items: center;
@@ -132,8 +136,8 @@
   cursor: pointer;
   transition: all 0.3s;
   width: 100%;
-  max-width: 220px; /* Maximalbreite für Button */
-  margin: 0 auto; /* Zentrierung */
+  max-width: 220px;
+  margin: 0 auto;
   position: relative;
 }
 
@@ -170,13 +174,13 @@
     gap: 1rem;
     text-align: center;
   }
-  
+
   .footer-item {
     justify-content: center;
   }
-  
+
   .checkout-btn {
     max-width: 100%;
-    order: 3; /* Button nach unten verschieben */
+    order: 3;
   }
 }
