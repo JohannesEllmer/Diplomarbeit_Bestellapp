@@ -1,3 +1,5 @@
+import { User } from "./user.model";
+
 export interface MenuItem {
   id: number;
   title: string;
@@ -12,6 +14,9 @@ export interface MenuItem {
 
 export interface OrderItem {
   menuItem: MenuItem;
+  user: User;
   note: string;
   quantity: number;
+  delivered?: boolean;
+  deliveryTime?: string;
 }

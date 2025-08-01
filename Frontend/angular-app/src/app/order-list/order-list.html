@@ -1,0 +1,35 @@
+<div class="order-list-container">
+  <h2>Bestellungen</h2>
+
+  <label for="groupSelect">Gruppieren nach:</label>
+  <select id="groupSelect" [(ngModel)]="activeGroup">
+    <option *ngFor="let option of groupOptions" [value]="option">{{ option }}</option>
+  </select>
+
+  <div *ngFor="let group of groupedOrders | keyvalue">
+    <h3>{{ group.key }}</h3>
+    <div *ngFor="let item of group.value" class="order-item">
+      <div>
+        <strong>{{ item.menuItem.title }}</strong> × {{ item.quantity }}
+        <span class="price">{{ item.menuItem.price | currency:'EUR' }}</span>
+      </div>
+      <div>
+        Bestellt von: 
+        <a (click)="navigateToUser(item.user.id)">{{ item.user.name }}</a>
+      </div>
+      <div *ngIf="item.note">Anmerkung: {{ item.note }}</div>
+      <div>Lieferzeit: {{ item.deliveryTime }}</div>
+      <div>
+        <label>
+          <input type="checkbox" [(ngModel)]="item.delivered" (change)="toggleDelivered(item)" />
+          Geliefert
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <hr />
+  <div class="total">
+    <strong>Gesamtsumme:</strong> {{ totalSum | currency:'EUR' }}
+  </div>
+</div>

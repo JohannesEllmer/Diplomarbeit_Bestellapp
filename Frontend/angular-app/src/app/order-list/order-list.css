@@ -1,0 +1,19 @@
+.order-list-container {
+  padding: 1rem;
+}
+
+.order-item {
+  border-bottom: 1px solid #ccc;
+  padding: 0.5rem 0;
+}
+
+.price {
+  float: right;
+  color: green;
+}
+
+.total {
+  text-align: right;
+  font-size: 1.2rem;
+  margin-top: 1rem;
+}
