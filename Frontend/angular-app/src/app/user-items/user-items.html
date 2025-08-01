@@ -1,6 +1,6 @@
-<div class="user-card" [class.blocked]="user.blocked">
+<div class="user-card" [class.blocked]="user.blocked" (click)="navigateToUser($event)">
   <div class="user-summary">
-    <div class="user-info" (click)="toggleDetails()">
+    <div class="user-info">
       <h2>{{ user.name }}</h2>
       <p class="meta">
         <span>{{ user.email }}</span> · 
@@ -12,23 +12,31 @@
     <div class="user-controls">
       <div class="balance">
         <span>{{ user.balance | currency: 'EUR' }}</span>
-        <button class="edit-btn" (click)="startEditBalance(); $event.stopPropagation()" title="Guthaben bearbeiten">➕</button>
+        <button class="edit-btn" 
+                (click)="startEditBalance($event)" 
+                title="Guthaben bearbeiten">➕</button>
         <input *ngIf="user.editingBalance"
                type="number"
                [(ngModel)]="user.newBalance"
-               (keyup.enter)="saveBalance()"
+               (keyup.enter)="saveBalance($event)"
+               (blur)="saveBalance($event)"
                placeholder="Betrag"
-               class="balance-input" />
+               class="balance-input"
+               (click)="$event.stopPropagation()" />
       </div>
 
       <div class="actions">
-        <button class="icon-btn delete" (click)="emitDelete()" title="Benutzer löschen">🗑️</button>
-        <button class="icon-btn block" (click)="emitBlock()" title="Benutzer sperren">🚫</button>
+        <button class="icon-btn delete" 
+                (click)="emitDelete($event)" 
+                title="Benutzer löschen">🗑️</button>
+        <button class="icon-btn block" 
+                (click)="emitBlock($event)" 
+                title="Benutzer sperren">🚫</button>
       </div>
     </div>
   </div>
 
-  <div *ngIf="user.showDetails" class="user-details">
+  <div *ngIf="user.showDetails" class="user-details" (click)="$event.stopPropagation()">
     <div class="detail-row">
       <label>Guthaben:</label>
       <span>{{ user.balance | currency: 'EUR' }}</span>

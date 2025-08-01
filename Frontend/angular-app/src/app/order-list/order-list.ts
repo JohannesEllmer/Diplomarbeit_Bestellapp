@@ -14,7 +14,6 @@ import { User } from '../../models/user.model';
 })
 export class OrderListComponent {
   activeGroup: string = 'Keine Gruppierung';
-
   readonly groupOptions = ['Keine Gruppierung', 'Nach Gericht', 'Nach Lieferzeit'];
 
   orderItems: OrderItem[] = [
@@ -69,6 +68,32 @@ export class OrderListComponent {
       quantity: 1,
       delivered: true,
       deliveryTime: '13:00'
+    },
+    {
+      menuItem: {
+        id: 1,
+        title: 'Kürbiscremesuppe',
+        description: '',
+        price: 4.90,
+        category: 'Vorspeisen',
+        available: true,
+        vegetarian: true,
+        allergens: [],
+        imageUrl: ''
+      },
+      user: {
+        id: 103,
+        name: 'Lisa Schmidt',
+        email: 'lisa@example.com',
+        class: '5C',
+        orderCount: 7,
+        balance: 8.50,
+        blocked: false
+      },
+      note: 'Extra Brot dazu',
+      quantity: 1,
+      delivered: false,
+      deliveryTime: '12:45'
     }
   ];
 
@@ -78,17 +103,24 @@ export class OrderListComponent {
     return this.orderItems.reduce((sum, item) => sum + item.menuItem.price * item.quantity, 0);
   }
 
-get groupedOrders(): { [key: string]: OrderItem[] } {
-  switch (this.activeGroup) {
-    case 'Nach Gericht':
-      return this.groupBy(item => item.menuItem.title);
-    case 'Nach Lieferzeit':
-      return this.groupBy(item => item.deliveryTime || 'Unbekannt');
-    default:
-      return { 'Alle Bestellungen': this.orderItems };
+  get totalOrders(): number {
+    return this.orderItems.length;
   }
-}
 
+  get completedOrders(): number {
+    return this.orderItems.filter(item => item.delivered).length;
+  }
+
+  get groupedOrders(): { [key: string]: OrderItem[] } {
+    switch (this.activeGroup) {
+      case 'Nach Gericht':
+        return this.groupBy(item => `${item.menuItem.title} (${item.user.name})`);
+      case 'Nach Lieferzeit':
+        return this.groupBy(item => item.deliveryTime || 'Unbekannt');
+      default:
+        return { 'Alle Bestellungen': this.orderItems };
+    }
+  }
 
   groupBy(fn: (item: OrderItem) => string): { [key: string]: OrderItem[] } {
     return this.orderItems.reduce((groups, item) => {
@@ -104,6 +136,6 @@ get groupedOrders(): { [key: string]: OrderItem[] } {
   }
 
   navigateToUser(userId: number): void {
-    this.router.navigate(['/user', userId]);
+    this.router.navigate(['/users', userId]);
   }
 }

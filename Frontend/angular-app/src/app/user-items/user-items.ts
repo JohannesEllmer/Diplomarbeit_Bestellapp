@@ -1,9 +1,8 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { User } from '../../models/user.model';
-
-
 
 @Component({
   selector: 'app-user-items',
@@ -17,25 +16,39 @@ export class UserItemsComponent {
   @Output() delete = new EventEmitter<User>();
   @Output() block = new EventEmitter<User>();
 
-  toggleDetails(): void {
+  constructor(private router: Router) {}
+
+  toggleDetails(event: Event): void {
+    event.stopPropagation();
     this.user.showDetails = !this.user.showDetails;
   }
 
-  startEditBalance(): void {
-    this.user.editingBalance = !this.user.editingBalance;
+  startEditBalance(event: Event): void {
+    event.stopPropagation();
+    this.user.editingBalance = true;
     this.user.newBalance = 0;
   }
 
-  saveBalance(): void {
-    this.user.balance += this.user.newBalance ?? 0;
+  saveBalance(event: Event): void {
+    event.stopPropagation();
+    if (this.user.newBalance !== undefined) {
+      this.user.balance += this.user.newBalance;
+    }
     this.user.editingBalance = false;
   }
 
-  emitDelete(): void {
+  emitDelete(event: Event): void {
+    event.stopPropagation();
     this.delete.emit(this.user);
   }
 
-  emitBlock(): void {
+  emitBlock(event: Event): void {
+    event.stopPropagation();
     this.block.emit(this.user);
+  }
+
+  navigateToUser(event: Event): void {
+    event.stopPropagation();
+    this.router.navigate(['/user', this.user.id]);
   }
 }
