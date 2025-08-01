@@ -1,0 +1,14 @@
+<div class="user-management-container">
+  <header class="menu-header">
+    <h1>Benutzerverwaltung</h1>
+  </header>
+
+  <main class="user-list">
+    <app-user-items
+      *ngFor="let user of users"
+      [user]="user"
+      (delete)="deleteUser($event)"
+      (block)="blockUser($event)">
+    </app-user-items>
+  </main>
+</div>

@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MenuItem, OrderItem } from '../../models/menu-item.model';
+import { User } from '../../models/user.model';
 import { MenuItemComponent } from '../menu-item-component/menu-item-component';
 
 @Component({
@@ -42,7 +43,7 @@ export class MenuPlanComponent {
       allergens: ['G', 'E', 'M'],
       imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
     },
-     {
+    {
       id: 3,
       title: 'Kalbs Schnitzel',
       description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
@@ -53,20 +54,30 @@ export class MenuPlanComponent {
       allergens: ['G', 'E', 'M'],
       imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
     },
-     {
+    {
       id: 4,
       title: 'Cola',
-      description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
+      description: 'Erfrischungsgetränk',
       price: 3.50,
       category: 'Getränke',
       available: true,
-      vegetarian: false,
-      allergens: ['G', 'E', 'M'],
+      vegetarian: true,
+      allergens: [],
       imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
     }
   ];
 
-  orderItems: (OrderItem & { quantity: number })[] = [];
+  orderItems: OrderItem[] = [];
+
+  currentUser: User = {
+    id: 999,
+    name: 'Ellmer Johannes',
+    email: 'ellmer@example.com',
+    class: '5C',
+    orderCount: 0,
+    balance: 14.00,
+    blocked: false
+  };
 
   constructor(private router: Router) {}
 
@@ -78,21 +89,28 @@ export class MenuPlanComponent {
     });
   }
 
-  addToOrder(menuItem: MenuItem, note: string = ''): void {
+  addToOrder(menuItem: MenuItem, note: string = '', deliveryTime: string = '12:00'): void {
     const existing = this.orderItems.find(
-      item => item.menuItem.id === menuItem.id && item.note === note
+      item => item.menuItem.id === menuItem.id && item.note === note && item.deliveryTime === deliveryTime
     );
 
     if (existing) {
       existing.quantity += 1;
     } else {
-      this.orderItems.push({ menuItem, note, quantity: 1 });
+      this.orderItems.push({
+        menuItem,
+        user: this.currentUser,
+        note,
+        quantity: 1,
+        delivered: false,
+        deliveryTime
+      });
     }
   }
 
-  removeFromOrder(menuItem: MenuItem, note: string = ''): void {
+  removeFromOrder(menuItem: MenuItem, note: string = '', deliveryTime: string = '12:00'): void {
     const index = this.orderItems.findIndex(
-      item => item.menuItem.id === menuItem.id && item.note === note
+      item => item.menuItem.id === menuItem.id && item.note === note && item.deliveryTime === deliveryTime
     );
 
     if (index !== -1) {
@@ -109,9 +127,9 @@ export class MenuPlanComponent {
     }
   }
 
-  changeQuantity(menuItem: MenuItem, note: string, delta: number): void {
+  changeQuantity(menuItem: MenuItem, note: string, deliveryTime: string, delta: number): void {
     const item = this.orderItems.find(
-      i => i.menuItem.id === menuItem.id && i.note === note
+      i => i.menuItem.id === menuItem.id && i.note === note && i.deliveryTime === deliveryTime
     );
     if (item) {
       item.quantity = Math.max(1, item.quantity + delta);
