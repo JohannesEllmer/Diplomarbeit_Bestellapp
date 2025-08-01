@@ -1,0 +1,39 @@
+<article class="cart-card">
+  <div class="cart-image">
+    <img [src]="item.menuItem.imageUrl" [alt]="item.menuItem.title" />
+  </div>
+
+  <div class="cart-content">
+    <div class="cart-header">
+      <div>
+        <h3>{{ item.menuItem.title }}</h3>
+        <div class="tags">
+          <span class="category-tag">{{ item.menuItem.category }}</span>
+          <span class="vegetarian-tag" *ngIf="item.menuItem.vegetarian">Vegetarisch</span>
+        </div>
+      </div>
+      <div class="price">
+        {{ item.menuItem.price * item.quantity | currency:'EUR' }}
+      </div>
+    </div>
+
+    <div class="allergens">
+      <strong>Allergene:</strong> {{ item.menuItem.allergens.join(', ') || 'Keine' }}
+    </div>
+
+    <div class="note-input">
+      <textarea [(ngModel)]="item.note" placeholder="Anmerkung..."></textarea>
+    </div>
+
+    <div class="quantity-control">
+      <button (click)="decrease.emit()">−</button>
+      <span>{{ item.quantity }}</span>
+      <button (click)="increase.emit()">+</button>
+    </div>
+
+    <div class="cart-footer">
+      <span class="price-each">Einzelpreis: {{ item.menuItem.price | currency:'EUR' }}</span>
+      <button class="remove-btn" (click)="remove.emit()">Entfernen</button>
+    </div>
+  </div>
+</article>

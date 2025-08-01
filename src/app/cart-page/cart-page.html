@@ -1,0 +1,68 @@
+<div class="menu-container">
+  <div class="menu-header">
+    <h1>Ihre Bestellung</h1>
+    <button class="back-top-btn" (click)="navigateBack()">Zurück zum Menüplan</button>
+  </div>
+
+  <div class="main-content">
+    <div class="menu-items">
+      @for (item of cartItems; track item.menuItem.id; let i = $index) {
+        <app-cart-item
+          [item]="item"
+          (increase)="increaseQuantity(i)"
+          (decrease)="decreaseQuantity(i)"
+          (remove)="removeItem(i)">
+        </app-cart-item>
+      }
+    </div>
+
+    <div class="order-summary">
+      <div class="summary-title">Bestellübersicht</div>
+
+      <div class="summary-items">
+        @for (item of cartItems; track item.menuItem.id) {
+          <div class="summary-line">
+            <span class="item-name">{{ item.menuItem.title }}</span>
+            <span class="item-quantity">x{{ item.quantity }}</span>
+            <span class="item-price">{{ item.menuItem.price * item.quantity | currency: 'EUR' }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="summary-total">
+        Gesamt: {{ getTotal() | currency: 'EUR' }}
+      </div>
+
+      <div class="summary-balance">
+        <span>Guthaben:</span>
+        <strong>{{ balance | currency: 'EUR' }}</strong>
+      </div>
+
+      <div class="time-select">
+        <label for="time-input">Gewünschte Lieferzeit:</label>
+        <input
+          id="time-input"
+          list="time-options"
+          [(ngModel)]="selectedTime"
+          placeholder="HH:mm z.B. 12:30"
+          required />
+        <datalist id="time-options">
+          <option *ngFor="let time of deliveryTimeOptions" [value]="time"></option>
+        </datalist>
+        <div class="error-msg" *ngIf="timeError">{{ timeError }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="menu-footer">
+    <div class="footer-grid">
+      <div class="footer-item"></div>
+      <div class="footer-item">
+        <div class="footer-buttons">
+          <button class="checkout-btn" (click)="onOrder()">Jetzt bestellen</button>
+        </div>
+      </div>
+      <div class="footer-item"></div>
+    </div>
+  </div>
+</div>
