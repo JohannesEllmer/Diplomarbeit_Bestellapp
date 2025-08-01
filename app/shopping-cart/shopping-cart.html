@@ -1,0 +1,56 @@
+<div class="cart-container">
+  <div class="cart-header">
+    <button class="back-btn" (click)="backToMenu()">← Zurück zur Speisekarte</button>
+    <h2>Ihr Warenkorb</h2>
+  </div>
+
+  <div class="cart-items" *ngIf="cartService.getItems().length > 0; else emptyCart">
+    <div *ngFor="let item of cartService.getItems(); let i = index" class="cart-item">
+      <img [src]="item.menuItem.imageUrl" [alt]="item.menuItem.title" class="item-image">
+      
+      <div class="item-details">
+        <h3>{{ item.menuItem.title }}</h3>
+        <p class="item-price">€{{ item.menuItem.price.toFixed(2) }}</p>
+        
+        <div class="item-notes">
+          <label [for]="'note-' + i">Anmerkungen:</label>
+          <input 
+            type="text" 
+            [id]="'note-' + i"
+            [(ngModel)]="item.note" 
+            (ngModelChange)="updateNote(i, $event)"
+            placeholder="Zusätzliche Wünsche..."
+          >
+        </div>
+      </div>
+      
+      <button class="remove-btn" (click)="removeItem(i)">×</button>
+    </div>
+  </div>
+
+  <ng-template #emptyCart>
+    <div class="empty-cart">
+      <p>Ihr Warenkorb ist leer</p>
+    </div>
+  </ng-template>
+
+  <div class="cart-summary" *ngIf="cartService.getItems().length > 0">
+    <h3>Zusammenfassung</h3>
+    
+    <div class="summary-items">
+      <div *ngFor="let item of cartService.getItems()" class="summary-item">
+        <span>{{ item.menuItem.title }}</span>
+        <span>€{{ item.menuItem.price.toFixed(2) }}</span>
+      </div>
+    </div>
+    
+    <div class="total">
+      <span>Gesamtbetrag:</span>
+      <span class="total-price">{{ cartService.getTotal().toFixed(2) }}</span>
+    </div>
+    
+    <button class="checkout-btn" (click)="checkout()">
+      Bestellen
+    </button>
+  </div>
+</div>
