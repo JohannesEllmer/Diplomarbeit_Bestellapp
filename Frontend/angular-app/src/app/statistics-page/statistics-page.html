@@ -1,0 +1,79 @@
+<div class="statistics-container">
+  <header class="statistics-header">
+    <h1>Auswertung</h1>
+  </header>
+
+  <div class="selectors">
+    <div class="selector-group">
+      <label for="range">Zeitraum:</label>
+      <select id="range" [(ngModel)]="selectedRange" (change)="loadStatistics()">
+        <option value="today">Heute</option>
+        <option value="yesterday">Gestern</option>
+        <option value="week">Letzte Woche</option>
+        <option value="month">Letzter Monat</option>
+      </select>
+    </div>
+
+    <div class="selector-group">
+      <label for="chartType">Diagrammtyp:</label>
+      <select id="chartType" [(ngModel)]="selectedChartType" (change)="updateChart()">
+        <option value="bar">Balken</option>
+        <option value="line">Linie</option>
+        <option value="pie">Kreis</option>
+        <option value="doughnut">Donut</option>
+      </select>
+    </div>
+
+    <div class="selector-group">
+      <label for="dataset">Datenquelle:</label>
+      <select id="dataset" [(ngModel)]="selectedDataset" (change)="updateChart()">
+        <option *ngFor="let ds of availableDatasets" [value]="ds.key">{{ ds.label }}</option>
+      </select>
+    </div>
+
+    <div class="spacer"></div>
+
+    <button class="export-btn" (click)="exportChart()">Exportieren</button>
+  </div>
+
+  <section class="summary-cards">
+    <div class="card">
+      <span>Bestellungen</span>
+      <div class="value-trend">
+        <strong>{{ totalOrders }}</strong>
+        <span class="trend-icon" [ngClass]="trendOrders === 'up' ? 'trend-up' : 'trend-down'">
+          {{ trendOrders === 'up' ? '↗' : '↘' }}
+        </span>
+      </div>
+    </div>
+
+    <div class="card">
+      <span>Kunden</span>
+      <div class="value-trend">
+        <strong>{{ totalCustomers }}</strong>
+        <span class="trend-icon" [ngClass]="trendCustomers === 'up' ? 'trend-up' : 'trend-down'">
+          {{ trendCustomers === 'up' ? '↗' : '↘' }}
+        </span>
+      </div>
+    </div>
+
+    <div class="card">
+      <span>Einnahmen</span>
+      <div class="value-trend">
+        <strong>{{ totalRevenue | currency: 'EUR' }}</strong>
+        <span class="trend-icon" [ngClass]="trendRevenue === 'up' ? 'trend-up' : 'trend-down'">
+          {{ trendRevenue === 'up' ? '↗' : '↘' }}
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section class="chart-section">
+    <h2>Diagramm</h2>
+    <canvas baseChart
+      [data]="chartData"
+      [type]="selectedChartType"
+      [options]="chartOptions">
+    </canvas>
+  </section>
+</div>
