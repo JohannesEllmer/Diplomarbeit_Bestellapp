@@ -12,19 +12,13 @@ import { CommonModule } from '@angular/common';
 })
 export class MenuItemComponent {
   @Input() item!: MenuItem;
-  @Output() addItem = new EventEmitter<string>(); 
+  @Output() addItem = new EventEmitter<string>();
 
-  showNoteInput = false;
   note: string = '';
 
-  toggleNoteInput(): void {
-    this.showNoteInput = !this.showNoteInput;
-    if (!this.showNoteInput) this.note = '';
-  }
-
   addToOrder(): void {
-    this.addItem.emit(this.note);
+    const trimmedNote = this.note.trim();
+    this.addItem.emit(trimmedNote); // leerer String = keine Bemerkung
     this.note = '';
-    this.showNoteInput = false;
   }
 }

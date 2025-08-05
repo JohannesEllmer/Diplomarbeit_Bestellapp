@@ -1,5 +1,9 @@
 <div class="user-card" [class.blocked]="user.blocked" (click)="navigateToUser($event)">
   <div class="user-summary">
+    <div class="user-avatar">
+      <img [src]="user.profileImageUrl || 'assets/default-avatar.png'" alt="Profilbild" />
+    </div>
+
     <div class="user-info">
       <h2>{{ user.name }}</h2>
       <p class="meta">
@@ -9,9 +13,9 @@
       </p>
     </div>
 
-    <div class="user-controls">
+    <div class="user-controls-row">
       <div class="balance">
-        <span>{{ user.balance | currency: 'EUR' }}</span>
+        <span class="balance-amount">{{ user.balance | currency: 'EUR' }}</span>
         <button class="edit-btn" 
                 (click)="startEditBalance($event)" 
                 title="Guthaben bearbeiten">➕</button>
@@ -25,7 +29,7 @@
                (click)="$event.stopPropagation()" />
       </div>
 
-      <div class="actions">
+      <div class="actions-inline">
         <button class="icon-btn delete" 
                 (click)="emitDelete($event)" 
                 title="Benutzer löschen">🗑️</button>

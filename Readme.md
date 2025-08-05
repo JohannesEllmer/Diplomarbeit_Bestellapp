@@ -10,7 +10,7 @@ Datum   Zeitaufwand     Titel                   Autor   genauere Beschreibung wa
 27.07. 1 h verbesserungen und üebrarbeitungen wie besprochen
 01.08. 3h           Erstellung Userverwaltung   HONS    Erstellung einer USer und Guthabenverwaltung für Herb. Auch schon vorbereitungen üfr spätere anbidnugn an Bakcen düber API Services. Daher wurde auch bereits eine service erstellt. Außerdem wurde ein                                                     User model ersetellt und den models hinzugefügt.  
 1.08. 2h Hons Erstellung Order-List für Herb. Ohne Backend. 
-
+5.8.  6.5 h  Hons Implementierung von Services im Frontend für zugrif auf Backend. Außerdem Verbesserung des Stylings bei order und users. Bei Users wurde ein user-icon hinzugefügt.
 
 
 

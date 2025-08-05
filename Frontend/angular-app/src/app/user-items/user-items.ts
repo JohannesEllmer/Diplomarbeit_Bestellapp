@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { User } from '../../models/user.model';
+import { UserService } from '../user-service';
 
 @Component({
   selector: 'app-user-items',
@@ -16,7 +17,7 @@ export class UserItemsComponent {
   @Output() delete = new EventEmitter<User>();
   @Output() block = new EventEmitter<User>();
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private userService: UserService) {}
 
   toggleDetails(event: Event): void {
     event.stopPropagation();
@@ -32,9 +33,11 @@ export class UserItemsComponent {
   saveBalance(event: Event): void {
     event.stopPropagation();
     if (this.user.newBalance !== undefined) {
-      this.user.balance += this.user.newBalance;
+      this.userService.updateBalance(this.user, this.user.newBalance).subscribe(updated => {
+        this.user.balance = updated.balance;
+        this.user.editingBalance = false;
+      });
     }
-    this.user.editingBalance = false;
   }
 
   emitDelete(event: Event): void {
@@ -49,6 +52,6 @@ export class UserItemsComponent {
 
   navigateToUser(event: Event): void {
     event.stopPropagation();
-    this.router.navigate(['/user', this.user.id]);
+    this.router.navigate(['/users', this.user.id]); // korrigierter Pfad
   }
 }

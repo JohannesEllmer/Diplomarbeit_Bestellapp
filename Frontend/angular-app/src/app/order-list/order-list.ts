@@ -1,9 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { OrderItem, MenuItem } from '../../models/menu-item.model';
-import { User } from '../../models/user.model';
+import { OrderItem } from '../../models/menu-item.model';
+import { OrderService } from '../order-service';
 
 @Component({
   selector: 'app-order-list',
@@ -12,118 +12,70 @@ import { User } from '../../models/user.model';
   templateUrl: './order-list.html',
   styleUrls: ['./order-list.css']
 })
-export class OrderListComponent {
+export class OrderListComponent implements OnInit {
   activeGroup: string = 'Keine Gruppierung';
   readonly groupOptions = ['Keine Gruppierung', 'Nach Gericht', 'Nach Lieferzeit'];
 
-  orderItems: OrderItem[] = [
-    {
-      menuItem: {
-        id: 1,
-        title: 'Kürbiscremesuppe',
-        description: '',
-        price: 4.90,
-        category: 'Vorspeisen',
-        available: true,
-        vegetarian: true,
-        allergens: [],
-        imageUrl: ''
-      },
-      user: {
-        id: 101,
-        name: 'Anna Müller',
-        email: 'anna@example.com',
-        class: '3A',
-        orderCount: 5,
-        balance: 10.00,
-        blocked: false
-      },
-      note: 'Ohne Ingwer',
-      quantity: 2,
-      delivered: false,
-      deliveryTime: '12:30'
-    },
-    {
-      menuItem: {
-        id: 2,
-        title: 'Wiener Schnitzel',
-        description: '',
-        price: 12.50,
-        category: 'Hauptgerichte',
-        available: true,
-        vegetarian: false,
-        allergens: [],
-        imageUrl: ''
-      },
-      user: {
-        id: 102,
-        name: 'Max Mustermann',
-        email: 'max@example.com',
-        class: '4B',
-        orderCount: 3,
-        balance: 5.00,
-        blocked: false
-      },
-      note: '',
-      quantity: 1,
-      delivered: true,
-      deliveryTime: '13:00'
-    },
-    {
-      menuItem: {
-        id: 1,
-        title: 'Kürbiscremesuppe',
-        description: '',
-        price: 4.90,
-        category: 'Vorspeisen',
-        available: true,
-        vegetarian: true,
-        allergens: [],
-        imageUrl: ''
-      },
-      user: {
-        id: 103,
-        name: 'Lisa Schmidt',
-        email: 'lisa@example.com',
-        class: '5C',
-        orderCount: 7,
-        balance: 8.50,
-        blocked: false
-      },
-      note: 'Extra Brot dazu',
-      quantity: 1,
-      delivered: false,
-      deliveryTime: '12:45'
-    }
-  ];
+  orderItems: OrderItem[] = [];
+  paginatedItems: OrderItem[] = [];
+  currentPage = 1;
+  itemsPerPage = 5;
+  pages: number[] = [];
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private orderService: OrderService) {}
+
+  ngOnInit(): void {
+    this.orderService.getOrders().subscribe(items => {
+      this.orderItems = items;
+      this.updatePagination();
+    });
+  }
+
+  updatePagination(): void {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    const end = start + this.itemsPerPage;
+    this.paginatedItems = this.orderItems.slice(start, end);
+    this.updatePages();
+  }
+
+  updatePages(): void {
+    const total = this.totalPages;
+    this.pages = Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  changePage(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+    this.updatePagination();
+  }
+
+  changeItemsPerPage(count: number): void {
+    this.itemsPerPage = count;
+    this.currentPage = 1;
+    this.updatePagination();
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.orderItems.length / this.itemsPerPage);
+  }
 
   get totalSum(): number {
     return this.orderItems.reduce((sum, item) => sum + item.menuItem.price * item.quantity, 0);
   }
 
-  get totalOrders(): number {
-    return this.orderItems.length;
-  }
-
-  get completedOrders(): number {
-    return this.orderItems.filter(item => item.delivered).length;
-  }
-
   get groupedOrders(): { [key: string]: OrderItem[] } {
     switch (this.activeGroup) {
       case 'Nach Gericht':
-        return this.groupBy(item => `${item.menuItem.title} (${item.user.name})`);
+        return this.groupBy(item => `${item.menuItem.title}`);
       case 'Nach Lieferzeit':
         return this.groupBy(item => item.deliveryTime || 'Unbekannt');
       default:
-        return { 'Alle Bestellungen': this.orderItems };
+        return { 'Alle Bestellungen': this.paginatedItems };
     }
   }
 
   groupBy(fn: (item: OrderItem) => string): { [key: string]: OrderItem[] } {
-    return this.orderItems.reduce((groups, item) => {
+    return this.paginatedItems.reduce((groups, item) => {
       const key = fn(item);
       if (!groups[key]) groups[key] = [];
       groups[key].push(item);
@@ -133,6 +85,7 @@ export class OrderListComponent {
 
   toggleDelivered(item: OrderItem): void {
     item.delivered = !item.delivered;
+    this.orderService.toggleDelivered(item.menuItem.id, item.delivered).subscribe();
   }
 
   navigateToUser(userId: number): void {

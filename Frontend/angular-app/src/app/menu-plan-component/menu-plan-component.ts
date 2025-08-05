@@ -1,72 +1,29 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MenuItem, OrderItem } from '../../models/menu-item.model';
 import { User } from '../../models/user.model';
 import { MenuItemComponent } from '../menu-item-component/menu-item-component';
+import { MenuService } from '../menu-service';
+import { CartService } from '../cart-service';
+import { HttpClientModule } from '@angular/common/http';
 
 @Component({
   selector: 'app-menu-plan',
   standalone: true,
-  imports: [CommonModule, MenuItemComponent],
+  imports: [CommonModule, MenuItemComponent, HttpClientModule],
   templateUrl: './menu-plan-component.html',
   styleUrls: ['./menu-plan-component.css']
 })
-export class MenuPlanComponent {
+export class MenuPlanComponent implements OnInit {
   activeCategory: string = 'Alle';
   activeFilter: string = 'Alle';
   balance: number = 14.00;
 
-  readonly categories = ['Alle', 'Vorspeisen', 'Hauptgerichte', 'Desserts', 'Getränke'];
-  readonly filters = ['Alle', 'Vegetarisch'];
+  categories = ['Alle', 'Vorspeisen', 'Hauptgerichte', 'Desserts', 'Getränke'];
+  filters = ['Alle', 'Vegetarisch'];
 
-  readonly menuItems: MenuItem[] = [
-    {
-      id: 1,
-      title: 'Kürbiscremesuppe',
-      description: 'Cremige Suppe mit Kürbis und Ingwer',
-      price: 4.90,
-      category: 'Vorspeisen',
-      available: true,
-      vegetarian: true,
-      allergens: ['G', 'L'],
-      imageUrl: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=600'
-    },
-    {
-      id: 2,
-      title: 'Wiener Schnitzel',
-      description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
-      price: 12.50,
-      category: 'Hauptgerichte',
-      available: true,
-      vegetarian: false,
-      allergens: ['G', 'E', 'M'],
-      imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
-    },
-    {
-      id: 3,
-      title: 'Kalbs Schnitzel',
-      description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
-      price: 12.50,
-      category: 'Hauptgerichte',
-      available: true,
-      vegetarian: false,
-      allergens: ['G', 'E', 'M'],
-      imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
-    },
-    {
-      id: 4,
-      title: 'Cola',
-      description: 'Erfrischungsgetränk',
-      price: 3.50,
-      category: 'Getränke',
-      available: true,
-      vegetarian: true,
-      allergens: [],
-      imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
-    }
-  ];
-
+  menuItems: MenuItem[] = [];
   orderItems: OrderItem[] = [];
 
   currentUser: User = {
@@ -79,15 +36,32 @@ export class MenuPlanComponent {
     blocked: false
   };
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private menuService: MenuService,
+    private cartService: CartService
+  ) {}
 
-  get filteredItems(): MenuItem[] {
-    return this.menuItems.filter(item => {
-      const categoryMatch = this.activeCategory === 'Alle' || item.category === this.activeCategory;
-      const filterMatch = this.activeFilter !== 'Vegetarisch' || item.vegetarian;
-      return categoryMatch && filterMatch;
+  ngOnInit(): void {
+    this.menuService.getMenuItems().subscribe(items => {
+      this.menuItems = items;
     });
   }
+
+  get filteredItems(): MenuItem[] {
+  return this.menuItems.filter(item => {
+    const isDrink = item.category === 'Getränke';
+    const categoryMatch =
+      this.activeCategory === 'Alle'
+        ? !isDrink 
+        : item.category === this.activeCategory;
+
+    const filterMatch = this.activeFilter !== 'Vegetarisch' || item.vegetarian;
+
+    return categoryMatch && filterMatch;
+  });
+}
+
 
   addToOrder(menuItem: MenuItem, note: string = '', deliveryTime: string = '12:00'): void {
     const existing = this.orderItems.find(
@@ -137,17 +111,15 @@ export class MenuPlanComponent {
   }
 
   get cartItemCount(): number {
-    return this.orderItems.reduce((sum, item) => sum + item.quantity, 0);
+    return this.cartService.getItemCount(this.orderItems);
   }
 
   get totalCost(): number {
-    return this.orderItems.reduce((total, item) => {
-      return total + item.menuItem.price * item.quantity;
-    }, 0);
+    return this.cartService.getTotal(this.orderItems);
   }
 
   navigateToCart(): void {
-    localStorage.setItem('cartItems', JSON.stringify(this.orderItems));
+    this.cartService.saveCartItems(this.orderItems);
     this.router.navigate(['/warenkorb']);
   }
 }

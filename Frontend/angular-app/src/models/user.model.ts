@@ -6,6 +6,7 @@ export interface User {
   orderCount: number;
   balance: number;
   blocked: boolean;
+  profileImageUrl?: string;
   showDetails?: boolean;
   editingBalance?: boolean;
   newBalance?: number;

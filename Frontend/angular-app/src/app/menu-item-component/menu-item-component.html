@@ -19,20 +19,16 @@
       <strong>Allergene:</strong> {{ item.allergens.join(', ') }}
     </div>
 
-    <div class="note-input" *ngIf="showNoteInput">
-      <textarea [(ngModel)]="note" placeholder="Bemerkung (z.B. keine Zwiebeln)"></textarea>
-      <div class="note-actions">
-        <button class="confirm-btn" (click)="addToOrder()">Mit Bemerkung hinzufügen</button>
-        <button class="cancel-btn" (click)="toggleNoteInput()">Abbrechen</button>
-      </div>
+    <div class="note-input">
+      <textarea [(ngModel)]="note" placeholder="Bemerkung (optional)"></textarea>
     </div>
 
     <div class="card-footer">
       <span class="price">{{ item.price | currency: 'EUR' }}</span>
       <button class="add-btn"
-              (click)="showNoteInput ? addToOrder() : toggleNoteInput()"
+              (click)="addToOrder()"
               [disabled]="!item.available">
-        {{ showNoteInput ? 'Ohne Bemerkung' : 'Hinzufügen' }}
+        Hinzufügen
       </button>
     </div>
   </div>

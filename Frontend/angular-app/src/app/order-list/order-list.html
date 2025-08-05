@@ -17,13 +17,33 @@
     </div>
   </div>
 
+  <div class="pagination-controls">
+    <label>
+      Elemente pro Seite:
+      <select [(ngModel)]="itemsPerPage" (change)="changeItemsPerPage(itemsPerPage)">
+        <option *ngFor="let count of [5, 10, 20, 50]" [value]="count">{{ count }}</option>
+      </select>
+    </label>
+
+    <div class="paginator">
+      <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1">‹</button>
+      <button 
+        *ngFor="let page of pages" 
+        (click)="changePage(page)" 
+        [class.active]="page === currentPage">
+        {{ page }}
+      </button>
+      <button (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages">›</button>
+    </div>
+  </div>
+
   <main class="order-list">
     @for (group of groupedOrders | keyvalue; track group.key) {
       <div class="order-group">
         <h3>{{ group.key }}</h3>
         
         @for (item of group.value; track item.menuItem.id + item.user.id) {
-          <div class="order-card">
+          <div class="order-card" [class.delivered]="item.delivered">
             <div class="order-summary">
               <div class="order-info">
                 <h2>{{ item.menuItem.title }} × {{ item.quantity }}</h2>
@@ -55,7 +75,7 @@
   <footer class="order-footer">
     <div class="footer-grid">
       <div class="footer-item">
-        <i class="icon-receipt"></i>
+        <i class="icon-euro"></i>
         <div class="footer-text">
           <span>Gesamtsumme</span>
           <strong>{{ totalSum | currency:'EUR' }}</strong>

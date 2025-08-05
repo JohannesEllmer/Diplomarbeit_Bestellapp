@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { OrderItem } from '../../models/menu-item.model';
-import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { CartItemComponent } from '../cart-item/cart-item';
+import { OrderItem } from '../../models/menu-item.model';
+import { CartService } from '../cart-service';
 
 @Component({
   selector: 'app-cart-page',
@@ -17,39 +18,28 @@ export class CartPageComponent implements OnInit {
   deliveryTimeOptions: string[] = ['11:30', '12:00', '12:30', '13:00'];
   selectedTime: string = '';
   timeError: string = '';
-  balance: number = 30.00; // Beispiel-Guthaben, könnte später aus User-State geladen werden
+  balance: number = 30.00;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private cartService: CartService) {}
 
   ngOnInit(): void {
-    const stored = localStorage.getItem('cartItems');
-    this.cartItems = stored ? JSON.parse(stored) : [];
-  }
-
-  saveToLocalStorage(): void {
-    localStorage.setItem('cartItems', JSON.stringify(this.cartItems));
+    this.cartItems = this.cartService.getCartItems();
   }
 
   increaseQuantity(index: number): void {
-    this.cartItems[index].quantity += 1;
-    this.saveToLocalStorage();
+    this.cartItems = this.cartService.increaseQuantity(this.cartItems, index);
   }
 
   decreaseQuantity(index: number): void {
-    if (this.cartItems[index].quantity > 1) {
-      this.cartItems[index].quantity -= 1;
-      this.saveToLocalStorage();
-    }
+    this.cartItems = this.cartService.decreaseQuantity(this.cartItems, index);
   }
 
   updateNote(index: number, note: string): void {
-    this.cartItems[index].note = note;
-    this.saveToLocalStorage();
+    this.cartItems = this.cartService.updateNote(this.cartItems, index, note);
   }
 
   removeItem(index: number): void {
-    this.cartItems.splice(index, 1);
-    this.saveToLocalStorage();
+    this.cartItems = this.cartService.removeItem(this.cartItems, index);
   }
 
   getAllergens(allergens: string[] | undefined): string {
@@ -57,18 +47,11 @@ export class CartPageComponent implements OnInit {
   }
 
   getTotal(): number {
-    return this.cartItems.reduce(
-      (sum, item) => sum + item.menuItem.price * item.quantity,
-      0
-    );
-  }
-
-  isValidTimeFormat(time: string): boolean {
-    return /^\d{2}:\d{2}$/.test(time) && !isNaN(Date.parse(`1970-01-01T${time}:00`));
+    return this.cartService.getTotal(this.cartItems);
   }
 
   onOrder(): void {
-    if (!this.isValidTimeFormat(this.selectedTime)) {
+    if (!this.cartService.isValidTimeFormat(this.selectedTime)) {
       this.timeError = 'Bitte gib eine gültige Uhrzeit im Format HH:mm ein.';
       return;
     }
@@ -88,19 +71,20 @@ export class CartPageComponent implements OnInit {
       }))
     };
 
-    console.log('Bestellung als JSON:', bestellung);
-
-    alert('Bestellung erfolgreich übermittelt.\nDetails siehe Konsole.');
-
-    // hier API call
-
-    // Clear cart
-    this.cartItems = [];
-    localStorage.removeItem('cartItems');
-    this.selectedTime = '';
+    this.cartService.submitOrder(bestellung).subscribe({
+      next: () => {
+        alert('Bestellung erfolgreich übermittelt.');
+        this.cartService.clearCart();
+        this.cartItems = [];
+        this.selectedTime = '';
+      },
+      error: () => {
+        alert('Fehler beim Übermitteln der Bestellung.');
+      }
+    });
   }
 
-  navigateBack() {
+  navigateBack(): void {
     this.router.navigate(['/']);
   }
 }
