@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserItemsComponent } from '../user-items/user-items';
 import { User } from '../../models/user.model';
-import { UserService } from '../user-service';
+import { UserService } from '../services/user/user-service';
 
 @Component({
   selector: 'app-user-management',

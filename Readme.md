@@ -9,10 +9,10 @@ Datum   Zeitaufwand     Titel                   Autor   genauere Beschreibung wa
 20.07   0.5h            Styling Fehler bei Cart item korrigiet.     Styling/Css wurde nicht angenommen, jetzt passt es.
 27.07. 1 h verbesserungen und üebrarbeitungen wie besprochen
 01.08. 3h           Erstellung Userverwaltung   HONS    Erstellung einer USer und Guthabenverwaltung für Herb. Auch schon vorbereitungen üfr spätere anbidnugn an Bakcen düber API Services. Daher wurde auch bereits eine service erstellt. Außerdem wurde ein                                                     User model ersetellt und den models hinzugefügt.  
-1.08. 2h Hons Erstellung Order-List für Herb. Ohne Backend. 
+1.08. 2.5h Hons Erstellung Order-List für Herb. Ohne Backend. 
 5.8.  7 h  Hons Implementierung von Services im Frontend für zugrif auf Backend. Außerdem Verbesserung des Stylings bei order und users. Bei Users wurde ein user-icon hinzugefügt.
-6.8.  3 h  Hons Implementierung einer neuen Page Auswertung als entwurf um eine Datenvisualisierung durchzuführen. Auch bereitstellung eines kleinen services. Befüllt mit Testdaten. ENTWURF
-
+6.8.  3.5 h  Hons Implementierung einer neuen Page Auswertung als entwurf um eine Datenvisualisierung durchzuführen. Auch bereitstellung eines kleinen services. Befüllt mit Testdaten. ENTWURF
+7.8.  5 h Hons   Erstellung bzw. begonnen mit Unit Tests für meine Komponenten in specs mit Karma und Jasmine. Noch keine Tests bei den services und noch fehler vorhanden. nochmal überarbeiten. Service-ordnerstruktur überarbeitet
 
 
 

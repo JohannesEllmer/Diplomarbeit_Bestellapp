@@ -4,8 +4,8 @@ import { Router } from '@angular/router';
 import { MenuItem, OrderItem } from '../../models/menu-item.model';
 import { User } from '../../models/user.model';
 import { MenuItemComponent } from '../menu-item-component/menu-item-component';
-import { MenuService } from '../menu-service';
-import { CartService } from '../cart-service';
+import { MenuService } from '../services/menu/menu-service';
+import { CartService } from '../services/cart/cart-service';
 import { HttpClientModule } from '@angular/common/http';
 
 @Component({

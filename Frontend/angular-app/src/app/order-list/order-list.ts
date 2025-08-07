@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { OrderItem } from '../../models/menu-item.model';
-import { OrderService } from '../order-service';
+import { OrderService } from '../services/order/order-service';
 
 @Component({
   selector: 'app-order-list',

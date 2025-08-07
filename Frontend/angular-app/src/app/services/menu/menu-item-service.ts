@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { MenuItem, OrderItem } from '../models/menu-item.model';
-import { User } from '../models/user.model';
+import { MenuItem, OrderItem } from '../../../models/menu-item.model';
+import { User } from '../../../models/user.model';
 
 @Injectable({
   providedIn: 'root'

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CartItemComponent } from '../cart-item/cart-item';
 import { OrderItem } from '../../models/menu-item.model';
-import { CartService } from '../cart-service';
+import { CartService } from '../services/cart/cart-service';
 
 @Component({
   selector: 'app-cart-page',
