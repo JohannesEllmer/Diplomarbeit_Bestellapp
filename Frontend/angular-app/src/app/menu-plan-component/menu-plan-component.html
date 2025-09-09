@@ -1,8 +1,10 @@
 <div class="menu-container">
+  <!-- HEADER -->
   <header class="menu-header">
     <h1>Menüplan</h1>
   </header>
 
+  <!-- FILTER -->
   <div class="filter-container">
     <div class="filter-group">
       <span>Kategorie:</span>
@@ -29,6 +31,7 @@
     </div>
   </div>
 
+  <!-- MENÜ ITEMS -->
   <main class="menu-items">
     @for (item of filteredItems; track item.id) {
       <app-menu-item 
@@ -38,6 +41,7 @@
     }
   </main>
 
+  <!-- FOOTER -->
   <footer class="menu-footer">
     <div class="footer-grid">
       <div class="footer-item">

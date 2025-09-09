@@ -68,12 +68,10 @@
     </div>
   </section>
 
-  <section class="chart-section">
+   <section class="chart-section" (click)="goFullscreenMobile()">
     <h2>Diagramm</h2>
-    <canvas baseChart
-      [data]="chartData"
-      [type]="selectedChartType"
-      [options]="chartOptions">
-    </canvas>
+    <div class="chart-container">
+      <canvas #chartCanvas></canvas>
+    </div>
   </section>
 </div>

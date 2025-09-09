@@ -1,17 +1,22 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BaseChartDirective } from 'ng2-charts';
-import { ChartType, ChartConfiguration, ChartOptions } from 'chart.js';
+import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
+
+// Wichtig: Chart.js-Elemente registrieren
+Chart.register(...registerables);
 
 @Component({
   selector: 'app-statistics-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, BaseChartDirective],
+  imports: [CommonModule, FormsModule],
   templateUrl: './statistics-page.html',
   styleUrls: ['./statistics-page.css']
 })
-export class StatisticsPageComponent implements OnInit {
+export class StatisticsPageComponent implements AfterViewInit {
+  @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
+  chart!: Chart;
+
   selectedRange: 'today' | 'yesterday' | 'week' | 'month' = 'today';
   selectedChartType: ChartType = 'bar';
   selectedDataset: string = 'revenue';
@@ -28,20 +33,19 @@ export class StatisticsPageComponent implements OnInit {
   trendCustomers: 'up' | 'down' = 'down';
   trendRevenue: 'up' | 'down' = 'up';
 
- availableDatasets = [
-  { key: 'revenue', label: 'Umsatz' },
-  { key: 'ordersByWeekday', label: 'Bestellungen nach Wochentag' },
-  { key: 'avgOrderValue', label: 'Ø Bestellwert' },
-  { key: 'ordersByDish', label: 'Bestellungen pro Gericht' }
-];
-
+  availableDatasets = [
+    { key: 'revenue', label: 'Umsatz' },
+    { key: 'ordersByWeekday', label: 'Bestellungen nach Wochentag' },
+    { key: 'avgOrderValue', label: 'Ø Bestellwert' },
+    { key: 'ordersByDish', label: 'Bestellungen pro Gericht' }
+  ];
 
   chartData: ChartConfiguration['data'] = {
     labels: [],
     datasets: []
   };
 
-  chartOptions: ChartOptions = {
+  chartOptions: ChartConfiguration['options'] = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -59,7 +63,7 @@ export class StatisticsPageComponent implements OnInit {
     '#ef4444', '#ec4899', '#6366f1', '#22d3ee'
   ];
 
-  ngOnInit(): void {
+  ngAfterViewInit(): void {
     this.loadStatistics();
   }
 
@@ -75,56 +79,91 @@ export class StatisticsPageComponent implements OnInit {
   }
 
   updateChart(): void {
-  let labels: string[] = [];
-  let data: number[] = [];
-  let label = '';
+    if (!this.chartCanvas) return; // verhindert nativeElement-Fehler
 
-  switch (this.selectedDataset) {
-    case 'revenue':
-      labels = ['KW1', 'KW2', 'KW3', 'KW4'];
-      data = [2000, 2500, 1800, 2200];
-      label = 'Umsatz';
-      break;
-    case 'ordersByWeekday':
-      labels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-      data = [100, 120, 130, 140, 160, 180, 90];
-      label = 'Bestellungen/Wochentag';
-      break;
-    case 'avgOrderValue':
-      labels = ['KW1', 'KW2', 'KW3', 'KW4'];
-      data = [22.5, 24.0, 23.8, 25.1];
-      label = 'Ø Bestellwert';
-      break;
-    case 'ordersByDish':
-      // Beispielhafte Daten – später durch API-Daten ersetzen
-      labels = ['Pizza Margherita', 'Schnitzel', 'Spaghetti', 'Salat', 'Burger'];
-      data = [150, 120, 180, 90, 200];
-      label = 'Bestellungen pro Gericht';
-      break;
+    if (this.chart) {
+      this.chart.destroy();
+    }
+
+    let labels: string[] = [];
+    let data: number[] = [];
+    let label = '';
+
+    switch (this.selectedDataset) {
+      case 'revenue':
+        labels = ['KW1', 'KW2', 'KW3', 'KW4'];
+        data = [2000, 2500, 1800, 2200];
+        label = 'Umsatz';
+        break;
+      case 'ordersByWeekday':
+        labels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+        data = [100, 120, 130, 140, 160, 180, 90];
+        label = 'Bestellungen/Wochentag';
+        break;
+      case 'avgOrderValue':
+        labels = ['KW1', 'KW2', 'KW3', 'KW4'];
+        data = [22.5, 24.0, 23.8, 25.1];
+        label = 'Ø Bestellwert';
+        break;
+      case 'ordersByDish':
+        labels = ['Pizza Margherita', 'Schnitzel', 'Spaghetti', 'Salat', 'Burger'];
+        data = [150, 120, 180, 90, 200];
+        label = 'Bestellungen pro Gericht';
+        break;
+    }
+
+    const backgroundColors = this.COLORS.slice(0, data.length);
+
+    this.chartData = {
+      labels,
+      datasets: [{
+        data,
+        label,
+        backgroundColor: backgroundColors,
+        borderColor: this.selectedChartType === 'line' ? '#2563eb' : undefined,
+        borderWidth: 2,
+        fill: this.selectedChartType !== 'line',
+        tension: this.selectedChartType === 'line' ? 0.4 : 0
+      }]
+    };
+
+    this.createChart();
   }
 
-  const backgroundColors = this.COLORS.slice(0, data.length);
-
-  this.chartData = {
-    labels,
-    datasets: [{
-      data,
-      label,
-      backgroundColor: backgroundColors,
-      borderColor: this.selectedChartType === 'line' ? '#2563eb' : undefined,
-      borderWidth: 2,
-      fill: this.selectedChartType !== 'line',
-      tension: this.selectedChartType === 'line' ? 0.4 : 0
-    }]
-  };
-}
-
+  createChart(): void {
+    const ctx = this.chartCanvas?.nativeElement?.getContext('2d');
+    if (ctx) {
+      this.chart = new Chart(ctx, {
+        type: this.selectedChartType,
+        data: this.chartData,
+        options: this.chartOptions
+      });
+    }
+  }
 
   exportChart(): void {
-    const chart = document.querySelector('canvas') as HTMLCanvasElement;
+    if (!this.chartCanvas) return;
     const link = document.createElement('a');
-    link.href = chart.toDataURL('image/png');
+    link.href = this.chartCanvas.nativeElement.toDataURL('image/png');
     link.download = 'diagramm.png';
     link.click();
   }
+
+ goFullscreenMobile(): void {
+  if (window.innerWidth <= 480) {
+    if (!document.fullscreenElement) {
+      // Vollbild starten
+      const container = this.chartCanvas?.nativeElement?.parentElement;
+      if (container && container.requestFullscreen) {
+        container.requestFullscreen();
+      }
+    } else {
+      // Vollbild beenden
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  }
+}
+
 }

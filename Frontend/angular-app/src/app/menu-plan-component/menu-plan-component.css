@@ -1,13 +1,14 @@
+/* === Container-Layout === */
 .menu-container {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 20px;
-  height: 100vh; 
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden; 
 }
 
+/* === Header === */
 .menu-header {
   background: #0ea5e9;
   color: white;
@@ -22,7 +23,7 @@
   font-size: 1.75rem;
 }
 
-/* Filter-Leiste */
+/* === Filter-Leiste === */
 .filter-container {
   display: flex;
   gap: 2rem;
@@ -33,16 +34,19 @@
   z-index: 50;
   border-bottom: 1px solid #e2e8f0;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .filter-group {
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .filter-group span {
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .filter-btn {
@@ -51,7 +55,7 @@
   border-radius: 20px;
   background: white;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   font-size: 0.9rem;
 }
 
@@ -61,7 +65,7 @@
   border-color: #0ea5e9;
 }
 
-/* Menü-Items Grid – SCROLLBAR BEREICH */
+/* === Menü-Items === */
 .menu-items {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -69,11 +73,12 @@
   padding: 1.5rem 0;
   flex-grow: 1;
   overflow-y: auto;
-  justify-content: center; 
+  justify-content: center;
   align-content: start;
+  min-height: 0; /* Verhindert Layout-Bugs mit Sticky-Header */
 }
 
-/* Footer */
+/* === Footer === */
 .menu-footer {
   background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
   padding: 1rem 0;
@@ -123,7 +128,7 @@
   font-weight: 600;
 }
 
-/* Checkout Button */
+/* === Checkout Button === */
 .checkout-btn {
   display: flex;
   align-items: center;
@@ -136,7 +141,7 @@
   border-radius: 50px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
   width: 100%;
   max-width: 220px;
   margin: 0 auto;
@@ -169,7 +174,7 @@
   cursor: not-allowed;
 }
 
-/* Responsive Anpassungen */
+/* === Responsive Anpassungen === */
 @media (max-width: 768px) {
   .footer-grid {
     grid-template-columns: 1fr;
@@ -184,5 +189,15 @@
   .checkout-btn {
     max-width: 100%;
     order: 3;
+  }
+}
+
+@media (max-width: 480px) {
+  .menu-items {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-text strong {
+    font-size: 1rem;
   }
 }
