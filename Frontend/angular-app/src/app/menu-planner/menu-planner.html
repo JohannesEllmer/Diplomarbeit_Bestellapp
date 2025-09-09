@@ -1,0 +1,37 @@
+<div class="menu-planner-container">
+  <div class="menu-planner-header">
+    <h1>Menüplaner</h1>
+  </div>
+
+  <div class="planner-container">
+    <div class="selected-dishes-wrapper">
+      <div class="selected-dishes-container">
+        <input class="menu-title-input" [(ngModel)]="menuTitle" placeholder="Menü Titel eingeben" />
+        <div class="dishes-list">
+          @for ( dish of selectedDishes; track dish) {
+            <div class="dish-container" (click)="toggleDish(dish, true)">
+                <span class="dish-title">{{ dish.title }}</span>
+            </div>
+          }
+        </div>
+      </div>
+      <div class="save-menu-btn-wrapper">
+        <button class="save-menu-button">Speichern</button>
+      </div>
+    </div>
+    <div class="unselected-dishes-wrapper">
+      <div class="unselected-dishes-container">
+        <div class="dishes-list">
+          @for ( dish of unselectedDishes; track dish) {
+            <div class="dish-container" (click)="toggleDish(dish, false)">
+              <span class="dish-title">{{ dish.title }}</span>
+            </div>
+          }
+        </div>
+      </div>
+      <div class="add-dish-btn-wrapper">
+        <button class="add-dish-button">Hinzufügen</button>
+      </div>
+    </div>
+  </div>
+</div>

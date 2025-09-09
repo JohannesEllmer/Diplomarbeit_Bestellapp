@@ -1,0 +1,28 @@
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+<div class="menu-manager-container">
+  <header class="menu-manager-header">
+    <h1>Menüs</h1>
+  </header>
+
+  <div class="menus-container">
+    @for (menu of Menus; track menu) {
+      <div class="menu-container"
+          (click)="selectMenu(menu)"
+          [class.selected]="selectedMenu === menu">
+        <span class="menu-title">{{ menu.title }}</span>
+        <div class="menu-actions" (click)="$event.stopPropagation()">
+          <button title="Edit">
+            <span class="material-icons">edit</span>
+          </button>
+          <button title="Delete">
+            <span class="material-icons">delete</span>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+  <div class="add-menu-btn-wrapper">
+    <button class="add-menu-button">Hinzufügen</button>
+  </div>
+</div>

@@ -1,0 +1,133 @@
+.menu-planner-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.menu-planner-header {
+  background: #0ea5e9;
+  color: white;
+  padding: 1.5rem;
+  text-align: center;
+  border-radius: 0 0 16px 16px;
+  box-shadow: 0 2px 8px rgba(14,165,233,0.08);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 5vh;
+  max-height: 5vh;
+}
+
+.planner-container {
+  display: flex;
+  gap: 2rem;
+}
+
+.selected-dishes-wrapper,
+.unselected-dishes-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.selected-dishes-container,
+.unselected-dishes-container {
+  flex: 1 1 0;
+  background: #e0e7ef;
+  border: 1px solid #000000;
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 65vh;
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
+.menu-title-input {
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1.5px solid #94a3b8;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.dishes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.dish-container {
+  width: 92%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1.5px solid #94a3b8;
+  border-radius: 12px;
+  background: white;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.dish-container:hover {
+  box-shadow: 0 4px 12px rgba(56,189,248,0.10);
+  border-color: #0ea5e9;
+}
+
+.dish-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.add-dish-btn-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.1vh;
+  margin-bottom: auto;
+}
+
+.save-menu-btn-wrapper{
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.1vh;
+  margin-bottom: auto;
+}
+
+.add-dish-button,
+.save-menu-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: white;
+  color: #0ea5e9;
+  border: 1px solid #0ea5e9;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-width: 23vh;
+  max-width: 23vh;
+  box-shadow: 0 4px 8px rgba(14,165,233,0.10);
+  align-self: flex-end;
+  margin-top: 1vh;
+}
+
+.add-dish-button:hover,
+.save-menu-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(14,165,233,0.15);
+  background: #0ea5e9;
+  color: white;
+}
