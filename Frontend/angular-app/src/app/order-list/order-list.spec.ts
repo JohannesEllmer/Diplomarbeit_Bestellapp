@@ -22,7 +22,7 @@ describe('OrderListComponent', () => {
         available: true,
         vegetarian: false,
         allergens: [],
-        imageUrl: ''
+        image: ''
       },
       user: {
         id: 1,
@@ -48,7 +48,7 @@ describe('OrderListComponent', () => {
         available: true,
         vegetarian: false,
         allergens: [],
-        imageUrl: ''
+        image: ''
       },
       user: {
         id: 2,

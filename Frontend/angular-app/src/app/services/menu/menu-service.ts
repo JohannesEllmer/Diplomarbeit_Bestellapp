@@ -21,7 +21,7 @@ export class MenuService {
       available: true,
       vegetarian: true,
       allergens: ['G', 'L'],
-      imageUrl: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=600'
+      image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=600'
     },
     {
       id: 2,
@@ -32,7 +32,7 @@ export class MenuService {
       available: true,
       vegetarian: false,
       allergens: ['G', 'E', 'M'],
-      imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
+      image: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
     },
      {
       id: 3,
@@ -43,7 +43,7 @@ export class MenuService {
       available: true,
       vegetarian: false,
       allergens: ['G', 'E', 'M'],
-      imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
+      image: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
     },
      {
       id: 4,
@@ -54,7 +54,7 @@ export class MenuService {
       available: true,
       vegetarian: false,
       allergens: ['G', 'E', 'M'],
-      imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
+      image: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
     },
      {
       id: 5,
@@ -65,7 +65,7 @@ export class MenuService {
       available: true,
       vegetarian: false,
       allergens: ['G', 'E', 'M'],
-      imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
+      image: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
     },
      {
       id: 6,
@@ -76,7 +76,7 @@ export class MenuService {
       available: true,
       vegetarian: false,
       allergens: ['G', 'E', 'M'],
-      imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
+      image: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
     },
     {
       id: 5,
@@ -87,7 +87,7 @@ export class MenuService {
       available: true,
       vegetarian: true,
       allergens: [],
-      imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
+      image: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600'
     }
   ];
 

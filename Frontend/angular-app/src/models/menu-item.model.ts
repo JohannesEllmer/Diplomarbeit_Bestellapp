@@ -9,7 +9,7 @@ export interface MenuItem {
   available: boolean;
   vegetarian: boolean;
   allergens: string[];
-  imageUrl: string;
+  image: string | ArrayBuffer | null;
 }
 
 export interface OrderItem {

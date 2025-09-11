@@ -31,10 +31,11 @@ Datum   Zeitaufwand     Titel                   Autor   genauere Beschreibung wa
 
 03.09   1.5 h          Menüplaner-frontend      Chris   Menüplaner grundsätzliches Design fertiggestellt
 
+09.09   2.5 h          Github Probleme          Chris   Probleme mit der Github repository gelöst
 
+10.09   1 h            Gerichteverwaltung       Chris   Entwicklung der Gerichteverwaltung Frontend Page angefangen
 
-
-
+11.09   4 h            Gerichteverwaltung        Chris   Fertigsstellung des Designs der Gerichteverwaltung Frontend Page
 
 
 

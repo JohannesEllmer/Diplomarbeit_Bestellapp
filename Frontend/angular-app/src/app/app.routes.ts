@@ -6,6 +6,7 @@ import { OrderListComponent } from './order-list/order-list';
 import { StatisticsPageComponent } from './statistics-page/statistics-page';
   import {MenuManager} from './menu-manager/menu-manager';
   import {MenuPlanner} from './menu-planner/menu-planner';
+  import {DishEditor} from './dish-editor/dish-editor';
 
 export const routes: Routes = [
   { path: '', component: MenuPlanComponent },
@@ -13,6 +14,7 @@ export const routes: Routes = [
   { path: 'user', component: UserManagementComponent },
   { path: 'orders', component: OrderListComponent },
   { path: 'statistics', component: StatisticsPageComponent },
-  { path: 'menü-manager', component: MenuManager},
-  { path: 'menüplaner', component: MenuPlanner}
+  { path: 'menu-manager', component: MenuManager},
+  { path: 'menuplaner', component: MenuPlanner},
+  { path: 'gericht-verwaltung', component: DishEditor}
 ];

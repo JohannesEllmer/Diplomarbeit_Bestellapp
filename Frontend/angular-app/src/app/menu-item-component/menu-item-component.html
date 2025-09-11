@@ -1,6 +1,6 @@
 <article class="menu-card" [class.unavailable]="!item.available">
   <div class="card-image">
-    <img [src]="item.imageUrl" [alt]="item.title">
+    <img [src]="item.image" [alt]="item.title">
     <div class="unavailable-label" *ngIf="!item.available">Nicht verfügbar</div>
   </div>
 
