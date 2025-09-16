@@ -19,7 +19,7 @@ export class OrderService {
       available: true,
       vegetarian: true,
       allergens: [],
-      imageUrl: ''
+      image: ''
     },
     user: {
       id: 101,
@@ -46,7 +46,7 @@ export class OrderService {
       available: true,
       vegetarian: false,
       allergens: [],
-      imageUrl: ''
+      image: ''
     },
     user: {
       id: 102,
@@ -73,7 +73,7 @@ export class OrderService {
       available: true,
       vegetarian: false,
       allergens: ['Gluten'],
-      imageUrl: ''
+      image: ''
     },
     user: {
       id: 103,
@@ -100,7 +100,7 @@ export class OrderService {
       available: true,
       vegetarian: true,
       allergens: [],
-      imageUrl: ''
+      image: ''
     },
     user: {
       id: 104,
@@ -127,7 +127,7 @@ export class OrderService {
       available: true,
       vegetarian: true,
       allergens: ['Gluten'],
-      imageUrl: ''
+      image: ''
     },
     user: {
       id: 105,
@@ -154,7 +154,7 @@ export class OrderService {
       available: true,
       vegetarian: true,
       allergens: [],
-      imageUrl: ''
+      image: ''
     },
     user: {
       id: 106,
@@ -181,7 +181,7 @@ export class OrderService {
       available: true,
       vegetarian: true,
       allergens: ['Gluten', 'Milch'],
-      imageUrl: ''
+      image: ''
     },
     user: {
       id: 107,
@@ -208,7 +208,7 @@ export class OrderService {
       available: true,
       vegetarian: true,
       allergens: [],
-      imageUrl: ''
+      image: ''
     },
     user: {
       id: 108,
@@ -235,7 +235,7 @@ export class OrderService {
       available: true,
       vegetarian: true,
       allergens: [],
-      imageUrl: ''
+      image: ''
     },
     user: {
       id: 109,
@@ -262,7 +262,7 @@ export class OrderService {
       available: true,
       vegetarian: true,
       allergens: ['Milch'],
-      imageUrl: ''
+      image: ''
     },
     user: {
       id: 110,

@@ -36,7 +36,7 @@ describe('CartPageComponent', () => {
         available: true,
         vegetarian: false,
         allergens: ['Gluten', 'Milch'],
-        imageUrl: 'pizza.jpg'
+        image: 'pizza.jpg'
       },
       user: mockUser,
       quantity: 2,

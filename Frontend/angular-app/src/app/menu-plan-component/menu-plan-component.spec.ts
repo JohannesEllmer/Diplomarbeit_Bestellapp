@@ -24,7 +24,7 @@ describe('MenuPlanComponent', () => {
       available: true,
       vegetarian: true,
       allergens: ['Nüsse'],
-      imageUrl: 'salat.jpg'
+      image: 'salat.jpg'
     },
     {
       id: 2,
@@ -35,7 +35,7 @@ describe('MenuPlanComponent', () => {
       available: true,
       vegetarian: true,
       allergens: [],
-      imageUrl: 'cola.jpg'
+      image: 'cola.jpg'
     }
   ];
 
