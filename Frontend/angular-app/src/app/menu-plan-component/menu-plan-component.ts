@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { MenuItem, OrderItem } from '../../models/menu-item.model';
 import { User } from '../../models/user.model';
 import { MenuItemComponent } from '../menu-item-component/menu-item-component';
@@ -11,7 +12,7 @@ import { HttpClientModule } from '@angular/common/http';
 @Component({
   selector: 'app-menu-plan',
   standalone: true,
-  imports: [CommonModule, MenuItemComponent, HttpClientModule],
+  imports: [CommonModule, MenuItemComponent, HttpClientModule, FormsModule],
   templateUrl: './menu-plan-component.html',
   styleUrls: ['./menu-plan-component.css']
 })
@@ -19,6 +20,7 @@ export class MenuPlanComponent implements OnInit {
   activeCategory: string = 'Alle';
   activeFilter: string = 'Alle';
   balance: number = 14.00;
+  searchTerm: string = '';
 
   categories = ['Alle', 'Vorspeisen', 'Hauptgerichte', 'Desserts', 'Getränke'];
   filters = ['Alle', 'Vegetarisch'];
@@ -49,19 +51,34 @@ export class MenuPlanComponent implements OnInit {
   }
 
   get filteredItems(): MenuItem[] {
-  return this.menuItems.filter(item => {
-    const isDrink = item.category === 'Getränke';
-    const categoryMatch =
-      this.activeCategory === 'Alle'
-        ? !isDrink 
-        : item.category === this.activeCategory;
+    return this.menuItems.filter(item => {
+      // Suchfilter
+      const searchMatch = !this.searchTerm || 
+        item.title.toLowerCase().includes(this.searchTerm.toLowerCase());
+      
+      // Kategorienfilter
+      const isDrink = item.category === 'Getränke';
+      const categoryMatch =
+        this.activeCategory === 'Alle'
+          ? !isDrink 
+          : item.category === this.activeCategory;
 
-    const filterMatch = this.activeFilter !== 'Vegetarisch' || item.vegetarian;
+      // Vegetarisch-Filter
+      const filterMatch = this.activeFilter !== 'Vegetarisch' || item.vegetarian;
 
-    return categoryMatch && filterMatch;
-  });
-}
+      return searchMatch && categoryMatch && filterMatch;
+    });
+  }
 
+  // Wird bei jeder Eingabeänderung im Suchfeld aufgerufen
+  onSearchChange(): void {
+    // Die filteredItems-Property wird automatisch aktualisiert
+  }
+
+  // Löscht die Suche
+  clearSearch(): void {
+    this.searchTerm = '';
+  }
 
   addToOrder(menuItem: MenuItem, note: string = '', deliveryTime: string = '12:00'): void {
     const existing = this.orderItems.find(
