@@ -29,19 +29,6 @@
   font-weight: bold;
 }
 
-/* Bild-Bereich */
-.card-image {
-  height: 180px;
-  overflow: hidden;
-  position: relative;
-}
-
-.card-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 /* Inhaltsbereich */
 .card-content {
   padding: 1rem;

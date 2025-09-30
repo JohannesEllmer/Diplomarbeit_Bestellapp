@@ -15,10 +15,16 @@ export class MenuItemComponent {
   @Output() addItem = new EventEmitter<string>();
 
   note: string = '';
+  
+
+  ngOnInit() {
+    
+  }
+
 
   addToOrder(): void {
     const trimmedNote = this.note.trim();
-    this.addItem.emit(trimmedNote); // leerer String = keine Bemerkung
+    this.addItem.emit(trimmedNote); 
     this.note = '';
   }
 }

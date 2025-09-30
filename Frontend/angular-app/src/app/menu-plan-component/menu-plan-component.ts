@@ -22,7 +22,7 @@ export class MenuPlanComponent implements OnInit {
   balance: number = 14.00;
   searchTerm: string = '';
 
-  categories = ['Alle', 'Vorspeisen', 'Hauptgerichte', 'Desserts', 'Getränke'];
+  categories = ['Alle', 'Hauptgerichte', 'Süßes', 'Getränke'];
   filters = ['Alle', 'Vegetarisch'];
 
   menuItems: MenuItem[] = [];

@@ -3,6 +3,7 @@ import { MenuPlanComponent } from './menu-plan-component/menu-plan-component';
 import { CartPageComponent } from './cart-page/cart-page';
 import { UserManagementComponent } from './user-management/user-management';
 import { OrderListComponent } from './order-list/order-list';
+import { OrderOverviewComponent } from './order-overview/order-overview';
 import { StatisticsPageComponent } from './statistics-page/statistics-page';
   import {MenuManager} from './menu-manager/menu-manager';
   import {MenuPlanner} from './menu-planner/menu-planner';
@@ -12,6 +13,7 @@ export const routes: Routes = [
   { path: '', component: MenuPlanComponent },
   { path: 'warenkorb', component: CartPageComponent },
   { path: 'user', component: UserManagementComponent },
+   { path: 'my-orders', component: OrderOverviewComponent },
   { path: 'orders', component: OrderListComponent },
   { path: 'statistics', component: StatisticsPageComponent },
   { path: 'menu-manager', component: MenuManager},

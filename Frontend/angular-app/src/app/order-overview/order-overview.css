@@ -1,0 +1,165 @@
+/* Container Layout */
+.menu-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.menu-header {
+  background: #0ea5e9;
+  color: white;
+  padding: 1.5rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+}
+
+.menu-header h1 {
+  margin: 0;
+  font-size: 1.75rem;
+}
+
+/* Sections */
+.order-sections {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-bottom: 1rem;
+}
+
+section {
+  margin-bottom: 2rem;
+}
+
+section h2 {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  color: #0f172a;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+/* Order Cards */
+.order-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  margin-bottom: 1rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.order-card.closed {
+  opacity: 0.85;
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.2s ease;
+}
+
+.order-header:hover {
+  background: #f8fafc;
+}
+
+.order-info h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.order-date {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.order-price {
+  font-weight: bold;
+  color: #0284c7;
+  font-size: 1.1rem;
+}
+
+/* Details */
+.order-details {
+  padding: 1rem;
+  background: #f9fafb;
+}
+
+.order-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.order-items li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.item-title {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-quantity {
+  color: #475569;
+}
+
+.item-price {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* QR Section */
+.qr-section {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.qr-section h4 {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+/* No results */
+.no-results {
+  text-align: center;
+  padding: 1.5rem;
+  color: #666;
+  font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .order-items li {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "title price"
+      "quantity quantity";
+  }
+
+  .item-title {
+    grid-area: title;
+  }
+  .item-quantity {
+    grid-area: quantity;
+    text-align: left;
+  }
+  .item-price {
+    grid-area: price;
+    text-align: right;
+  }
+}

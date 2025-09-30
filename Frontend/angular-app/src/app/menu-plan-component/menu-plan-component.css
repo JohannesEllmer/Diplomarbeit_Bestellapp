@@ -1,8 +1,6 @@
 /* === Container-Layout === */
 .menu-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 20px;
+  max-width: 2000px;
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -68,14 +66,14 @@
 /* === Menü-Items === */
 .menu-items {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 0.5rem;
   padding: 1.5rem 0;
   flex-grow: 1;
   overflow-y: auto;
   justify-content: center;
   align-content: start;
-  min-height: 0; /* Verhindert Layout-Bugs mit Sticky-Header */
+  min-height: 0; 
 }
 
 /* === Footer === */

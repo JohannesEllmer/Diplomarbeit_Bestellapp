@@ -17,7 +17,6 @@ export class UserService {
       orderCount: 5,
       balance: 10.00,
       blocked: false,
-      profileImageUrl: 'assets/anna.jpg'
     },
     {
       id: 102,
@@ -27,7 +26,6 @@ export class UserService {
       orderCount: 3,
       balance: 5.00,
       blocked: false,
-      profileImageUrl: 'assets/max.jpg'
     },
     {
       id: 103,
@@ -37,7 +35,6 @@ export class UserService {
       orderCount: 7,
       balance: 8.50,
       blocked: false,
-      profileImageUrl: 'assets/lisa.jpg'
     }
   ];
 
@@ -75,14 +72,5 @@ export class UserService {
       return of(updatedUser);
     }
     return this.http.put<User>(`/api/users/${user.id}`, updatedUser);
-  }
-
-  updateProfileImage(userId: number, imageUrl: string): Observable<User> {
-    if (environment.useMockData) {
-      const user = this.mockUsers.find(u => u.id === userId);
-      if (user) user.profileImageUrl = imageUrl;
-      return of(user!);
-    }
-    return this.http.put<User>(`/api/users/${userId}`, { profileImageUrl: imageUrl });
   }
 }

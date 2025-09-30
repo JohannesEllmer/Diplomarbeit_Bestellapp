@@ -1,20 +1,23 @@
 /* === Reset & Grundlayout === */
 html, body {
   height: 100%;
+  width: 100%;
   margin: 0;
   font-family: 'Inter', sans-serif;
   background-color: #f8fafc;
   color: #0f172a;
+  overflow: hidden; /* Verhindert Body-Scrolling */
 }
 
 .menu-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 1rem;
+  height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* === Header === */
@@ -23,8 +26,13 @@ html, body {
   color: white;
   padding: 1.5rem 1rem;
   text-align: center;
-  position: relative;
-  border-radius: 0 0 20px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 0;
+  flex-shrink: 0;
 }
 
 .menu-header h1 {
@@ -59,8 +67,10 @@ html, body {
   flex: 1;
   display: flex;
   gap: 2rem;
-  padding: 1.5rem 0;
+  padding: 1.5rem 20px;
   flex-wrap: wrap;
+  overflow: hidden;
+  min-height: 0;
 }
 
 /* === Menü-Items === */
@@ -69,6 +79,21 @@ html, body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
+  overflow-y: auto;
+  padding: 0 10px 1rem 0;
+  min-height: 0;
+}
+
+/* Scrollbar für Menü-Items */
+.menu-items::-webkit-scrollbar {
+  width: 6px;
+}
+.menu-items::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 3px;
+}
+.menu-items::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 /* === Bestellübersicht === */
@@ -173,23 +198,34 @@ html, body {
 .menu-footer {
   background: linear-gradient(135deg, #0ea5e9, #0284c7);
   padding: 1rem 0;
-  border-radius: 20px 20px 0 0;
-  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 0;
+  margin-top: 0;
+  flex-shrink: 0;
 }
 
 .footer-grid {
   display: flex;
   justify-content: center;
+  width: 100%;
+  padding: 0 20px;
+  box-sizing: border-box;
 }
 
 .footer-buttons {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
+  width: 100%;
+  max-width: 1400px;
 }
 
 .checkout-btn {
-  background: #044bd7;
+  background: #0284c7;
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -198,6 +234,8 @@ html, body {
   cursor: pointer;
   font-size: 1rem;
   transition: background 0.2s ease, transform 0.1s ease;
+  flex: 1;
+  min-width: 200px;
 }
 
 .checkout-btn:hover {
@@ -205,29 +243,193 @@ html, body {
   transform: translateY(-2px);
 }
 
+/* Impressum Bereich */
+.impressum {
+  width: 100%;
+  text-align: center;
+  padding-top: 1rem;
+  margin-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.impressum a {
+  color: white;
+  text-decoration: none;
+  font-size: 0.9rem;
+  opacity: 0.9;
+  transition: opacity 0.2s ease;
+}
+
+.impressum a:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
 /* === Responsive Anpassungen === */
 @media (max-width: 1024px) {
   .main-content {
     flex-direction: column;
+    padding: 1rem 15px;
+    gap: 1rem;
   }
+  
   .order-summary {
-    flex: 1;
-    max-height: none;
+    flex: 0 0 auto;
+    max-height: 300px;
+    width: 100%;
+  }
+  
+  .menu-items {
+    padding-right: 5px;
   }
 }
 
-@media (max-width: 600px) {
-  .menu-header h1 {
-    font-size: 1.4rem;
+@media (max-width: 768px) {
+  .menu-container {
+    height: 100vh;
+    overflow: hidden;
   }
-  .back-top-btn {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.8rem;
-  }
-  .order-summary {
+  
+  .menu-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
     padding: 1rem;
   }
+  
+  .menu-header h1 {
+    font-size: 1.4rem;
+    padding-right: 120px; /* Platz für Back-Button */
+  }
+  
+  .back-top-btn {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    z-index: 101;
+  }
+  
+  .main-content {
+    flex-direction: column;
+    padding: 0.75rem 10px;
+    gap: 0.75rem;
+    overflow: hidden;
+  }
+  
+  .menu-items {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0 5px 0.5rem 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .order-summary {
+    max-height: 250px;
+    padding: 1rem;
+    border-radius: 12px;
+  }
+  
+  .menu-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 100;
+    padding: 0.75rem 0;
+  }
+  
+  .footer-grid {
+    padding: 0 10px;
+  }
+  
+  .footer-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
   .checkout-btn {
     width: 100%;
+    min-width: auto;
+    order: 3;
+  }
+  
+  .impressum {
+    order: 4;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .menu-header {
+    padding: 0.75rem;
+  }
+  
+  .menu-header h1 {
+    font-size: 1.25rem;
+    padding-right: 100px;
+  }
+  
+  .back-top-btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+  
+  .main-content {
+    padding: 0.5rem 8px;
+    gap: 0.5rem;
+  }
+  
+  .menu-items {
+    gap: 0.75rem;
+    padding-right: 3px;
+  }
+  
+  .order-summary {
+    padding: 0.75rem;
+    max-height: 200px;
+  }
+  
+  .footer-grid {
+    padding: 0 8px;
+  }
+}
+
+/* Scrollbar Optimierung für Mobile */
+@media (max-width: 768px) {
+  .menu-items {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+  
+  .menu-items::-webkit-scrollbar {
+    width: 3px;
+  }
+  
+  .menu-items::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .menu-items::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 1.5px;
+  }
+  
+  .order-summary::-webkit-scrollbar {
+    width: 4px;
+  }
+}
+
+/* Sicherstellen, dass nur die Content-Bereiche scrollen */
+@media (max-width: 768px) {
+  html, body {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
   }
 }

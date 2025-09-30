@@ -19,7 +19,7 @@ export class OrderService {
       available: true,
       vegetarian: true,
       allergens: [],
-      image: ''
+   
     },
     user: {
       id: 101,
@@ -29,7 +29,7 @@ export class OrderService {
       orderCount: 5,
       balance: 10.00,
       blocked: false,
-      profileImageUrl: 'assets/anna.jpg'
+      
     },
     note: 'Ohne Ingwer',
     quantity: 2,
@@ -46,7 +46,7 @@ export class OrderService {
       available: true,
       vegetarian: false,
       allergens: [],
-      image: ''
+      
     },
     user: {
       id: 102,
@@ -56,7 +56,7 @@ export class OrderService {
       orderCount: 3,
       balance: 5.00,
       blocked: false,
-      profileImageUrl: 'assets/max.jpg'
+     
     },
     note: '',
     quantity: 1,
@@ -73,7 +73,7 @@ export class OrderService {
       available: true,
       vegetarian: false,
       allergens: ['Gluten'],
-      image: ''
+      
     },
     user: {
       id: 103,
@@ -83,7 +83,7 @@ export class OrderService {
       orderCount: 7,
       balance: 8.50,
       blocked: false,
-      profileImageUrl: 'assets/lisa.jpg'
+      
     },
     note: 'Extra Käse',
     quantity: 1,
@@ -100,7 +100,7 @@ export class OrderService {
       available: true,
       vegetarian: true,
       allergens: [],
-      image: ''
+      
     },
     user: {
       id: 104,
@@ -110,7 +110,7 @@ export class OrderService {
       orderCount: 2,
       balance: 12.00,
       blocked: false,
-      profileImageUrl: 'assets/tom.jpg'
+      
     },
     note: '',
     quantity: 1,
@@ -127,7 +127,7 @@ export class OrderService {
       available: true,
       vegetarian: true,
       allergens: ['Gluten'],
-      image: ''
+      
     },
     user: {
       id: 105,
@@ -137,7 +137,7 @@ export class OrderService {
       orderCount: 1,
       balance: 6.00,
       blocked: false,
-      profileImageUrl: 'assets/julia.jpg'
+      
     },
     note: '',
     quantity: 2,
@@ -154,7 +154,7 @@ export class OrderService {
       available: true,
       vegetarian: true,
       allergens: [],
-      image: ''
+      
     },
     user: {
       id: 106,
@@ -164,7 +164,7 @@ export class OrderService {
       orderCount: 4,
       balance: 9.00,
       blocked: false,
-      profileImageUrl: 'assets/felix.jpg'
+      
     },
     note: 'Ohne Dressing',
     quantity: 1,
@@ -181,7 +181,7 @@ export class OrderService {
       available: true,
       vegetarian: true,
       allergens: ['Gluten', 'Milch'],
-      image: ''
+    
     },
     user: {
       id: 107,
@@ -191,7 +191,7 @@ export class OrderService {
       orderCount: 6,
       balance: 11.00,
       blocked: false,
-      profileImageUrl: 'assets/nina.jpg'
+      
     },
     note: '',
     quantity: 1,
@@ -208,7 +208,7 @@ export class OrderService {
       available: true,
       vegetarian: true,
       allergens: [],
-      image: ''
+      
     },
     user: {
       id: 108,
@@ -218,7 +218,7 @@ export class OrderService {
       orderCount: 2,
       balance: 3.00,
       blocked: false,
-      profileImageUrl: 'assets/paul.jpg'
+      
     },
     note: '',
     quantity: 1,
@@ -235,7 +235,7 @@ export class OrderService {
       available: true,
       vegetarian: true,
       allergens: [],
-      image: ''
+      
     },
     user: {
       id: 109,
@@ -245,7 +245,7 @@ export class OrderService {
       orderCount: 8,
       balance: 7.50,
       blocked: false,
-      profileImageUrl: 'assets/sophie.jpg'
+     
     },
     note: 'Mit Croutons',
     quantity: 1,
@@ -262,7 +262,7 @@ export class OrderService {
       available: true,
       vegetarian: true,
       allergens: ['Milch'],
-      image: ''
+      
     },
     user: {
       id: 110,
@@ -272,7 +272,7 @@ export class OrderService {
       orderCount: 1,
       balance: 5.00,
       blocked: false,
-      profileImageUrl: 'assets/leon.jpg'
+     
     },
     note: '',
     quantity: 1,

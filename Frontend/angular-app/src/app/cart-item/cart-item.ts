@@ -13,8 +13,13 @@ import { ViewEncapsulation } from '@angular/core';
 })
 export class CartItemComponent {
   @Input() item: any;
-
   @Output() remove = new EventEmitter<void>();
   @Output() increase = new EventEmitter<void>();
   @Output() decrease = new EventEmitter<void>();
+
+  private apiBaseUrl = 'http://localhost:3000/api'; // Deine Backend-URL
+
+  currentImageUrl: string = '';
+
+
 }
