@@ -1,12 +1,12 @@
 <article class="menu-card" [class.unavailable]="!item.available">
   <div class="card-image">
-    <img [src]="item.image" [alt]="item.title">
+    <img [src]="item.image" [alt]="item.name">
     <div class="unavailable-label" *ngIf="!item.available">Nicht verfügbar</div>
   </div>
 
   <div class="card-content">
     <div class="card-header">
-      <h3>{{ item.title }}</h3>
+      <h3>{{ item.name }}</h3>
       <div class="tags">
         <span class="category-tag">{{ item.category }}</span>
         <span class="vegetarian-tag" *ngIf="item.vegetarian">Vegetarisch</span>

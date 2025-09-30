@@ -12,10 +12,10 @@
           [class.selected]="selectedMenu === menu">
         <span class="menu-title">{{ menu.title }}</span>
         <div class="menu-actions" (click)="$event.stopPropagation()">
-          <button title="Edit">
+          <button title="Edit" (click)="goToMenuPlanner(menu)">
             <span class="material-icons">edit</span>
           </button>
-          <button title="Delete">
+          <button title="Remove" (click)="removeMenu(menu)">
             <span class="material-icons">delete</span>
           </button>
         </div>
@@ -23,6 +23,6 @@
     }
   </div>
   <div class="add-menu-btn-wrapper">
-    <button class="add-menu-button">Hinzufügen</button>
+    <button class="add-menu-button" (click)="goToMenuPlanner({ title: '', dishes: [] })">Hinzufügen</button>
   </div>
 </div>

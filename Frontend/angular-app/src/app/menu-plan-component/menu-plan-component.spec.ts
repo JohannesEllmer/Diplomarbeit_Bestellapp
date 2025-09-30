@@ -17,7 +17,7 @@ describe('MenuPlanComponent', () => {
   const mockMenuItems: MenuItem[] = [
     {
       id: 1,
-      title: 'Salat',
+      name: 'Salat',
       description: 'Frischer Salat',
       price: 5,
       category: 'Vorspeisen',
@@ -28,7 +28,7 @@ describe('MenuPlanComponent', () => {
     },
     {
       id: 2,
-      title: 'Cola',
+      name: 'Cola',
       description: 'Erfrischungsgetränk',
       price: 2,
       category: 'Getränke',
@@ -73,7 +73,7 @@ describe('MenuPlanComponent', () => {
     component.activeCategory = 'Alle';
     const filtered = component.filteredItems;
     expect(filtered.length).toBe(1);
-    expect(filtered[0].title).toBe('Salat');
+    expect(filtered[0].name).toBe('Salat');
   });
 
   it('should filter vegetarian items when filter is "Vegetarisch"', () => {

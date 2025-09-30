@@ -14,7 +14,7 @@ export class MenuService {
   private readonly mockMenuItems: MenuItem[] = [
     {
       id: 1,
-      title: 'Kürbiscremesuppe',
+      name: 'Kürbiscremesuppe',
       description: 'Cremige Suppe mit Kürbis und Ingwer',
       price: 4.90,
       category: 'Vorspeisen',
@@ -25,7 +25,7 @@ export class MenuService {
     },
     {
       id: 2,
-      title: 'Wiener Schnitzel',
+      name: 'Wiener Schnitzel',
       description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
       price: 12.50,
       category: 'Hauptgerichte',
@@ -36,7 +36,7 @@ export class MenuService {
     },
      {
       id: 3,
-      title: 'Wiener Schnitzel',
+      name: 'Wiener Schnitzel',
       description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
       price: 12.50,
       category: 'Hauptgerichte',
@@ -47,7 +47,7 @@ export class MenuService {
     },
      {
       id: 4,
-      title: 'Wiener Schnitzel',
+      name: 'Wiener Schnitzel',
       description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
       price: 12.50,
       category: 'Hauptgerichte',
@@ -58,7 +58,7 @@ export class MenuService {
     },
      {
       id: 5,
-      title: 'Wiener Schnitzel',
+      name: 'Wiener Schnitzel',
       description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
       price: 12.50,
       category: 'Hauptgerichte',
@@ -69,7 +69,7 @@ export class MenuService {
     },
      {
       id: 6,
-      title: 'Wiener Schnitzel',
+      name: 'Wiener Schnitzel',
       description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
       price: 12.50,
       category: 'Hauptgerichte',
@@ -80,7 +80,7 @@ export class MenuService {
     },
     {
       id: 5,
-      title: 'Cola',
+      name: 'Cola',
       description: 'Erfrischungsgetränk',
       price: 3.50,
       category: 'Getränke',

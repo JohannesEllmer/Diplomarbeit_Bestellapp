@@ -53,7 +53,7 @@ export class MenuPlanComponent implements OnInit {
     const isDrink = item.category === 'Getränke';
     const categoryMatch =
       this.activeCategory === 'Alle'
-        ? !isDrink 
+        ? !isDrink
         : item.category === this.activeCategory;
 
     const filterMatch = this.activeFilter !== 'Vegetarisch' || item.vegetarian;

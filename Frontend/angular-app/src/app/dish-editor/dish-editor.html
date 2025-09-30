@@ -7,7 +7,7 @@
       <div class="inputs-scrollable">
         <div class="input-group">
           <label for="dish-name">Name</label>
-          <input id="dish-name" type="text" placeholder="Gericht Name" [(ngModel)]="dish.title"/>
+          <input id="dish-name" type="text" placeholder="Gericht Name" [(ngModel)]="dish.name"/>
         </div>
         <div class="input-group">
           <label for="dish-description">Beschreibung</label>
@@ -49,7 +49,7 @@
           </div>
         </div>
       </div>
-      <button class="save-dish-button">Speichern</button>
+      <button class="save-dish-button" (click)="onSave()">Speichern</button>
     </div>
     <div class="dish-preview-container">
       <app-menu-item [item]="dish"></app-menu-item>

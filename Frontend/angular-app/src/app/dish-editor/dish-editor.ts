@@ -1,7 +1,8 @@
 import { Component, ChangeDetectorRef } from '@angular/core';
 import { MenuItemComponent} from '../menu-item-component/menu-item-component';
-import {MenuItem} from '../../models/menu-item.model';
-import {FormsModule} from '@angular/forms';
+import { MenuItem } from '../../models/menu-item.model';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-dish-editor',
@@ -11,7 +12,7 @@ import {FormsModule} from '@angular/forms';
 })
 export class DishEditor {
   dish: MenuItem = {
-    title: '',
+    name: '',
     description: '',
     price: 0,
     image: null,
@@ -25,7 +26,7 @@ export class DishEditor {
   allergenTemp: string = '';
   imageTemp: string | ArrayBuffer | null = null;
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  constructor(private cdr: ChangeDetectorRef, private router: Router) {}
 
   onImageSelected(event: Event){
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -48,5 +49,10 @@ export class DishEditor {
   }
   removeAllergen(allergen: string){
     this.dish.allergens = this.dish.allergens.filter(a => a !== allergen);
+  }
+
+  onSave(){
+    console.log(this.dish)
+    this.router.navigate(['/menuplaner'], { state: { dish: this.dish } })
   }
 }

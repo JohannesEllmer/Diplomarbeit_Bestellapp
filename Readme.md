@@ -37,7 +37,13 @@ Datum   Zeitaufwand     Titel                   Autor   genauere Beschreibung wa
 
 11.09   4 h            Gerichteverwaltung        Chris   Fertigsstellung des Designs der Gerichteverwaltung Frontend Page
 
+16.09   3 h            Frontend-Funktionalität   Chris   Funktionalität von mehreren Teilen der Frontend Seiten
 
+17.09   4 h            Pflichtenheft Powerpoint  Chris   Powerpoint für die Pflichtenheft Präsentation
+
+26.09   3 h            Pflichtenheft Powerpoint  Chris   Powerpoint für die Pflichtenheft Präsentation
+
+27.09   4 h            Pflichtenheft Powerpoint  Chris   Powerpoint für die Pflichtenheft Präsentation
 
 
 
