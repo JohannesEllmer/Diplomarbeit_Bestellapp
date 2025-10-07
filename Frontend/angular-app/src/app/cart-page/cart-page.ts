@@ -73,10 +73,13 @@ export class CartPageComponent implements OnInit {
 
     this.cartService.submitOrder(bestellung).subscribe({
       next: () => {
-        alert('Bestellung erfolgreich übermittelt.');
+        // ✅ Bestellung erfolgreich
         this.cartService.clearCart();
         this.cartItems = [];
         this.selectedTime = '';
+
+        // Weiterleitung auf die Order-Übersicht
+        this.router.navigate(['/my-orders']);
       },
       error: () => {
         alert('Fehler beim Übermitteln der Bestellung.');

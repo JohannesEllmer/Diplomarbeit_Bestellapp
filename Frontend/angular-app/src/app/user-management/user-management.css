@@ -64,6 +64,79 @@
   border-color: #0ea5e9;
 }
 
+/* Suchfeld Styles */
+.search-controls {
+  margin-bottom: 20px;
+  padding: 0 20px;
+}
+
+.search-field {
+  position: relative;
+  max-width: 300px;
+  margin-bottom: 10px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 40px 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.clear-search {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  font-size: 16px;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clear-search:hover {
+  color: #666;
+}
+
+.search-info {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Keine Ergebnisse */
+.no-results {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .search-field {
+    max-width: 100%;
+  }
+  
+  .search-controls {
+    padding: 0 10px;
+  }
+}
+
 /* User Cards Grid */
 .user-list {
   display: grid;

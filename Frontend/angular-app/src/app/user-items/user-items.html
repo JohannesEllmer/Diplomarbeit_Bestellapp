@@ -1,8 +1,6 @@
 <div class="user-card" [class.blocked]="user.blocked" (click)="navigateToUser($event)">
   <div class="user-summary">
-    <div class="user-avatar">
-      <img [src]="user.profileImageUrl || 'assets/default-avatar.png'" alt="Profilbild" />
-    </div>
+   
 
     <div class="user-info">
       <h2>{{ user.name }}</h2>
@@ -18,7 +16,7 @@
         <span class="balance-amount">{{ user.balance | currency: 'EUR' }}</span>
         <button class="edit-btn" 
                 (click)="startEditBalance($event)" 
-                title="Guthaben bearbeiten">➕</button>
+                title="Guthaben bearbeiten"></button>
         <input *ngIf="user.editingBalance"
                type="number"
                [(ngModel)]="user.newBalance"

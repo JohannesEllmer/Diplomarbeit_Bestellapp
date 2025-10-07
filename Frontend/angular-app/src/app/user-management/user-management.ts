@@ -14,10 +14,12 @@ import { UserService } from '../services/user/user-service';
 })
 export class UserManagementComponent implements OnInit {
   users: User[] = [];
+  filteredUsers: User[] = [];
   paginatedUsers: User[] = [];
   currentPage = 1;
   usersPerPage = 5;
   pages: number[] = [];
+  searchTerm = '';
 
   constructor(private userService: UserService) {}
 
@@ -28,14 +30,39 @@ export class UserManagementComponent implements OnInit {
   loadUsers(): void {
     this.userService.getUsers().subscribe(users => {
       this.users = users;
-      this.updatePagination();
+      this.filterUsers();
     });
+  }
+
+  // Filtert Benutzer basierend auf dem Suchbegriff
+  filterUsers(): void {
+    if (!this.searchTerm) {
+      this.filteredUsers = [...this.users];
+    } else {
+      const searchLower = this.searchTerm.toLowerCase();
+      this.filteredUsers = this.users.filter(user => 
+        user.name.toLowerCase().includes(searchLower)
+      );
+    }
+    this.currentPage = 1; // Zurück zur ersten Seite nach Suche
+    this.updatePagination();
+  }
+
+  // Wird bei jeder Eingabeänderung im Suchfeld aufgerufen
+  onSearchChange(): void {
+    this.filterUsers();
+  }
+
+  // Löscht die Suche
+  clearSearch(): void {
+    this.searchTerm = '';
+    this.filterUsers();
   }
 
   updatePagination(): void {
     const start = (this.currentPage - 1) * this.usersPerPage;
     const end = start + this.usersPerPage;
-    this.paginatedUsers = this.users.slice(start, end);
+    this.paginatedUsers = this.filteredUsers.slice(start, end);
     this.updatePages();
   }
 
@@ -57,13 +84,13 @@ export class UserManagementComponent implements OnInit {
   }
 
   get totalPages(): number {
-    return Math.ceil(this.users.length / this.usersPerPage);
+    return Math.ceil(this.filteredUsers.length / this.usersPerPage);
   }
 
   deleteUser(user: User): void {
     this.userService.deleteUser(user.id).subscribe(() => {
       this.users = this.users.filter(u => u.id !== user.id);
-      this.updatePagination();
+      this.filterUsers(); // Filter neu anwenden nach Löschen
     });
   }
 
@@ -71,7 +98,7 @@ export class UserManagementComponent implements OnInit {
     this.userService.toggleBlockUser(user).subscribe(updated => {
       const index = this.users.findIndex(u => u.id === updated.id);
       if (index !== -1) this.users[index] = updated;
-      this.updatePagination();
+      this.filterUsers(); // Filter neu anwenden nach Änderung
     });
   }
 }

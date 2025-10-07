@@ -1,8 +1,6 @@
 /* === Container-Layout === */
 .menu-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 20px;
+  max-width: 2000px;
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -68,14 +66,14 @@
 /* === Menü-Items === */
 .menu-items {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 0.5rem;
   padding: 1.5rem 0;
   flex-grow: 1;
   overflow-y: auto;
   justify-content: center;
   align-content: start;
-  min-height: 0; /* Verhindert Layout-Bugs mit Sticky-Header */
+  min-height: 0; 
 }
 
 /* === Footer === */
@@ -199,5 +197,105 @@
 
   .footer-text strong {
     font-size: 1rem;
+  }
+}
+/* Suchfeld Styles */
+.search-controls {
+  margin: 0 20px 20px 20px;
+  padding: 0;
+}
+
+.search-field {
+  position: relative;
+  max-width: 300px;
+  margin-bottom: 10px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 40px 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background-color: #f8f9fa;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+  background-color: white;
+}
+
+.clear-search {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  font-size: 16px;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.clear-search:hover {
+  color: #666;
+  background-color: #f0f0f0;
+}
+
+.search-info {
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+}
+
+/* Keine Ergebnisse */
+.no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  font-style: italic;
+  grid-column: 1 / -1;
+}
+
+.no-results p {
+  margin: 0;
+  font-size: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .search-field {
+    max-width: 100%;
+  }
+  
+  .search-controls {
+    margin: 0 10px 15px 10px;
+  }
+  
+  .search-input {
+    padding: 10px 35px 10px 12px;
+    font-size: 16px; /* Bessere Bedienbarkeit auf Mobile */
+  }
+}
+
+/* Anpassung für das Filter-Container Layout */
+.filter-container {
+  margin: 0 20px 20px 20px;
+}
+
+@media (max-width: 768px) {
+  .filter-container {
+    margin: 0 10px 15px 10px;
   }
 }

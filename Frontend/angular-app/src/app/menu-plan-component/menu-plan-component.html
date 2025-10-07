@@ -1,8 +1,27 @@
 <div class="menu-container">
-  <!-- HEADER -->
+
   <header class="menu-header">
     <h1>Menüplan</h1>
   </header>
+
+  <div class="search-controls">
+    <div class="search-field">
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm"
+        (input)="onSearchChange()"
+        placeholder="Nach Gerichten suchen..."
+        class="search-input"
+      />
+      <button *ngIf="searchTerm" (click)="clearSearch()" class="clear-search" title="Suche löschen">
+        ✕
+      </button>
+    </div>
+    
+    <div class="search-info" *ngIf="searchTerm">
+      <span>{{ filteredItems.length }} von {{ menuItems.length }} Gerichten gefunden</span>
+    </div>
+  </div>
 
   <!-- FILTER -->
   <div class="filter-container">
@@ -39,6 +58,12 @@
         (addItem)="addToOrder(item, $event)">
       </app-menu-item>
     }
+    
+    <!-- Hinweis wenn keine Gerichte gefunden wurden -->
+    <div *ngIf="filteredItems.length === 0" class="no-results">
+      <p *ngIf="searchTerm">Keine Gerichte mit "{{ searchTerm }}" gefunden.</p>
+      <p *ngIf="!searchTerm && menuItems.length === 0">Keine Gerichte vorhanden.</p>
+    </div>
   </main>
 
   <!-- FOOTER -->

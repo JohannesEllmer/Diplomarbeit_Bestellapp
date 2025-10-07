@@ -9,7 +9,6 @@ export interface MenuItem {
   available: boolean;
   vegetarian: boolean;
   allergens: string[];
-  image: string | ArrayBuffer | null;
 }
 
 export interface OrderItem {
@@ -17,6 +16,18 @@ export interface OrderItem {
   user: User;
   note: string;
   quantity: number;
+  
   delivered?: boolean;
   deliveryTime?: string;
+}
+
+
+export interface Order {
+  id: number;
+  user: User;
+  items: OrderItem[];
+  totalPrice: number;
+  createdAt: Date;
+  status: "open" | "closed";
+  showDetails?: boolean;
 }

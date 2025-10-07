@@ -27,7 +27,7 @@
           <div class="summary-line">
             <span class="item-name">{{ item.menuItem.title }}</span>
             <span class="item-quantity">x{{ item.quantity }}</span>
-            <span class="item-price">{{ item.menuItem.price * item.quantity | currency: 'EUR' }}</span>
+            <span class="item-price"> {{ item.menuItem.price | currency: 'EUR' }}</span>
           </div>
         }
       </div>

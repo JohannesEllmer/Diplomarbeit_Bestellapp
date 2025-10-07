@@ -3,6 +3,26 @@
     <h1>Benutzerverwaltung</h1>
   </header>
 
+  <!-- Suchfeld hinzugefügt -->
+  <div class="search-controls">
+    <div class="search-field">
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm"
+        (input)="onSearchChange()"
+        placeholder="Nach Namen suchen..."
+        class="search-input"
+      />
+      <button *ngIf="searchTerm" (click)="clearSearch()" class="clear-search" title="Suche löschen">
+        ✕
+      </button>
+    </div>
+    
+    <div class="search-info" *ngIf="searchTerm">
+      <span>{{ filteredUsers.length }} von {{ users.length }} Benutzern gefunden</span>
+    </div>
+  </div>
+
   <div class="pagination-controls">
     <label>
       Benutzer pro Seite:
@@ -30,5 +50,11 @@
       (delete)="deleteUser($event)"
       (block)="blockUser($event)">
     </app-user-items>
+    
+    
+    <div *ngIf="filteredUsers.length === 0" class="no-results">
+      <p *ngIf="searchTerm">Keine Benutzer mit "{{ searchTerm }}" gefunden.</p>
+      <p *ngIf="!searchTerm">Keine Benutzer vorhanden.</p>
+    </div>
   </main>
 </div>
