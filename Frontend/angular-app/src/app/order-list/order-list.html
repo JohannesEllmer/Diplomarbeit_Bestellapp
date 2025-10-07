@@ -7,7 +7,7 @@
     <div class="filter-group">
       <span>Gruppieren nach:</span>
       @for (option of groupOptions; track option) {
-        <button 
+        <button
           class="filter-btn"
           [class.active]="activeGroup === option"
           (click)="activeGroup = option">
@@ -27,9 +27,9 @@
 
     <div class="paginator">
       <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1">‹</button>
-      <button 
-        *ngFor="let page of pages" 
-        (click)="changePage(page)" 
+      <button
+        *ngFor="let page of pages"
+        (click)="changePage(page)"
         [class.active]="page === currentPage">
         {{ page }}
       </button>
@@ -41,15 +41,15 @@
     @for (group of groupedOrders | keyvalue; track group.key) {
       <div class="order-group">
         <h3>{{ group.key }}</h3>
-        
+
         @for (item of group.value; track item.menuItem.id + item.user.id) {
           <div class="order-card" [class.delivered]="item.delivered">
             <div class="order-summary">
               <div class="order-info">
-                <h2>{{ item.menuItem.title }} × {{ item.quantity }}</h2>
+                <h2>{{ item.menuItem.name }} × {{ item.quantity }}</h2>
                 <p class="meta">
-                  <span>{{ item.menuItem.price * item.quantity | currency:'EUR' }}</span> · 
-                  <span>Lieferzeit: {{ item.deliveryTime }}</span> · 
+                  <span>{{ item.menuItem.price * item.quantity | currency:'EUR' }}</span> ·
+                  <span>Lieferzeit: {{ item.deliveryTime }}</span> ·
                   <span>Bestellt von: <a (click)="navigateToUser(item.user.id)">{{ item.user.name }}</a></span>
                 </p>
                 @if (item.note) {
@@ -59,8 +59,8 @@
 
               <div class="order-controls">
                 <label class="delivery-toggle">
-                  <input type="checkbox" 
-                         [(ngModel)]="item.delivered" 
+                  <input type="checkbox"
+                         [(ngModel)]="item.delivered"
                          (change)="toggleDelivered(item)" />
                   <span class="toggle-label">{{ item.delivered ? 'Geliefert' : 'Ausstehend' }}</span>
                 </label>

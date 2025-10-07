@@ -63,7 +63,7 @@ export class CartPageComponent implements OnInit {
       gesamtbetrag: this.getTotal(),
       guthaben: this.balance,
       positionen: this.cartItems.map(item => ({
-        gericht: item.menuItem.title,
+        gericht: item.menuItem.name,
         menge: item.quantity,
         einzelpreis: item.menuItem.price,
         gesamtpreis: item.menuItem.price * item.quantity,

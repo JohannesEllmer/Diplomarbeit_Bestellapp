@@ -2,7 +2,7 @@ import { User } from "./user.model";
 
 export interface MenuItem {
   id: number;
-  title: string;
+  name: string;
   description: string;
   price: number;
   category: string;

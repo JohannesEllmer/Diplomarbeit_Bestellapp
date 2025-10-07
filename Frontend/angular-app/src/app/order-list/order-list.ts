@@ -66,7 +66,7 @@ export class OrderListComponent implements OnInit {
   get groupedOrders(): { [key: string]: OrderItem[] } {
     switch (this.activeGroup) {
       case 'Nach Gericht':
-        return this.groupBy(item => `${item.menuItem.title}`);
+        return this.groupBy(item => `${item.menuItem.name}`);
       case 'Nach Lieferzeit':
         return this.groupBy(item => item.deliveryTime || 'Unbekannt');
       default:

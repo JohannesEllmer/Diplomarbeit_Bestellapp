@@ -5,32 +5,45 @@
 
   <div class="planner-container">
     <div class="selected-dishes-wrapper">
-      <div class="selected-dishes-container">
+      <div class="selected-dishes-container"
+        cdkDropList
+        [cdkDropListData]="selectedDishes"
+        [cdkDropListConnectedTo]="['unselectedDishesList']"
+        (cdkDropListDropped)="drop($event)"
+        id="selectedDishesList">
+
         <input class="menu-title-input" [(ngModel)]="menuTitle" placeholder="Menü Titel eingeben" />
+
         <div class="dishes-list">
           @for ( dish of selectedDishes; track dish) {
-            <div class="dish-container" (click)="toggleDish(dish, true)">
-                <span class="dish-title">{{ dish.title }}</span>
+            <div class="dish-container" (click)="toggleDish(dish, true)" cdkDrag>
+                <span class="dish-title">{{ dish.name }}</span>
             </div>
           }
         </div>
       </div>
       <div class="save-menu-btn-wrapper">
-        <button class="save-menu-button">Speichern</button>
+        <button class="save-menu-button" (click)="saveMenu()">Speichern</button>
       </div>
     </div>
     <div class="unselected-dishes-wrapper">
-      <div class="unselected-dishes-container">
+      <div class="unselected-dishes-container"
+           cdkDropList
+           [cdkDropListData]="unselectedDishes"
+           [cdkDropListConnectedTo]="['selectedDishesList']"
+           (cdkDropListDropped)="drop($event)"
+           id="unselectedDishesList">
+
         <div class="dishes-list">
           @for ( dish of unselectedDishes; track dish) {
-            <div class="dish-container" (click)="toggleDish(dish, false)">
-              <span class="dish-title">{{ dish.title }}</span>
+            <div class="dish-container" (click)="toggleDish(dish, false)" cdkDrag>
+              <span class="dish-title">{{ dish.name }}</span>
             </div>
           }
         </div>
       </div>
       <div class="add-dish-btn-wrapper">
-        <button class="add-dish-button">Hinzufügen</button>
+        <button class="add-dish-button" (click)="goToDishDesigner()">Hinzufügen</button>
       </div>
     </div>
   </div>

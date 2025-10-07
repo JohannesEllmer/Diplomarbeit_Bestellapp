@@ -12,7 +12,7 @@ export class OrderService {
   {
     menuItem: {
       id: 1,
-      title: 'Kürbiscremesuppe',
+      name: 'Kürbiscremesuppe',
       description: '',
       price: 4.90,
       category: 'Vorspeisen',
@@ -39,7 +39,7 @@ export class OrderService {
   {
     menuItem: {
       id: 2,
-      title: 'Wiener Schnitzel',
+      name: 'Wiener Schnitzel',
       description: '',
       price: 12.50,
       category: 'Hauptgerichte',
@@ -66,7 +66,7 @@ export class OrderService {
   {
     menuItem: {
       id: 3,
-      title: 'Spaghetti Bolognese',
+      name: 'Spaghetti Bolognese',
       description: '',
       price: 8.90,
       category: 'Hauptgerichte',
@@ -93,7 +93,7 @@ export class OrderService {
   {
     menuItem: {
       id: 4,
-      title: 'Gemüsepfanne',
+      name: 'Gemüsepfanne',
       description: '',
       price: 7.50,
       category: 'Hauptgerichte',
@@ -120,7 +120,7 @@ export class OrderService {
   {
     menuItem: {
       id: 5,
-      title: 'Apfelstrudel',
+      name: 'Apfelstrudel',
       description: '',
       price: 3.90,
       category: 'Desserts',
@@ -147,7 +147,7 @@ export class OrderService {
   {
     menuItem: {
       id: 6,
-      title: 'Grüner Salat',
+      name: 'Grüner Salat',
       description: '',
       price: 4.50,
       category: 'Vorspeisen',
@@ -174,7 +174,7 @@ export class OrderService {
   {
     menuItem: {
       id: 7,
-      title: 'Pizza Margherita',
+      name: 'Pizza Margherita',
       description: '',
       price: 9.90,
       category: 'Hauptgerichte',
@@ -201,7 +201,7 @@ export class OrderService {
   {
     menuItem: {
       id: 8,
-      title: 'Mineralwasser',
+      name: 'Mineralwasser',
       description: '',
       price: 1.50,
       category: 'Getränke',
@@ -228,7 +228,7 @@ export class OrderService {
   {
     menuItem: {
       id: 9,
-      title: 'Tomatensuppe',
+      name: 'Tomatensuppe',
       description: '',
       price: 4.20,
       category: 'Vorspeisen',
@@ -255,7 +255,7 @@ export class OrderService {
   {
     menuItem: {
       id: 10,
-      title: 'Schokoladenpudding',
+      name: 'Schokoladenpudding',
       description: '',
       price: 2.90,
       category: 'Desserts',
