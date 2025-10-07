@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Menu } from '../../models/menu.model';
+import { MealPlan } from '../../models/meal-plan.model';
 import { Router } from '@angular/router';
 
 @Component({
@@ -8,7 +8,7 @@ import { Router } from '@angular/router';
   styleUrl: './menu-manager.css'
 })
 export class MenuManager {
-  Menus: Menu[] = [
+  Menus: MealPlan[] = [
     { title: 'Menu1', dishes: [] },
     { title: 'Menu2', dishes: [] },
     { title: 'Menu3', dishes: [] },
@@ -25,15 +25,15 @@ export class MenuManager {
     { title: 'Menu14', dishes: [] }
   ];
 
-  selectedMenu: Menu | null = null;
+  selectedMenu: MealPlan | null = null;
 
   constructor(private router: Router) {}
 
-  goToMenuPlanner(menu: Menu){
+  goToMenuPlanner(menu: MealPlan){
     this.router.navigate(['menuplaner'], { state: { menu }})
   }
 
-  selectMenu(menu: Menu): void {
+  selectMenu(menu: MealPlan): void {
     if(menu != this.selectedMenu) {
       this.selectedMenu = menu;
     }else{
@@ -42,7 +42,7 @@ export class MenuManager {
     console.log('Selected Menu:', this.selectedMenu);
   }
 
-  removeMenu(menu: Menu) {
+  removeMenu(menu: MealPlan) {
     this.Menus = this.Menus.filter(m => m !== menu)
   }
 }

@@ -5,49 +5,64 @@
   <div class="dish-editor-body">
     <div class="dish-inputs-container">
       <div class="inputs-scrollable">
-        <div class="input-group">
-          <label for="dish-name">Name</label>
-          <input id="dish-name" type="text" placeholder="Gericht Name" [(ngModel)]="dish.name"/>
+        <div class="input-row">
+          <div class="input-group">
+            <label for="dish-name">Name</label>
+            <input id="dish-name" type="text" placeholder="Gericht Name" [(ngModel)]="dish.name"/>
+          </div>
+          <div class="input-group">
+            <label for="dish-price">Preis</label>
+            <input id="dish-price" type="number" placeholder="Preis in €" [(ngModel)]="dish.price"/>
+          </div>
         </div>
         <div class="input-group">
           <label for="dish-description">Beschreibung</label>
           <textarea id="dish-description" placeholder="Gericht Beschreibung" [(ngModel)]="dish.description"></textarea>
         </div>
-        <div class="input-group">
-          <label for="dish-price">Preis</label>
-          <input id="dish-price" type="number" placeholder="Preis in €" [(ngModel)]="dish.price"/>
-        </div>
-        <div class="input-group">
-          <label for="dish-category">Kategorie</label>
-          <input id="dish-category" type="text" placeholder="Kategorie" [(ngModel)]="dish.category"/>
-        </div>
-        <div class="input-group">
-          <label for="dish-allergens">Allergene</label>
-          <div style="display: flex; gap: 0.5rem; width: 100%;">
-            <input id="dish--allergens" type="text" placeholder="z.B. Gluten" [(ngModel)]="allergenTemp" style="flex: 1;">
-            <button class="add-allergen-button" type="button" (click)="addAllergen()" style="flex-shrink: 0;">+</button>
+        <div class="input-row">
+          <div class="input-group">
+            <label for="dish-category">Kategorie</label>
+            <input id="dish-category" type="text" placeholder="Kategorie" [(ngModel)]="dish.category"/>
           </div>
-          <div class="allergens-output-container">
-             @for(allergen of dish.allergens; track allergen){
-               <span style="background: #e0e7ef;border-radius: 12px; padding: 0.2rem 0.8rem; display: flex; align-items: center;">
-                {{allergen}}
-                <button class="remove-allergen-button" type="button" (click)="removeAllergen(allergen)">&times;</button>
-               </span>
-             }
+          <div class="input-group allergens-container">
+            <label for="dish-allergens">Allergene</label>
+            <div style="display: flex; gap: 0.5rem; width: 150%;">
+              <input id="dish--allergens" type="text" placeholder="z.B. Gluten" [(ngModel)]="allergenTemp" style="flex: 1;">
+              <button class="add-allergen-button" type="button" (click)="addAllergen()" style="flex-shrink: 0;">+</button>
+            </div>
+            <div class="allergens-output-container">
+              @for(allergen of dish.allergens; track allergen){
+                <span style="background: #e0e7ef;border-radius: 12px; padding: 0.2rem 0.8rem; display: flex; align-items: center;">
+              {{allergen}}
+                  <button class="remove-allergen-button" type="button" (click)="removeAllergen(allergen)">&times;</button>
+             </span>
+              }
+            </div>
           </div>
-        </div>
-        <div class="input-group input-row">
-          <div class="image-upload-container">
-            <label for="dish-image" class="custom-file-label">Bild hochladen</label>
-            <input id="dish-image" type="file" accept="image/*" (change)="onImageSelected($event)" style="display: none;"/>
-          </div>
-          <div class="vegetarian-container">
-            <label>
-              Vegetarisch
-              <input type="checkbox" id="dish-vegetarian" [(ngModel)]="dish.vegetarian"/>
-            </label>
+          <div class="input-group">
+            <div class="vegetarian-container">
+              <label>
+                Vegetarisch
+                <input type="checkbox" id="dish-vegetarian" [(ngModel)]="dish.vegetarian"/>
+              </label>
+            </div>
           </div>
         </div>
+        <div class="input-group menu-title">
+          <label for="menuTitle">Menu Titel</label>
+          <input id="menuTitle" type="text" placeholder="Menü" [(ngModel)]="menu.title"/>
+        </div>
+        <div class="input-row">
+          <div class="input-group">
+            <label for="drink">Getränk</label>
+            <input id="drink" type="text" placeholder="Getränk" [(ngModel)]="menu.drink"/>
+          </div>
+          <div class="input-group">
+            <label for="dessert">Nachspeise</label>
+            <input id="dessert" type="text" placeholder="Nachspeise" [(ngModel)]="menu.dessert"/>
+          </div>
+        </div>
+
       </div>
       <button class="save-dish-button" (click)="onSave()">Speichern</button>
     </div>

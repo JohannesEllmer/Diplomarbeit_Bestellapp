@@ -45,11 +45,13 @@ Datum   Zeitaufwand     Titel                   Autor   genauere Beschreibung wa
 
 27.09   4 h            Pflichtenheft Powerpoint  Chris   Powerpoint für die Pflichtenheft Präsentation
 
+30.09   3 h            Frontend                  Chris   Frontend Design Verbesserung
 
+01.10   1 h            Frontend                  Chris   Gericht Verwaltung anpassung für Menüs angefangen
 
+02.10   3 h            Frontend                  Chris   Gericht Verwaltung anpassung für Menüs fertigentwicklet
 
-
-
+03.10   3 h            Frontend                  Chris   Design Verbesserungen in Menüplaner (drag & drop) und Menü-Manager
 
 
 

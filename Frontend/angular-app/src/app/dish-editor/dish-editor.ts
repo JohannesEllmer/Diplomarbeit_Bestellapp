@@ -2,7 +2,8 @@ import { Component, ChangeDetectorRef } from '@angular/core';
 import { MenuItemComponent} from '../menu-item-component/menu-item-component';
 import { MenuItem } from '../../models/menu-item.model';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router } from '@angular/router'
+import { Menu } from '../../models/menu.model';
 
 @Component({
   selector: 'app-dish-editor',
@@ -21,6 +22,12 @@ export class DishEditor {
     vegetarian: false,
     id: 0,
     available: true
+  }
+  menu: Menu = {
+    title: '',
+    dish: this.dish,
+    drink: '',
+    dessert: ''
   }
 
   allergenTemp: string = '';
@@ -53,6 +60,10 @@ export class DishEditor {
 
   onSave(){
     console.log(this.dish)
-    this.router.navigate(['/menuplaner'], { state: { dish: this.dish } })
+    if(this.menu.drink != '' || this.menu.drink != ''){
+      this.router.navigate(['/menuplaner'], { state: { menu: this.menu } })
+    } else{
+      this.router.navigate(['/menuplaner'], { state: { dish: this.dish } })
+    }
   }
 }

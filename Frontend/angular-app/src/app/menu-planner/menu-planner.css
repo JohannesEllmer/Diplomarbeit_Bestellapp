@@ -38,7 +38,7 @@
 .selected-dishes-container,
 .unselected-dishes-container {
   flex: 1 1 0;
-  background: #e0e7ef;
+  background: white;
   border: 1px solid #000000;
   border-radius: 16px;
   padding: 2rem 1.5rem;
@@ -69,7 +69,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border: 1.5px solid #94a3b8;
+  border: 1.5px solid #000000;
   border-radius: 12px;
   background: white;
   padding: 1rem 1.5rem;
