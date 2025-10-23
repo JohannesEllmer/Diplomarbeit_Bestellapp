@@ -14,8 +14,28 @@ describe('MenuPlanComponent', () => {
   let routerSpy: jasmine.SpyObj<Router>;
 
   const mockMenuItems: MenuItem[] = [
-    { id: 1, title: 'Salat', description: 'Frischer Salat', price: 5, category: 'Vorspeisen', available: true, vegetarian: true, allergens: ['Nüsse'] },
-    { id: 2, title: 'Cola', description: 'Erfrischungsgetränk', price: 2, category: 'Getränke', available: true, vegetarian: true, allergens: [] }
+    {
+      id: 1,
+      name: 'Salat',
+      description: 'Frischer Salat',
+      price: 5,
+      category: 'Vorspeisen',
+      available: true,
+      vegetarian: true,
+      allergens: ['Nüsse'],
+     
+    },
+    {
+      id: 2,
+      name: 'Cola',
+      description: 'Erfrischungsgetränk',
+      price: 2,
+      category: 'Getränke',
+      available: true,
+      vegetarian: true,
+      allergens: [],
+
+    }
   ];
 
   beforeEach(async () => {
@@ -53,7 +73,7 @@ describe('MenuPlanComponent', () => {
     component.activeCategory = 'Alle';
     const filtered = component.filteredItems;
     expect(filtered.length).toBe(1);
-    expect(filtered[0].title).toBe('Salat');
+    expect(filtered[0].name).toBe('Salat');
   });
 
   it('should filter vegetarian items when filter is "Vegetarisch"', () => {

@@ -29,7 +29,7 @@ describe('CartPageComponent', () => {
     {
       menuItem: {
         id: 1,
-        title: 'Pizza',
+        name: 'Pizza',
         description: 'Leckere Pizza mit Tomatensauce',
         price: 10,
         category: 'Hauptgericht',

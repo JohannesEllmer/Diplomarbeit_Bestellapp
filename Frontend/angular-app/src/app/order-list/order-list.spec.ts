@@ -15,7 +15,7 @@ describe('OrderListComponent', () => {
     {
       menuItem: {
         id: 1,
-        title: 'Pizza',
+        name: 'Pizza',
         description: '',
         price: 10,
         category: 'Hauptgericht',
@@ -41,7 +41,7 @@ describe('OrderListComponent', () => {
     {
       menuItem: {
         id: 2,
-        title: 'Burger',
+        name: 'Burger',
         description: '',
         price: 8,
         category: 'Hauptgericht',
@@ -104,7 +104,7 @@ describe('OrderListComponent', () => {
     component.itemsPerPage = 1;
     component.changePage(2);
     expect(component.currentPage).toBe(2);
-    expect(component.paginatedItems[0].menuItem.title).toBe('Burger');
+    expect(component.paginatedItems[0].menuItem.name).toBe('Burger');
   });
 
   it('should group by Gericht', () => {
