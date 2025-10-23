@@ -15,14 +15,14 @@ describe('OrderListComponent', () => {
     {
       menuItem: {
         id: 1,
-        title: 'Pizza',
+        name: 'Pizza',
         description: '',
         price: 10,
         category: 'Hauptgericht',
         available: true,
         vegetarian: false,
         allergens: [],
-        image: ''
+ 
       },
       user: {
         id: 1,
@@ -41,14 +41,14 @@ describe('OrderListComponent', () => {
     {
       menuItem: {
         id: 2,
-        title: 'Burger',
+        name: 'Burger',
         description: '',
         price: 8,
         category: 'Hauptgericht',
         available: true,
         vegetarian: false,
         allergens: [],
-        image: ''
+        
       },
       user: {
         id: 2,
@@ -104,7 +104,7 @@ describe('OrderListComponent', () => {
     component.itemsPerPage = 1;
     component.changePage(2);
     expect(component.currentPage).toBe(2);
-    expect(component.paginatedItems[0].menuItem.title).toBe('Burger');
+    expect(component.paginatedItems[0].menuItem.name).toBe('Burger');
   });
 
   it('should group by Gericht', () => {
@@ -129,7 +129,7 @@ it('should toggle delivered status', () => {
 };
 mockOrderService.toggleDelivered.and.returnValue(of(updatedItem));
 
-  component.toggleDelivered(item);
+  component.completeOrder(item);
 
   expect(item.delivered).toBeTrue();
   expect(mockOrderService.toggleDelivered).toHaveBeenCalledWith(item.menuItem.id, true);

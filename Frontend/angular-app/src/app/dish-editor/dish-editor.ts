@@ -1,7 +1,9 @@
 import { Component, ChangeDetectorRef } from '@angular/core';
 import { MenuItemComponent} from '../menu-item-component/menu-item-component';
-import {MenuItem} from '../../models/menu-item.model';
-import {FormsModule} from '@angular/forms';
+import { MenuItem } from '../../models/menu-item.model';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router'
+import { Menu } from '../../models/menu.model';
 
 @Component({
   selector: 'app-dish-editor',
@@ -11,21 +13,26 @@ import {FormsModule} from '@angular/forms';
 })
 export class DishEditor {
   dish: MenuItem = {
-    title: '',
+    name: '',
     description: '',
     price: 0,
-    image: null,
     category: '',
     allergens: [],
     vegetarian: false,
     id: 0,
     available: true
   }
+  menu: Menu = {
+    title: '',
+    dish: this.dish,
+    drink: '',
+    dessert: ''
+  }
 
   allergenTemp: string = '';
   imageTemp: string | ArrayBuffer | null = null;
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  constructor(private cdr: ChangeDetectorRef, private router: Router) {}
 
   onImageSelected(event: Event){
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -33,7 +40,6 @@ export class DishEditor {
 
     const reader = new FileReader();
     reader.onload = () => {
-      this.dish.image = reader.result as string;
       this.cdr.detectChanges();
     };
     reader.readAsDataURL(file);
@@ -48,5 +54,14 @@ export class DishEditor {
   }
   removeAllergen(allergen: string){
     this.dish.allergens = this.dish.allergens.filter(a => a !== allergen);
+  }
+
+  onSave(){
+    console.log(this.dish)
+    if(this.menu.drink != '' || this.menu.drink != ''){
+      this.router.navigate(['/menuplaner'], { state: { menu: this.menu } })
+    } else{
+      this.router.navigate(['/menuplaner'], { state: { dish: this.dish } })
+    }
   }
 }

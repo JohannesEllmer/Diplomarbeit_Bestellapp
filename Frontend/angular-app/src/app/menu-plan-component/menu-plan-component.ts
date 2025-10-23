@@ -17,6 +17,7 @@ import { HttpClientModule } from '@angular/common/http';
   styleUrls: ['./menu-plan-component.css']
 })
 export class MenuPlanComponent implements OnInit {
+  showImpressumPopup = false;
   activeCategory: string = 'Alle';
   activeFilter: string = 'Alle';
   balance: number = 14.00;
@@ -26,7 +27,6 @@ export class MenuPlanComponent implements OnInit {
   filters = ['Alle', 'Vegetarisch'];
 
   menuItems: MenuItem[] = [];
-  orderItems: OrderItem[] = [];
 
   currentUser: User = {
     id: 999,
@@ -45,50 +45,46 @@ export class MenuPlanComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+  
     this.menuService.getMenuItems().subscribe(items => {
       this.menuItems = items;
     });
+
+    
+  
+    this.cartService.getCartItems();
   }
 
+  // Filterfunktion für Menü-Items
   get filteredItems(): MenuItem[] {
     return this.menuItems.filter(item => {
-      // Suchfilter
-      const searchMatch = !this.searchTerm || 
-        item.title.toLowerCase().includes(this.searchTerm.toLowerCase());
-      
-      // Kategorienfilter
+      const searchMatch = !this.searchTerm || item.name.toLowerCase().includes(this.searchTerm.toLowerCase());
       const isDrink = item.category === 'Getränke';
-      const categoryMatch =
-        this.activeCategory === 'Alle'
-          ? !isDrink 
-          : item.category === this.activeCategory;
-
-      // Vegetarisch-Filter
+      const categoryMatch = this.activeCategory === 'Alle' ? !isDrink : item.category === this.activeCategory;
       const filterMatch = this.activeFilter !== 'Vegetarisch' || item.vegetarian;
-
       return searchMatch && categoryMatch && filterMatch;
     });
   }
 
-  // Wird bei jeder Eingabeänderung im Suchfeld aufgerufen
   onSearchChange(): void {
-    // Die filteredItems-Property wird automatisch aktualisiert
+    // filteredItems aktualisieren sich automatisch
   }
 
-  // Löscht die Suche
   clearSearch(): void {
     this.searchTerm = '';
   }
 
+  // Item in den Warenkorb legen
   addToOrder(menuItem: MenuItem, note: string = '', deliveryTime: string = '12:00'): void {
-    const existing = this.orderItems.find(
+    let items = this.cartService.getCartItems();
+    const existing = items.find(
       item => item.menuItem.id === menuItem.id && item.note === note && item.deliveryTime === deliveryTime
     );
 
     if (existing) {
       existing.quantity += 1;
     } else {
-      this.orderItems.push({
+      items.push({
         menuItem,
         user: this.currentUser,
         note,
@@ -97,46 +93,45 @@ export class MenuPlanComponent implements OnInit {
         deliveryTime
       });
     }
+
+    this.cartService.saveCartItems(items);
   }
 
   removeFromOrder(menuItem: MenuItem, note: string = '', deliveryTime: string = '12:00'): void {
-    const index = this.orderItems.findIndex(
-      item => item.menuItem.id === menuItem.id && item.note === note && item.deliveryTime === deliveryTime
-    );
-
-    if (index !== -1) {
-      this.orderItems.splice(index, 1);
-    }
-  }
-
-  updateNote(menuItem: MenuItem, oldNote: string, newNote: string): void {
-    const item = this.orderItems.find(
-      i => i.menuItem.id === menuItem.id && i.note === oldNote
-    );
-    if (item) {
-      item.note = newNote;
-    }
+    let items = this.cartService.getCartItems();
+    items = items.filter(i => !(i.menuItem.id === menuItem.id && i.note === note && i.deliveryTime === deliveryTime));
+    this.cartService.saveCartItems(items);
   }
 
   changeQuantity(menuItem: MenuItem, note: string, deliveryTime: string, delta: number): void {
-    const item = this.orderItems.find(
+    let items = this.cartService.getCartItems();
+    const item = items.find(
       i => i.menuItem.id === menuItem.id && i.note === note && i.deliveryTime === deliveryTime
     );
     if (item) {
       item.quantity = Math.max(1, item.quantity + delta);
+      this.cartService.saveCartItems(items);
+    }
+  }
+
+  updateNote(menuItem: MenuItem, oldNote: string, newNote: string): void {
+    let items = this.cartService.getCartItems();
+    const item = items.find(i => i.menuItem.id === menuItem.id && i.note === oldNote);
+    if (item) {
+      item.note = newNote;
+      this.cartService.saveCartItems(items);
     }
   }
 
   get cartItemCount(): number {
-    return this.cartService.getItemCount(this.orderItems);
+    return this.cartService.getItemCount(this.cartService.getCartItems());
   }
 
   get totalCost(): number {
-    return this.cartService.getTotal(this.orderItems);
+    return this.cartService.getTotal(this.cartService.getCartItems());
   }
 
   navigateToCart(): void {
-    this.cartService.saveCartItems(this.orderItems);
     this.router.navigate(['/warenkorb']);
   }
 }

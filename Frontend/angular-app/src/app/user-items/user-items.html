@@ -14,26 +14,27 @@
     <div class="user-controls-row">
       <div class="balance">
         <span class="balance-amount">{{ user.balance | currency: 'EUR' }}</span>
-        <button class="edit-btn" 
-                (click)="startEditBalance($event)" 
-                title="Guthaben bearbeiten"></button>
-        <input *ngIf="user.editingBalance"
-               type="number"
-               [(ngModel)]="user.newBalance"
-               (keyup.enter)="saveBalance($event)"
-               (blur)="saveBalance($event)"
-               placeholder="Betrag"
-               class="balance-input"
-               (click)="$event.stopPropagation()" />
+  <button class="icon-btn edit" 
+    *ngIf="!user.editingBalance"
+    (click)="startEditBalance($event)" 
+    title="Guthaben bearbeiten">✎</button>
+  <input *ngIf="user.editingBalance"
+         type="number"
+         [(ngModel)]="user.newBalance"
+         (keyup.enter)="saveBalance($event)"
+         (blur)="saveBalance($event)"
+         placeholder="Betrag"
+         class="balance-input"
+         (click)="$event.stopPropagation()" />
       </div>
 
       <div class="actions-inline">
         <button class="icon-btn delete" 
                 (click)="emitDelete($event)" 
-                title="Benutzer löschen">🗑️</button>
+                title="Benutzer löschen">🗑</button>
         <button class="icon-btn block" 
                 (click)="emitBlock($event)" 
-                title="Benutzer sperren">🚫</button>
+                title="Benutzer sperren">⊘</button>
       </div>
     </div>
   </div>

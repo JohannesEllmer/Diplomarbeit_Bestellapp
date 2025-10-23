@@ -1,6 +1,6 @@
 /* Basis-Styling */
 .menu-card {
-  border: 1px solid #e2e8f0;
+  border: 2px solid #e2e8f0;
   border-radius: 12px;
   overflow: hidden;
   background: white;
@@ -8,7 +8,7 @@
 }
 
 .menu-card:not(.unavailable):hover {
-  transform: translateY(-5px);
+  transform: translateY(-2px);
   box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
 
@@ -22,7 +22,7 @@
   position: absolute;
   top: 10px;
   right: 10px;
-  background: #ef4444;
+  background: #8d1515;
   color: white;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
@@ -51,7 +51,7 @@
 }
 
 .category-tag {
-  background: #3b82f6;
+  background: #0d55c9;
   color: white;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
@@ -90,7 +90,7 @@
 }
 
 .confirm-btn {
-  background: #0ea5e9;
+  background: #0284c7;
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -124,7 +124,7 @@
 }
 
 .add-btn {
-  background: #0ea5e9;
+  background: #0284c7;
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -140,4 +140,130 @@
 
 .add-btn:hover:not(:disabled) {
   background: #0284c7;
+}
+
+/* === Header wie cart-page === */
+.menu-header {
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  color: white;
+  padding: 1.5rem;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
+
+.menu-header h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 700;
+}
+
+/* === Button-Styling wie cart-page === */
+.add-btn,
+.confirm-btn,
+.cancel-btn {
+  background: #0f172a;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: 600;
+}
+
+.add-btn:disabled,
+.confirm-btn:disabled,
+.cancel-btn:disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.add-btn:hover:not(:disabled),
+.confirm-btn:hover:not(:disabled) {
+  background: #0284c7;
+}
+
+.cancel-btn {
+  background: #e92b0e;
+}
+
+.cancel-btn:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+/* === Footer wie cart-page === */
+.menu-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  padding: 1.5rem 0 1rem 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.footer-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.impressum-desktop,
+.impressum-mobile {
+  width: 100%;
+  text-align: center;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  color: white;
+  font-size: 0.9rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  border-top: 1px solid rgba(255,255,255,0.15);
+}
+
+.impressum-desktop span:not(:last-child)::after {
+  content: "|";
+  margin-left: 10px;
+  color: rgba(255,255,255,0.7);
+}
+
+.impressum-mobile {
+  display: none;
+}
+
+.impressum-mobile a {
+  color: white;
+  text-decoration: none;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.impressum-mobile a:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .impressum-desktop {
+    display: none;
+  }
+  .impressum-mobile {
+    display: flex;
+  }
+  .menu-footer {
+    font-size: 0.8rem;
+    padding: 1rem 0.5rem 0.5rem 0.5rem;
+  }
 }

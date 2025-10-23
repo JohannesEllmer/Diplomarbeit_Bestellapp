@@ -14,8 +14,9 @@ import { CartService } from '../services/cart/cart-service';
   styleUrls: ['./cart-page.css']
 })
 export class CartPageComponent implements OnInit {
+  showImpressumPopup = false;
   cartItems: OrderItem[] = [];
-  deliveryTimeOptions: string[] = ['11:30', '12:00', '12:30', '13:00'];
+  deliveryTimeOptions: string[] = ['12:20', '13:10'];
   selectedTime: string = '';
   timeError: string = '';
   balance: number = 30.00;
@@ -51,19 +52,37 @@ export class CartPageComponent implements OnInit {
   }
 
   onOrder(): void {
+    // Prüfen, ob ausgewählte Lieferzeit gültig ist
     if (!this.cartService.isValidTimeFormat(this.selectedTime)) {
       this.timeError = 'Bitte gib eine gültige Uhrzeit im Format HH:mm ein.';
       return;
     }
 
-    this.timeError = '';
+    // Prüfen, ob aktuelle Zeit vor 11:20 Uhr liegt
+    const now = new Date();
+    const cutoff = new Date();
+    cutoff.setHours(11, 20, 0, 0); // 11:20 Uhr heute
 
+    // Prüfen, ob heute Montag bis Freitag ist (0=Sonntag, 6=Samstag)
+    const weekday = now.getDay();
+    if (weekday === 0 || weekday === 6) {
+      this.timeError = 'Bestellungen sind nur von Montag bis Freitag möglich.';
+      return;
+    }
+
+    if (now > cutoff) {
+      this.timeError = 'Bestellungen können nur bis 11:20 Uhr am selben Tag aufgegeben werden.';
+      return;
+    }
+
+    // Alles OK → Bestellung erstellen
+    this.timeError = '';
     const bestellung = {
       zeit: this.selectedTime,
       gesamtbetrag: this.getTotal(),
       guthaben: this.balance,
       positionen: this.cartItems.map(item => ({
-        gericht: item.menuItem.title,
+        gericht: item.menuItem.name,
         menge: item.quantity,
         einzelpreis: item.menuItem.price,
         gesamtpreis: item.menuItem.price * item.quantity,
@@ -73,12 +92,10 @@ export class CartPageComponent implements OnInit {
 
     this.cartService.submitOrder(bestellung).subscribe({
       next: () => {
-        // ✅ Bestellung erfolgreich
+        //Bestellung erfolgreich
         this.cartService.clearCart();
         this.cartItems = [];
         this.selectedTime = '';
-
-        // Weiterleitung auf die Order-Übersicht
         this.router.navigate(['/my-orders']);
       },
       error: () => {

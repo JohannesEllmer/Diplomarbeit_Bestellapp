@@ -34,7 +34,6 @@ export class UserManagementComponent implements OnInit {
     });
   }
 
-  // Filtert Benutzer basierend auf dem Suchbegriff
   filterUsers(): void {
     if (!this.searchTerm) {
       this.filteredUsers = [...this.users];
@@ -44,16 +43,14 @@ export class UserManagementComponent implements OnInit {
         user.name.toLowerCase().includes(searchLower)
       );
     }
-    this.currentPage = 1; // Zurück zur ersten Seite nach Suche
+    this.currentPage = 1; 
     this.updatePagination();
   }
 
-  // Wird bei jeder Eingabeänderung im Suchfeld aufgerufen
   onSearchChange(): void {
     this.filterUsers();
   }
 
-  // Löscht die Suche
   clearSearch(): void {
     this.searchTerm = '';
     this.filterUsers();
@@ -90,7 +87,7 @@ export class UserManagementComponent implements OnInit {
   deleteUser(user: User): void {
     this.userService.deleteUser(user.id).subscribe(() => {
       this.users = this.users.filter(u => u.id !== user.id);
-      this.filterUsers(); // Filter neu anwenden nach Löschen
+      this.filterUsers(); 
     });
   }
 
@@ -98,7 +95,7 @@ export class UserManagementComponent implements OnInit {
     this.userService.toggleBlockUser(user).subscribe(updated => {
       const index = this.users.findIndex(u => u.id === updated.id);
       if (index !== -1) this.users[index] = updated;
-      this.filterUsers(); // Filter neu anwenden nach Änderung
+      this.filterUsers(); 
     });
   }
 }

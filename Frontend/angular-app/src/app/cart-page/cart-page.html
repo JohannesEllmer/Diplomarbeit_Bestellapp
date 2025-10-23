@@ -25,7 +25,7 @@
       <div class="summary-items">
         @for (item of cartItems; track item.menuItem.id) {
           <div class="summary-line">
-            <span class="item-name">{{ item.menuItem.title }}</span>
+            <span class="item-name">{{ item.menuItem.name }}</span>
             <span class="item-quantity">x{{ item.quantity }}</span>
             <span class="item-price"> {{ item.menuItem.price | currency: 'EUR' }}</span>
           </div>
@@ -42,24 +42,46 @@
       </div>
 
       <div class="time-select">
-        <label for="time-input">Gewünschte Lieferzeit:</label>
-        <input
-          id="time-input"
-          list="time-options"
+        <label for="time-select">Gewünschte Lieferzeit:</label>
+        <select
+          id="time-select"
           [(ngModel)]="selectedTime"
-          placeholder="HH:mm z.B. 12:30"
-          required />
-        <datalist id="time-options">
-          <option *ngFor="let time of deliveryTimeOptions" [value]="time"></option>
-        </datalist>
+          required>
+          <option value="" disabled selected>Bitte wählen</option>
+          <option *ngFor="let time of deliveryTimeOptions" [value]="time">{{ time }}</option>
+        </select>
         <div class="error-msg" *ngIf="timeError">{{ timeError }}</div>
       </div>
     </div>
   </div>
 
-  <div class="menu-footer">
-    <div class="footer-buttons">
+  <footer class="menu-footer">
+    <div class="footer-center">
       <button class="checkout-btn" (click)="onOrder()">Jetzt bestellen</button>
+      <div class="impressum-desktop">
+        <span>Firma Muster GmbH</span>
+        <span>Musterstraße 1, 12345 Musterstadt</span>
+        <span>Tel: 01234 / 567890</span>
+        <span>E-Mail: info@musterfirma.de</span>
+      </div>
+      <div class="impressum-mobile">
+        <button class="impressum-btn" (click)="showImpressumPopup = true">Impressum</button>
+      </div>
+
+      <!-- Popup für Impressum -->
+      <div class="impressum-popup-overlay" *ngIf="showImpressumPopup" (click)="showImpressumPopup = false">
+        <div class="impressum-popup" (click)="$event.stopPropagation()">
+          <h2>Impressum</h2>
+          <div class="impressum-details">
+            <p><strong>Firma Muster GmbH</strong></p>
+            <p>Musterstraße 1, 12345 Musterstadt</p>
+            <p>Tel: 01234 / 567890</p>
+            <p>E-Mail: info@musterfirma.de</p>
+          </div>
+          <button class="close-btn" (click)="showImpressumPopup = false">Schließen</button>
+        </div>
+      </div>
     </div>
-  </div>
+  </footer>
+
 </div>

@@ -1,5 +1,4 @@
 .order-management-container {
-  max-width: 1200px;
   margin: 0 auto;
   height: 100vh;
   display: flex;
@@ -11,7 +10,7 @@
 
 /* HEADER fixiert */
 .menu-header {
-  background: #0ea5e9;
+  background: #0284c7;
   color: white;
   padding: 1.5rem;
   text-align: center;
@@ -181,7 +180,7 @@
 
 /* FOOTER fixiert */
 .order-footer {
-  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  background: #0284c7;
   padding: 1rem;
   flex-shrink: 0;
   position: sticky;
@@ -209,4 +208,49 @@
 .footer-text strong {
   font-size: 1.1rem;
   font-weight: 600;
+}
+
+/* Bestell-Button */
+.complete-btn {
+  background: #0284c7;
+  color: white;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(16, 185, 129, 0.3);
+  transition: all 0.25s ease;
+}
+
+.complete-btn:hover {
+  background: #0284c7;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* Finanzseite-Button */
+.finance-btn {
+  background: #011647;
+  color: white;
+  font-weight: 600;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(29, 78, 216, 0.3);
+  transition: all 0.25s ease;
+}
+
+.finance-btn:hover {
+  background: 0f172a;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 12px rgba(29, 78, 216, 0.4);
+}
+
+/* Footer-Button Position */
+.footer-actions {
+  margin-top: 1rem;
+  text-align: center;
+  width: 100%;
 }
