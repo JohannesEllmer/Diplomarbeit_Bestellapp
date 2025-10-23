@@ -1,9 +1,15 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { OrderItem } from '../../models/menu-item.model';
 import { OrderService } from '../services/order/order-service';
+
+// ↓ html5-qrcode Imports
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
+
+type Camera = { id: string; label?: string };
+type Res = { w: number; h: number };
 
 @Component({
   selector: 'app-order-list',
@@ -12,7 +18,7 @@ import { OrderService } from '../services/order/order-service';
   templateUrl: './order-list.html',
   styleUrls: ['./order-list.css']
 })
-export class OrderListComponent implements OnInit {
+export class OrderListComponent implements OnInit, OnDestroy {
   activeGroup: string = 'Keine Gruppierung';
   readonly groupOptions = ['Keine Gruppierung', 'Nach Gericht', 'Nach Lieferzeit'];
 
@@ -22,15 +28,35 @@ export class OrderListComponent implements OnInit {
   itemsPerPage = 5;
   pages: number[] = [];
 
+  // --- Scanner State ---
+  scanning = false;
+  private html5?: Html5Qrcode;
+  cameras: Camera[] = [];
+  selectedCameraId: string | null = null;
+  resolution: Res = { w: 640, h: 480 };
+  scanMessage = '';
+  private pendingItem?: OrderItem;
+  private scanningInProgress = false;
+
   constructor(private router: Router, private orderService: OrderService) {}
 
   ngOnInit(): void {
+    this.loadOrders();
+  }
+
+  ngOnDestroy(): void {
+    this.stopScanner().catch(() => {});
+  }
+
+  /** Orders laden und Pagination setzen */
+  loadOrders(): void {
     this.orderService.getOrders().subscribe(items => {
       this.orderItems = items;
       this.updatePagination();
     });
   }
 
+  /** Pagination aktualisieren */
   updatePagination(): void {
     const start = (this.currentPage - 1) * this.itemsPerPage;
     const end = start + this.itemsPerPage;
@@ -39,8 +65,7 @@ export class OrderListComponent implements OnInit {
   }
 
   updatePages(): void {
-    const total = this.totalPages;
-    this.pages = Array.from({ length: total }, (_, i) => i + 1);
+    this.pages = Array.from({ length: this.totalPages }, (_, i) => i + 1);
   }
 
   changePage(page: number): void {
@@ -66,7 +91,7 @@ export class OrderListComponent implements OnInit {
   get groupedOrders(): { [key: string]: OrderItem[] } {
     switch (this.activeGroup) {
       case 'Nach Gericht':
-        return this.groupBy(item => `${item.menuItem.title}`);
+        return this.groupBy(item => item.menuItem.title);
       case 'Nach Lieferzeit':
         return this.groupBy(item => item.deliveryTime || 'Unbekannt');
       default:
@@ -83,12 +108,142 @@ export class OrderListComponent implements OnInit {
     }, {} as { [key: string]: OrderItem[] });
   }
 
-  toggleDelivered(item: OrderItem): void {
-    item.delivered = !item.delivered;
-    this.orderService.toggleDelivered(item.menuItem.id, item.delivered).subscribe();
+  // --------- QR: Öffnen & Schließen ---------
+  async openScanner(item: OrderItem): Promise<void> {
+    this.pendingItem = item;
+    this.scanning = true;
+    this.scanMessage = 'Kamera wird initialisiert …';
+
+    try {
+      await this.initCameras();
+      await this.startScanner();
+      this.scanMessage = 'Halte den QR-Code vor die Kamera.';
+    } catch (err: any) {
+      this.scanMessage = 'Kamera konnte nicht gestartet werden: ' + (err?.message || err);
+    }
   }
 
+  async closeScanner(): Promise<void> {
+    await this.stopScanner();
+    this.scanning = false;
+    this.pendingItem = undefined;
+    this.scanMessage = '';
+  }
+
+  // --------- QR: Kamera-Handling ---------
+  private async initCameras(): Promise<void> {
+    // Liste verfügbarer Kameras
+    const devices = await Html5Qrcode.getCameras();
+    this.cameras = (devices || []).map(d => ({ id: d.id, label: d.label }));
+    if (!this.cameras.length) throw new Error('Keine Kamera gefunden.');
+    if (!this.selectedCameraId) {
+      // Bevorzugt Rückkamera (meist "back"), sonst erste
+      const back = this.cameras.find(c => (c.label || '').toLowerCase().includes('back'));
+      this.selectedCameraId = (back || this.cameras[0]).id;
+    }
+  }
+
+  async startScanner(): Promise<void> {
+    if (this.scanningInProgress) return;
+    this.scanningInProgress = true;
+
+    // Container existiert nur, wenn Overlay sichtbar ist
+    const elementId = 'qr-reader';
+    if (this.html5?.isScanning) {
+      await this.stopScanner(); // Safety
+    }
+    this.html5 = new Html5Qrcode(elementId, {
+      verbose: false,
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.QR_CODE
+      ]
+    });
+
+    await this.html5.start(
+      { deviceId: { exact: this.selectedCameraId! } },
+      {
+        fps: 10,
+        qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+          const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+          const boxSize = Math.floor(minEdge * 0.6); // 60% des kleineren Rands
+          return { width: boxSize, height: boxSize };
+        },
+        aspectRatio: this.resolution.w / this.resolution.h
+      },
+      decodedText => this.onScanSuccess(decodedText),
+      errorMessage => this.onScanError(errorMessage)
+    );
+
+    this.scanningInProgress = false;
+  }
+
+  private async stopScanner(): Promise<void> {
+    if (this.html5) {
+      try {
+        if (this.html5.isScanning) {
+          await this.html5.stop();
+        }
+        await this.html5.clear();
+      } catch {}
+      this.html5 = undefined;
+    }
+  }
+
+  async switchCamera(): Promise<void> {
+    // Kamera-Wechsel nur, wenn bereits am Scannen
+    if (this.html5) {
+      this.scanMessage = 'Wechsle Kamera …';
+      await this.restartScanner();
+    }
+  }
+
+  async restartScanner(): Promise<void> {
+    await this.stopScanner();
+    await this.startScanner();
+  }
+
+  // --------- QR: Scan Events ---------
+  private onScanSuccess(decodedText: string): void {
+    // Optional: Vibration auf Mobile
+    try { navigator.vibrate?.(50); } catch {}
+
+    const code = decodedText?.trim();
+    if (!code) return;
+
+    // Direkt abschließen
+    const item = this.pendingItem;
+    if (!item) return;
+
+    this.scanMessage = 'Code erkannt. Bestellung wird abgeschlossen …';
+    this.orderService.completeOrder(item.menuItem.id, code).subscribe({
+      next: async () => {
+        // Bestellung aus der Liste entfernen + UI updaten
+        this.orderItems = this.orderItems.filter(i => i !== item);
+        this.updatePagination();
+        await this.closeScanner();
+        alert('Bestellung erfolgreich abgeschlossen!');
+      },
+      error: async (err) => {
+        await this.closeScanner();
+        this.scanMessage = 'Fehler beim Abschließen: ' + (err?.message || err);
+        alert('Fehler beim Abschließen: ' + (err?.message || err));
+      }
+    });
+  }
+
+  private onScanError(msg: string): void {
+    // Hier kein Spam – nur ggf. für Debugging:
+    // console.debug('Scan error', msg);
+  }
+
+  // --------- Navigation ---------
   navigateToUser(userId: number): void {
-    this.router.navigate(['/users', userId]);
+    this.router.navigate(['/user', userId]).catch(() => {
+      this.router.navigate(['/user']);
+    });
+  }
+
+  goToFinance(): void {
+    this.router.navigate(['/statistics']);
   }
 }

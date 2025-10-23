@@ -3,75 +3,126 @@
     <h1>Auswertung</h1>
   </header>
 
+  <!-- Filter + Export -->
   <div class="selectors">
     <div class="selector-group">
-      <label for="range">Zeitraum:</label>
-      <select id="range" [(ngModel)]="selectedRange" (change)="loadStatistics()">
-        <option value="today">Heute</option>
-        <option value="yesterday">Gestern</option>
-        <option value="week">Letzte Woche</option>
-        <option value="month">Letzter Monat</option>
-      </select>
+      <label for="startDate">Von:</label>
+      <input type="date" id="startDate" [(ngModel)]="startDate" (change)="loadStatistics()">
     </div>
 
     <div class="selector-group">
-      <label for="chartType">Diagrammtyp:</label>
-      <select id="chartType" [(ngModel)]="selectedChartType" (change)="updateChart()">
-        <option value="bar">Balken</option>
-        <option value="line">Linie</option>
-        <option value="pie">Kreis</option>
-        <option value="doughnut">Donut</option>
-      </select>
+      <label for="endDate">Bis:</label>
+      <input type="date" id="endDate" [(ngModel)]="endDate" (change)="loadStatistics()">
     </div>
 
     <div class="selector-group">
-      <label for="dataset">Datenquelle:</label>
-      <select id="dataset" [(ngModel)]="selectedDataset" (change)="updateChart()">
-        <option *ngFor="let ds of availableDatasets" [value]="ds.key">{{ ds.label }}</option>
-      </select>
+      <label>Diagrammtyp:</label>
+      <div class="chart-type-buttons">
+        <button [class.active]="selectedChartType==='bar'" (click)="toggleChartType('bar')">Balken</button>
+        <button [class.active]="selectedChartType==='line'" [disabled]="days.length < 5" (click)="toggleChartType('line')">Linie</button>
+      </div>
     </div>
 
     <div class="spacer"></div>
 
-    <button class="export-btn" (click)="exportChart()">Exportieren</button>
+    <button class="export-btn" (click)="exportFinancePDF()">PDF exportieren</button>
   </div>
 
+  <!-- Kennzahlen -->
   <section class="summary-cards">
     <div class="card">
       <span>Bestellungen</span>
       <div class="value-trend">
         <strong>{{ totalOrders }}</strong>
-        <span class="trend-icon" [ngClass]="trendOrders === 'up' ? 'trend-up' : 'trend-down'">
-          {{ trendOrders === 'up' ? '↗' : '↘' }}
+        <span class="badge" [ngClass]="{'up': trendOrders==='up', 'down': trendOrders==='down'}">
+          <span class="trend-icon">{{ trendOrders==='up' ? '▲' : '▼' }}</span>
         </span>
       </div>
     </div>
 
     <div class="card">
-      <span>Kunden</span>
+      <span>Ø Warenkorb</span>
       <div class="value-trend">
-        <strong>{{ totalCustomers }}</strong>
-        <span class="trend-icon" [ngClass]="trendCustomers === 'up' ? 'trend-up' : 'trend-down'">
-          {{ trendCustomers === 'up' ? '↗' : '↘' }}
-        </span>
+        <strong>{{ avgBasket | currency:'EUR' }}</strong>
       </div>
     </div>
 
     <div class="card">
-      <span>Einnahmen</span>
+      <span>Umsatz (Brutto)</span>
       <div class="value-trend">
-        <strong>{{ totalRevenue | currency: 'EUR' }}</strong>
-        <span class="trend-icon" [ngClass]="trendRevenue === 'up' ? 'trend-up' : 'trend-down'">
-          {{ trendRevenue === 'up' ? '↗' : '↘' }}
+        <strong>{{ totalRevenue | currency:'EUR' }}</strong>
+        <span class="badge" [ngClass]="{'up': trendRevenue==='up', 'down': trendRevenue==='down'}">
+          <span class="trend-icon">{{ trendRevenue==='up' ? '▲' : '▼' }}</span>
         </span>
       </div>
     </div>
   </section>
 
-   <section class="chart-section" (click)="goFullscreenMobile()">
+  <!-- Hinweise / Alerts -->
+  <div class="alerts" *ngIf="alerts?.length">
+    <div class="alert" *ngFor="let a of alerts" [ngClass]="a.severity">
+      <div class="icon">{{ a.severity==='danger' ? '⛔' : a.severity==='warn' ? '⚠️' : 'ℹ️' }}</div>
+      <div>{{ a.message }}</div>
+    </div>
+  </div>
+
+  <!-- (entfernt) Finanz-Tools -->
+
+  <!-- Tagesliste (wie gehabt) -->
+  <section class="orders-section" *ngIf="days?.length">
+    <h2>Bestellungen</h2>
+    <div *ngFor="let day of days" class="day-orders">
+      <h3>{{ day.date }}</h3>
+      <ul>
+        <li *ngFor="let order of day.ordersList">
+          #{{ order.id }} — {{ order.user?.name }} — {{ order.totalPrice | currency:'EUR' }}
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Chart -->
+  <section class="chart-section" (click)="goFullscreenMobile()">
     <h2>Diagramm</h2>
     <div class="chart-container">
       <canvas #chartCanvas></canvas>
     </div>
+    <span class="hint">Tippe auf das Diagramm (Mobil) für Vollbild.</span>
   </section>
+
+<section class="orders-section">
+  <h2>Finanzübersicht</h2>
+  <div class="finance-table-wrap">
+    <table class="finance-table">
+      <thead>
+        <tr>
+          <th>Datum / Woche</th>
+          <th>Bestellungen</th>
+          <th>Umsatz Brutto</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of financeRows">
+          <td>{{ r.label }}</td>
+          <td>{{ r.orders }}</td>
+          <td>{{ r.gross | currency:'EUR' }}</td>
+        </tr>
+      </tbody>
+    </table>
+            <div class="impressum-mobile">
+              <button class="impressum-btn" (click)="showImpressumPopup = true">Impressum</button>
+            </div>
+
+            <div class="impressum-popup-overlay" *ngIf="showImpressumPopup" (click)="showImpressumPopup = false">
+              <div class="impressum-popup" (click)="$event.stopPropagation()">
+                <h2>Impressum</h2>
+                <div class="impressum-details">
+                  <p><strong>Firma Muster GmbH</strong></p>
+                  <p>Musterstraße 1, 12345 Musterstadt</p>
+                  <p>Tel: 01234 / 567890</p>
+                  <p>E-Mail: info@musterfirma.de</p>
+                </div>
+                <button class="close-btn" (click)="showImpressumPopup = false">Schließen</button>
+              </div>
+            </div>
 </div>

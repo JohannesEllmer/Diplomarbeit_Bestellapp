@@ -22,7 +22,7 @@ describe('OrderListComponent', () => {
         available: true,
         vegetarian: false,
         allergens: [],
-        image: ''
+ 
       },
       user: {
         id: 1,
@@ -48,7 +48,7 @@ describe('OrderListComponent', () => {
         available: true,
         vegetarian: false,
         allergens: [],
-        image: ''
+        
       },
       user: {
         id: 2,
@@ -129,7 +129,7 @@ it('should toggle delivered status', () => {
 };
 mockOrderService.toggleDelivered.and.returnValue(of(updatedItem));
 
-  component.toggleDelivered(item);
+  component.completeOrder(item);
 
   expect(item.delivered).toBeTrue();
   expect(mockOrderService.toggleDelivered).toHaveBeenCalledWith(item.menuItem.id, true);

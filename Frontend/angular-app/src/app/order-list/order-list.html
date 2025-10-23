@@ -6,14 +6,13 @@
   <div class="filter-container">
     <div class="filter-group">
       <span>Gruppieren nach:</span>
-      @for (option of groupOptions; track option) {
-        <button 
-          class="filter-btn"
-          [class.active]="activeGroup === option"
-          (click)="activeGroup = option">
-          {{ option }}
-        </button>
-      }
+      <button 
+        *ngFor="let option of groupOptions" 
+        class="filter-btn"
+        [class.active]="activeGroup === option"
+        (click)="activeGroup = option">
+        {{ option }}
+      </button>
     </div>
   </div>
 
@@ -38,49 +37,78 @@
   </div>
 
   <main class="order-list">
-    @for (group of groupedOrders | keyvalue; track group.key) {
+    <div *ngFor="let group of groupedOrders | keyvalue">
       <div class="order-group">
         <h3>{{ group.key }}</h3>
-        
-        @for (item of group.value; track item.menuItem.id + item.user.id) {
-          <div class="order-card" [class.delivered]="item.delivered">
-            <div class="order-summary">
-              <div class="order-info">
-                <h2>{{ item.menuItem.title }} × {{ item.quantity }}</h2>
-                <p class="meta">
-                  <span>{{ item.menuItem.price * item.quantity | currency:'EUR' }}</span> · 
-                  <span>Lieferzeit: {{ item.deliveryTime }}</span> · 
-                  <span>Bestellt von: <a (click)="navigateToUser(item.user.id)">{{ item.user.name }}</a></span>
-                </p>
-                @if (item.note) {
-                  <p class="note">Anmerkung: {{ item.note }}</p>
-                }
-              </div>
 
-              <div class="order-controls">
-                <label class="delivery-toggle">
-                  <input type="checkbox" 
-                         [(ngModel)]="item.delivered" 
-                         (change)="toggleDelivered(item)" />
-                  <span class="toggle-label">{{ item.delivered ? 'Geliefert' : 'Ausstehend' }}</span>
-                </label>
-              </div>
+        <div *ngFor="let item of group.value" class="order-card">
+          <div class="order-summary">
+            <div class="order-info">
+              <h2>{{ item.menuItem.title }} × {{ item.quantity }}</h2>
+              <p class="meta">
+                <span>{{ item.menuItem.price * item.quantity | currency:'EUR' }}</span> ·
+                <span>Lieferzeit: {{ item.deliveryTime }}</span> ·
+                <span>Bestellt von: <a (click)="navigateToUser(item.user.id)">{{ item.user.name }}</a></span>
+              </p>
+              <p class="note" *ngIf="item.note">Anmerkung: {{ item.note }}</p>
+            </div>
+
+            <div class="order-controls">
+              <button class="complete-btn" (click)="openScanner(item)">
+                QR-Code scannen & abschließen
+              </button>
             </div>
           </div>
-        }
+        </div>
+
       </div>
-    }
+    </div>
   </main>
 
   <footer class="order-footer">
     <div class="footer-grid">
-      <div class="footer-item">
-        <i class="icon-euro"></i>
-        <div class="footer-text">
-          <span>Gesamtsumme</span>
-          <strong>{{ totalSum | currency:'EUR' }}</strong>
-        </div>
+      
+      <div class="footer-actions">
+        <button class="finance-btn" (click)="goToFinance()">Alle anzeigen / Finanzseite</button>
       </div>
     </div>
   </footer>
+</div>
+
+<!-- Scanner-Overlay -->
+<div class="scanner-backdrop" *ngIf="scanning">
+  <div class="scanner-modal">
+    <header class="scanner-header">
+      <h3>QR-Code scannen</h3>
+      <button class="close-btn" (click)="closeScanner()">×</button>
+    </header>
+
+    <div class="scanner-controls">
+      <label>
+        Kamera:
+        <select [(ngModel)]="selectedCameraId" (change)="switchCamera()">
+          <option *ngFor="let cam of cameras" [value]="cam.id">
+            {{ cam.label || 'Kamera ' + cam.id }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+        Auflösung:
+        <select [(ngModel)]="resolution" (change)="restartScanner()">
+          <option [value]="{w:640,h:480}">640×480</option>
+          <option [value]="{w:1280,h:720}">1280×720</option>
+          <option [value]="{w:1920,h:1080}">1920×1080</option>
+        </select>
+      </label>
+    </div>
+
+    <div id="qr-reader" class="qr-reader"></div>
+
+    <p class="scan-hint" *ngIf="scanMessage">{{ scanMessage }}</p>
+
+    <footer class="scanner-footer">
+      <button (click)="closeScanner()">Abbrechen</button>
+    </footer>
+  </div>
 </div>

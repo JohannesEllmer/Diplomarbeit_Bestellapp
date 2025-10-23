@@ -284,12 +284,14 @@ export class OrderService {
 
   constructor(private http: HttpClient) {}
 
+    /** Alle Bestellungen abrufen */
   getOrders(): Observable<OrderItem[]> {
     return environment.useMockData
       ? of(this.mockOrders)
       : this.http.get<OrderItem[]>('/api/orders');
   }
 
+  /** Lieferung umschalten (optional, falls Checkbox noch verwendet wird) */
   toggleDelivered(orderId: number, delivered: boolean): Observable<OrderItem> {
     if (environment.useMockData) {
       const order = this.mockOrders.find(o => o.menuItem.id === orderId);
@@ -299,6 +301,7 @@ export class OrderService {
     return this.http.patch<OrderItem>(`/api/orders/${orderId}`, { delivered });
   }
 
+  /** Bestellung löschen */
   deleteOrder(orderId: number): Observable<void> {
     if (environment.useMockData) {
       this.mockOrders = this.mockOrders.filter(o => o.menuItem.id !== orderId);
@@ -307,6 +310,7 @@ export class OrderService {
     return this.http.delete<void>(`/api/orders/${orderId}`);
   }
 
+  /** Bestellung erstellen */
   createOrder(order: OrderItem): Observable<OrderItem> {
     if (environment.useMockData) {
       this.mockOrders.push(order);
@@ -315,6 +319,7 @@ export class OrderService {
     return this.http.post<OrderItem>('/api/orders', order);
   }
 
+  /** Bestellung aktualisieren */
   updateOrder(order: OrderItem): Observable<OrderItem> {
     if (environment.useMockData) {
       const index = this.mockOrders.findIndex(o => o.menuItem.id === order.menuItem.id);
@@ -322,5 +327,18 @@ export class OrderService {
       return of(order);
     }
     return this.http.put<OrderItem>(`/api/orders/${order.menuItem.id}`, order);
+  }
+
+  /** Bestellung per QR-Code abschließen */
+  completeOrder(orderId: number, qrCode: string): Observable<void> {
+    if (environment.useMockData) {
+      // Bestellung lokal entfernen
+      this.mockOrders = this.mockOrders.filter(o => o.menuItem.id !== orderId);
+      console.log(`Mock: Bestellung ${orderId} abgeschlossen mit QR-Code: ${qrCode}`);
+      return of();
+    }
+
+    // Backend-Call für echtes System
+    return this.http.post<void>(`/api/orders/${orderId}/complete`, { qrCode });
   }
 }

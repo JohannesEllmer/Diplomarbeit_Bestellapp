@@ -112,11 +112,11 @@
 }
 
 .icon-btn.delete {
-  color: #ef4444;
+  color: #ea0000;
 }
 
 .icon-btn.block {
-  color: #f59e0b;
+  color: #000000;
 }
 
 .icon-btn:hover {
