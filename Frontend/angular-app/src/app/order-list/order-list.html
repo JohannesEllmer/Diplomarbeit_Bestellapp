@@ -6,13 +6,14 @@
   <div class="filter-container">
     <div class="filter-group">
       <span>Gruppieren nach:</span>
-      <button 
-        *ngFor="let option of groupOptions" 
-        class="filter-btn"
-        [class.active]="activeGroup === option"
-        (click)="activeGroup = option">
-        {{ option }}
-      </button>
+      @for (option of groupOptions; track option) {
+        <button 
+          class="filter-btn"
+          [class.active]="activeGroup === option"
+          (click)="activeGroup = option">
+          {{ option }}
+        </button>
+      }
     </div>
   </div>
 
@@ -40,15 +41,15 @@
     <div *ngFor="let group of groupedOrders | keyvalue">
       <div class="order-group">
         <h3>{{ group.key }}</h3>
-        
+
         @for (item of group.value; track item.menuItem.id + item.user.id) {
           <div class="order-card" [class.delivered]="item.delivered">
             <div class="order-summary">
               <div class="order-info">
-                <h2>{{ item.menuItem.title }} × {{ item.quantity }}</h2>
+                <h2>{{ item.menuItem.name }} × {{ item.quantity }}</h2>
                 <p class="meta">
-                  <span>{{ item.menuItem.price * item.quantity | currency:'EUR' }}</span> · 
-                  <span>Lieferzeit: {{ item.deliveryTime }}</span> · 
+                  <span>{{ item.menuItem.price * item.quantity | currency:'EUR' }}</span> ·
+                  <span>Lieferzeit: {{ item.deliveryTime }}</span> ·
                   <span>Bestellt von: <a (click)="navigateToUser(item.user.id)">{{ item.user.name }}</a></span>
                 </p>
                 @if (item.note) {
@@ -58,8 +59,8 @@
 
               <div class="order-controls">
                 <label class="delivery-toggle">
-                  <input type="checkbox" 
-                         [(ngModel)]="item.delivered" 
+                  <input type="checkbox"
+                         [(ngModel)]="item.delivered"
                          (change)="toggleDelivered(item)" />
                   <span class="toggle-label">{{ item.delivered ? 'Geliefert' : 'Ausstehend' }}</span>
                 </label>

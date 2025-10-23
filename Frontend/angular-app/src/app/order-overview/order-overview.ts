@@ -33,9 +33,9 @@ export class OrderOverviewComponent {
   };
 
   menuItems: MenuItem[] = [
-    { id: 1, title: "Käse-Semmel", description: "Frisches Weckerl mit Käse", price: 2.5, category: "Brot", available: true, vegetarian: true, allergens: ["Gluten", "Milch"] },
-    { id: 2, title: "Schinken-Käse-Toast", description: "Knuspriger Toast mit Schinken & Käse", price: 3.0, category: "Snack", available: true, vegetarian: false, allergens: ["Gluten", "Milch"] },
-    { id: 3, title: "Mineralwasser", description: "0,5l still oder prickelnd", price: 1.2, category: "Getränke", available: true, vegetarian: true, allergens: [] }
+    { id: 1, name: "Käse-Semmel", description: "Frisches Weckerl mit Käse", price: 2.5, category: "Brot", available: true, vegetarian: true, allergens: ["Gluten", "Milch"] },
+    { id: 2, name: "Schinken-Käse-Toast", description: "Knuspriger Toast mit Schinken & Käse", price: 3.0, category: "Snack", available: true, vegetarian: false, allergens: ["Gluten", "Milch"] },
+    { id: 3, name: "Mineralwasser", description: "0,5l still oder prickelnd", price: 1.2, category: "Getränke", available: true, vegetarian: true, allergens: [] }
   ];
 
   orders: Order[] = [

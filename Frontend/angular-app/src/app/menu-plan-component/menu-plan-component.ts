@@ -58,7 +58,7 @@ export class MenuPlanComponent implements OnInit {
   // Filterfunktion für Menü-Items
   get filteredItems(): MenuItem[] {
     return this.menuItems.filter(item => {
-      const searchMatch = !this.searchTerm || item.title.toLowerCase().includes(this.searchTerm.toLowerCase());
+      const searchMatch = !this.searchTerm || item.name.toLowerCase().includes(this.searchTerm.toLowerCase());
       const isDrink = item.category === 'Getränke';
       const categoryMatch = this.activeCategory === 'Alle' ? !isDrink : item.category === this.activeCategory;
       const filterMatch = this.activeFilter !== 'Vegetarisch' || item.vegetarian;
