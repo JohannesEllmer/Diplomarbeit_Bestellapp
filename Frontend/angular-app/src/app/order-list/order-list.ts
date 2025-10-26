@@ -44,14 +44,9 @@ export class OrderListComponent implements OnInit, OnDestroy {
     this.loadOrders();
   }
 
-  ngOnDestroy(): void {
-    this.stopScanner().catch(() => {});
-  }
 
-  /** Orders laden und Pagination setzen */
-  loadOrders(): void {
-    this.loadOrders();
-  }
+
+
 
   ngOnDestroy(): void {
     this.stopScanner().catch(() => {});
@@ -65,7 +60,7 @@ export class OrderListComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Pagination aktualisieren */
+  
   /** Pagination aktualisieren */
   updatePagination(): void {
     const start = (this.currentPage - 1) * this.itemsPerPage;
