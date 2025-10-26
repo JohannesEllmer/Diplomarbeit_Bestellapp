@@ -108,6 +108,19 @@ export class OrderListComponent implements OnInit, OnDestroy {
     }, {} as { [key: string]: OrderItem[] });
   }
 
+  // --------- FEHLENDE METHODE: toggleDelivered ---------
+  toggleDelivered(item: OrderItem): void {
+    // Hier die Logik zum Aktualisieren des Lieferstatus implementieren
+    // Beispiel: Service aufrufen, um Status zu speichern
+    console.log('Bestellstatus geändert:', item.menuItem.name, 'Geliefert:', item.delivered);
+    
+    // Optional: Service aufrufen, um Änderung zu persistieren
+    // this.orderService.updateOrderStatus(item.id, item.delivered).subscribe({
+    //   next: () => console.log('Status erfolgreich aktualisiert'),
+    //   error: (err) => console.error('Fehler beim Aktualisieren:', err)
+    // });
+  }
+
   // --------- QR: Öffnen & Schließen ---------
   async openScanner(item: OrderItem): Promise<void> {
     this.pendingItem = item;

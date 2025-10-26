@@ -1,86 +1,85 @@
 <div class="menu-container">
   <header class="menu-header">
     <h1>Meine Bestellungen</h1>
-    <button class="back-btn" (click)="navigateBack()" title="Zum Menüplan zurückkehren">←</button>
+    <button class="back-btn" (click)="navigateBack()" title="Zum Menüplan zurückkehren">
+      ←
+    </button>
   </header>
-
   <main class="order-sections">
-    <!-- Offene Bestellungen -->
     <section>
       <h2>Offene Bestellungen</h2>
+      <div *ngIf="openOrders.length === 0" class="no-results">
+        <p>Keine offenen Bestellungen vorhanden.</p>
+      </div>
 
-      <ng-container *ngIf="(openOrders?.length ?? 0) === 0; else hasOpenOrders">
-        <div class="no-results"><p>Keine offenen Bestellungen vorhanden.</p></div>
-      </ng-container>
+      <div class="order-card" *ngFor="let order of openOrders">
+        <div class="order-header" (click)="toggleDetails(order)">
+          <div class="order-info">
+            <h3>{{ order.user.name }}</h3>
+            <span class="order-date">{{ order.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
+          </div>
+          <div class="order-price">
+            {{ order.totalPrice | currency:'EUR' }}
+          </div>
+        </div>
 
-      <ng-template #hasOpenOrders>
-        <ng-container *ngFor="let order of openOrders">
-          <article class="order-card">
-            <div class="order-header" (click)="toggleDetails(order)">
-              <div class="order-info">
-                <h3>{{ order.user?.name }}</h3>
-                <span class="order-date">{{ order.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
-              </div>
-              <div class="order-price">{{ order.totalPrice | currency:'EUR' }}</div>
-            </div>
+        <div class="order-details" *ngIf="order.showDetails">
+          <ul class="order-items">
+            <li *ngFor="let item of order.items">
+              <span class="item-title">{{ item.menuItem.name }}</span>
+              <span class="item-quantity">x{{ item.quantity }}</span>
+              <span class="item-price">
+                 {{ item.menuItem.price * item.quantity | currency:'EUR' }}
+              </span>
+            </li>
+          </ul>
 
-            <div class="order-details" *ngIf="order.showDetails">
-              <ul class="order-items">
-                <li *ngFor="let item of order.items">
-                  <span class="item-title">{{ item.menuItem?.name }}</span>
-                  <span class="item-quantity">x{{ item.quantity }}</span>
-                  <span class="item-price">{{ (item.menuItem?.price ?? 0) * item.quantity | currency:'EUR' }}</span>
-                </li>
-              </ul>
-
-              <div class="qr-section">
-                <h4>QR-Code zur Abholung</h4>
-                <img
-                  [src]="'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Order-' + order.id"
-                  alt="QR Code" />
-              </div>
-            </div>
-          </article>
-        </ng-container>
-      </ng-template>
+          <div class="qr-section">
+            <h4>QR-Code zur Abholung</h4>
+            <img
+              [src]="'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Order-' + order.id"
+              alt="QR Code"
+            />
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- Abgeschlossene Bestellungen -->
     <section>
       <h2>Abgeschlossene Bestellungen</h2>
+      <div *ngIf="closedOrders.length === 0" class="no-results">
+        <p>Keine abgeschlossenen Bestellungen vorhanden.</p>
+      </div>
 
-      <ng-container *ngIf="(closedOrders?.length ?? 0) === 0; else hasClosedOrders">
-        <div class="no-results"><p>Keine abgeschlossenen Bestellungen vorhanden.</p></div>
-      </ng-container>
+      <div class="order-card closed" *ngFor="let order of closedOrders">
+        <div class="order-header" (click)="toggleDetails(order)">
+          <div class="order-info">
+            <h3>{{ order.user.name }}</h3>
+            <span class="order-date">{{ order.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
+          </div>
+          <div class="order-price">
+            {{ order.totalPrice | currency:'EUR' }}
+          </div>
+        </div>
 
-      <ng-template #hasClosedOrders>
-        <ng-container *ngFor="let order of closedOrders">
-          <article class="order-card closed">
-            <div class="order-header" (click)="toggleDetails(order)">
-              <div class="order-info">
-                <h3>{{ order.user?.name }}</h3>
-                <span class="order-date">{{ order.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
-              </div>
-              <div class="order-price">{{ order.totalPrice | currency:'EUR' }}</div>
-            </div>
+        <div class="order-details" *ngIf="order.showDetails">
+          <ul class="order-items">
+            <li *ngFor="let item of order.items">
+              <span class="item-title">{{ item.menuItem.name }}</span>
+              <span class="item-quantity">x{{ item.quantity }}</span>
+              <span class="item-price">
+                {{ item.menuItem.price * item.quantity | currency:'EUR' }}
+              </span>
+            </li>
+          </ul>
 
-            <div class="order-details" *ngIf="order.showDetails">
-              <ul class="order-items">
-                <li *ngFor="let item of order.items">
-                  <span class="item-title">{{ item.menuItem?.name }}</span>
-                  <span class="item-quantity">x{{ item.quantity }}</span>
-                  <span class="item-price">{{ (item.menuItem?.price ?? 0) * item.quantity | currency:'EUR' }}</span>
-                </li>
-              </ul>
+      <div class="qr-section" *ngIf="order.qrCodeUrl">
+        <h4>QR-Code zur Abholung</h4>
+        <img [src]="order.qrCodeUrl" alt="QR Code" />
+      </div>
 
-              <div class="qr-section" *ngIf="order.qrCodeUrl">
-                <h4>QR-Code zur Abholung</h4>
-                <img [src]="order.qrCodeUrl" alt="QR Code" />
-              </div>
-            </div>
-          </article>
-        </ng-container>
-      </ng-template>
+        </div>
+      </div>
     </section>
   </main>
 
@@ -94,28 +93,18 @@
     <div class="impressum-mobile">
       <button class="impressum-btn" (click)="showImpressumPopup = true">Impressum</button>
     </div>
-  </footer>
 
-  <!-- Overlay außerhalb von <main>, innerhalb des Containers -->
-  <div
-    class="impressum-popup-overlay"
-    *ngIf="showImpressumPopup"
-    (click)="showImpressumPopup = false">
-    <div
-      class="impressum-popup"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Impressum"
-      tabindex="-1"
-      (click)="$event.stopPropagation()">
-      <h2>Impressum</h2>
-      <div class="impressum-details">
-        <p><strong>Firma Muster GmbH</strong></p>
-        <p>Musterstraße 1, 12345 Musterstadt</p>
-        <p>Tel: 01234 / 567890</p>
-        <p>E-Mail: info@musterfirma.de</p>
+    <div class="impressum-popup-overlay" *ngIf="showImpressumPopup" (click)="showImpressumPopup = false">
+      <div class="impressum-popup" (click)="$event.stopPropagation()">
+        <h2>Impressum</h2>
+        <div class="impressum-details">
+          <p><strong>Firma Muster GmbH</strong></p>
+          <p>Musterstraße 1, 12345 Musterstadt</p>
+          <p>Tel: 01234 / 567890</p>
+          <p>E-Mail: info@musterfirma.de</p>
+        </div>
+        <button class="close-btn" (click)="showImpressumPopup = false">Schließen</button>
       </div>
-      <button class="close-btn" (click)="showImpressumPopup = false">Schließen</button>
     </div>
-  </div>
+  </footer>
 </div>
