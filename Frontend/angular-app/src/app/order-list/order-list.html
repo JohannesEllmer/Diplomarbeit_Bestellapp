@@ -86,8 +86,17 @@
 
     <div class="scanner-controls">
       <label>
+        Kamera:
+        <select [(ngModel)]="selectedCameraId" (change)="switchCamera()">
+          <option *ngFor="let cam of cameras" [value]="cam.id">
+            {{ cam.label || 'Kamera ' + cam.id }}
+          </option>
+        </select>
+      </label>
+
+      <label>
         Auflösung:
-        <select>
+        <select [(ngModel)]="resolution" (change)="restartScanner()">
           <option [value]="{w:640,h:480}">640×480</option>
           <option [value]="{w:1280,h:720}">1280×720</option>
           <option [value]="{w:1920,h:1080}">1920×1080</option>

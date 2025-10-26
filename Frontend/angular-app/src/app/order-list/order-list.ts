@@ -50,12 +50,22 @@ export class OrderListComponent implements OnInit, OnDestroy {
 
   /** Orders laden und Pagination setzen */
   loadOrders(): void {
+    this.loadOrders();
+  }
+
+  ngOnDestroy(): void {
+    this.stopScanner().catch(() => {});
+  }
+
+  /** Orders laden und Pagination setzen */
+  loadOrders(): void {
     this.orderService.getOrders().subscribe(items => {
       this.orderItems = items;
       this.updatePagination();
     });
   }
 
+  /** Pagination aktualisieren */
   /** Pagination aktualisieren */
   updatePagination(): void {
     const start = (this.currentPage - 1) * this.itemsPerPage;
@@ -91,7 +101,7 @@ export class OrderListComponent implements OnInit, OnDestroy {
   get groupedOrders(): { [key: string]: OrderItem[] } {
     switch (this.activeGroup) {
       case 'Nach Gericht':
-        return this.groupBy(item => item.menuItem.name);
+        return this.groupBy(item => `${item.menuItem.name}`);
       case 'Nach Lieferzeit':
         return this.groupBy(item => item.deliveryTime || 'Unbekannt');
       default:
