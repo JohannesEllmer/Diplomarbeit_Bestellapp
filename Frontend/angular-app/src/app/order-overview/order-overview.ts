@@ -62,7 +62,7 @@ export class OrderOverviewComponent {
     }
   ];
 
-  constructor(private router: Router) {   // ✅ Router hier injizieren!
+  constructor(private router: Router) {   
     this.orders.forEach(order => {
       order.totalPrice = order.items.reduce(
         (sum, item) => sum + item.menuItem.price * item.quantity,
