@@ -75,6 +75,7 @@
   padding: 1rem 1.5rem;
   box-shadow: 0 1px 4px rgba(0,0,0,0.03);
   transition: box-shadow 0.2s, border-color 0.2s;
+  align-self: center;
 }
 
 .dish-container:hover {
@@ -130,4 +131,35 @@
   box-shadow: 0 6px 16px rgba(14,165,233,0.15);
   background: #0ea5e9;
   color: white;
+}
+
+@media (max-width: 768px) {
+  .planner-container {
+    flex-direction: column;
+    gap: 1rem;
+    height: calc(100vh - 130px); /* Adjust this offset for header/footer as needed */
+    min-height: 0; /* Allows flex children to shrink */
+  }
+
+  .selected-dishes-wrapper,
+  .unselected-dishes-wrapper {
+    flex: 1 1 0;
+    min-height: 0; /* Allows inner flex (containers) to shrink */
+    display: flex;
+    flex-direction: column;
+  }
+
+  .selected-dishes-container,
+  .unselected-dishes-container {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: none; /* Remove fixed height from desktop */
+    overflow-y: auto;
+    /* Optionally, remove extra padding to maximize space on mobile */
+    padding: 1rem 0.5rem;
+  }
+
+  .dish-container {
+    max-width: 80%;
+  }
 }

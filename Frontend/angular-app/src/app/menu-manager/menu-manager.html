@@ -1,27 +1,41 @@
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-<header class="menu-manager-header">
-  <h1>Menüs</h1>
-</header>
-
-
 <div class="menu-manager-container">
+  <header class="menu-manager-header">
+    <h1>Menu Manager</h1>
+  </header>
+
   <div class="menus-container">
-    @for (menu of Menus; track menu) {
+    @for(menu of Menus; track menu.title) {
       <div class="menu-container"
-          (click)="selectMenu(menu)"
-          [class.selected]="selectedMenu === menu">
-        <span class="menu-title">{{ menu.title }}</span>
-        <div class="menu-actions" (click)="$event.stopPropagation()">
-          <button title="Edit" (click)="goToMenuPlanner(menu)">
-            <span class="material-icons">edit</span>
-          </button>
-          <button title="Remove" (click)="removeMenu(menu)">
-            <span class="material-icons">delete</span>
-          </button>
+           [class.selected]="selectedMenu === menu">
+        <div class="menu-header">
+          <span class="menu-title" [title]="menu.title">{{menu.title}}</span>
+          <div class="menu-actions">
+            <button title="Edit" (click)="goToMenuPlanner(menu)">
+              <span class="material-icons">edit</span>
+            </button>
+            <button title="Remove" (click)="removeMenu(menu)">
+              <span class="material-icons">delete</span>
+            </button>
+          </div>
+        </div>
+        <div class="menu-dishes">
+          @if (menu.dishes.length > 0) {
+            @for(dish of menu.dishes; track dish.name) {
+              <div class="menu-dish">
+                {{dish.name}}
+              </div>
+            }
+          } @else {
+            <div class="menu-dish">
+              Keine Gerichte
+            </div>
+          }
         </div>
       </div>
     }
   </div>
+
   <div class="add-menu-btn-wrapper">
     <button class="add-menu-button" (click)="goToMenuPlanner({ title: '', dishes: [] })">Hinzufügen</button>
   </div>

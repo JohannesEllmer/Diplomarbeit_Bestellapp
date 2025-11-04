@@ -53,12 +53,15 @@ Datum   Zeitaufwand     Titel                   Autor   genauere Beschreibung wa
 
 03.10   3 h            Frontend                  Chris   Design Verbesserungen in Menüplaner (drag & drop) und Menü-Manager
 
+07.10   3 h            Frontend                  Chris   Menü Verwaltung redesign
 
+09.10   4 h            Frontend                  Chris   Menü Verwaltung design Weiternetwicklung
 
+14.10   3 h            Frontend                  Chris   Menü Verwaltung grundsätzliche mobile Ansicht
 
+16.10   4 h            Frontend                  Chris   Menüplaner und Gerichte Verwaltung mobile Ansicht
 
-
-
+16.10   4 h            Nix                       Hons    Goa nix
 
 
 

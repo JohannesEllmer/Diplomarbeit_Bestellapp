@@ -7,15 +7,14 @@ html, body {
   flex-direction: column;
   max-width: 199vh;
   margin: 0 auto;
-  padding: 0 20px;
-  min-height: 100vh;
+  padding: 0; /* Remove horizontal padding */
   background: #f8fafc;
 }
 
 .menu-manager-header {
   background: #0ea5e9;
   color: white;
-  padding: 1.5rem;
+  padding: 1.5rem 0; /* Keep vertical padding, remove horizontal padding */
   text-align: center;
   box-shadow: 0 2px 8px rgba(14,165,233,0.08);
   margin-bottom: 1.5rem;
@@ -24,11 +23,13 @@ html, body {
   justify-content: center;
   min-height: 5vh;
   max-height: 5vh;
-  position: sticky; /* or fixed */
+  position: sticky;
   top: 0;
   left: 0;
   right: 0;
   z-index: 100;
+  width: 100vw; /* Make it full viewport width */
+  margin-left: calc(-50vw + 50%); /* Center it regardless of parent container */
 }
 
 .menu-manager-header h1 {
@@ -37,61 +38,105 @@ html, body {
   letter-spacing: 0.02em;
 }
 
+/* Add padding to the main content area */
 .menus-container {
-  flex: 1 0 auto;
+  margin: 0 20px; /* Add margin to maintain spacing for content */
+  /* ... other properties remain unchanged ... */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.25rem;
+  padding: 2rem 1.5rem;
+  max-height: 65vh;
+  overflow-y: auto;
   background: white;
   border: 1px solid #000000;
   border-radius: 16px;
-  padding: 2rem 1.5rem;
-  margin-top: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
   box-shadow: 0 4px 16px rgba(56,189,248,0.08);
-  max-height: 65vh;
-  overflow-y: auto;
 }
 
 .menu-container {
-  width: 100%;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   border: 1.5px solid black;
   border-radius: 12px;
   background: white;
-  padding: 1rem 1.5rem;
+  padding: 1rem;
   box-shadow: 0 1px 4px rgba(0,0,0,0.03);
   transition: box-shadow 0.2s, border-color 0.2s;
+  min-width: 39vh;
+  max-width: 39vh;
+  height: 280px;
 }
 
-.menu-container:hover {
-  box-shadow: 0 4px 12px rgba(56,189,248,0.10);
-  border-color: #0ea5e9;
+.menu-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  min-height: 50px; /* Increased to accommodate two lines */
+  max-height: 50px;
+  gap: 0.5rem;
+  overflow: visible;
+}
+
+.menu-dishes {
+  height: 200px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.menu-dish {
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  background: #f8fafc;
+  border-radius: 6px;
+  height: 40px; /* Fixed height for each dish */
+  display: flex;
+  align-items: center;
 }
 
 .menu-title {
   font-size: 1.2rem;
   font-weight: 600;
   letter-spacing: 0.01em;
+  flex: 1;
+  min-width: 0;
+  /* Updated properties for line breaking */
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Show max 2 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal; /* Changed from nowrap to normal */
+  line-height: 1.2; /* Control line height */
+  max-height: 2.4em; /* 2 lines × 1.2 line-height */
 }
 
 .menu-actions {
   display: flex;
   gap: 0.5rem;
+  height: 100%;
+  align-items: flex-start; /* Changed from center to align with top */
+  flex-shrink: 0;
+  padding-top: 0.25rem; /* Add some top padding to align with text */
 }
 
 .menu-actions button {
-  padding: 0.5rem 1.2rem;
+  padding: 1rem 0.5rem;
   border: 1px solid #38bdf8;
-  border-radius: 20px;
+  border-radius: 10px;
   background: white;
   color: #0ea5e9;
   font-weight: 500;
-  font-size: 0.95rem;
+  font-size: 0.3rem;
   cursor: pointer;
   transition: all 0.2s;
   box-shadow: 0 1px 2px rgba(56,189,248,0.04);
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .menu-actions button:hover {
@@ -102,23 +147,108 @@ html, body {
 }
 
 @media (max-width: 768px) {
-  .menus-container {
+  /* Make overall container padding smaller and adjust width constraints */
+  .menu-manager-container {
+    padding: 0 6px;
+    max-width: 100vw;
+  }
+
+  /* Header: reduce padding and font size for space */
+  .menu-manager-header {
     padding: 1rem 0.5rem;
-    gap: 0.75rem;
+    min-height: 44px;
+    max-height: 54px;
   }
+  .menu-manager-header h1 {
+    font-size: 1.2rem;
+  }
+
+  /* Single column for menu cards, remove side paddings */
+  .menus-container {
+    grid-template-columns: 1fr;
+    padding: 1rem 2px;
+    max-height: none;
+    gap: 0.75rem;
+    border-radius: 8px;
+  }
+
+  /* Menu card width fit to device, no min/max */
   .menu-container {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-    padding: 1rem;
-  }
-  .menu-actions {
+    min-width: unset;
+    max-width: 100vw;
     width: 100%;
-    justify-content: flex-end;
+    height: auto;
+    padding: 0.75rem 0.5rem;
+    border-radius: 10px;
+  }
+
+  /* Reduce menu header size and space */
+  .menu-header {
+    min-height: 40px;
+    max-height: 52px;
+    margin-bottom: 0.5rem;
+    gap: 0.25rem;
+  }
+
+  /* Dishes: shrink height and padding for fitting more */
+  .menu-dishes {
+    height: auto;
+    max-height: 180px;
+    padding: 0.25rem;
+    font-size: 0.98rem;
+  }
+  .menu-dish {
+    height: 36px;
+    padding: 0.4rem;
+    font-size: 0.97rem;
+  }
+
+  /* Menu actions: stack vertically if too many/few space */
+  .menu-actions {
+    flex-direction: row;
+    width: auto;
+    gap: 0.2rem;
+    padding-top: 0;
+  }
+  .menu-actions button {
+    padding: 0.5rem 0.4rem;
+    font-size: 0.83rem;
+    min-width: 32px;
+    min-height: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
+
+  /* Add menu button: full width and larger touch target */
+  .add-menu-btn-wrapper {
+    justify-content: stretch;
+    width: 100%;
+    margin-top: 0.5vh;
+  }
+  .add-menu-button {
+    min-width: 0;
+    max-width: 100vw;
+    width: 100%;
+    font-size: 1rem;
+    padding: 1rem 0;
+    border-radius: 24px;
+    box-shadow: 0 4px 8px rgba(14,165,233,0.05);
+    margin-top: 0.5vh;
+  }
+
+  /* Optional: Smaller tooltip font */
+  .menu-title:hover::after {
+    font-size: 0.7rem;
+    max-width: 150px;
+    left: 0;
+    top: 110%;
   }
 }
 
+/* Add horizontal margin to maintain spacing */
 .add-menu-btn-wrapper {
+  margin: 1.1vh 20px auto;
+  /* ... other properties remain unchanged ... */
   display: flex;
   justify-content: flex-end;
   margin-top: 1.1vh;
@@ -156,4 +286,24 @@ html, body {
 .menu-container.selected {
   border: 3px solid #0ea5e9;
   box-shadow: 0 4px 16px rgba(14,165,233,0.15);
+}
+
+/* Optional: Add tooltip for full title on hover */
+.menu-title {
+  position: relative;
+}
+
+.menu-title:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: 0;
+  top: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  z-index: 1000;
+  white-space: normal;
+  max-width: 200px;
 }
