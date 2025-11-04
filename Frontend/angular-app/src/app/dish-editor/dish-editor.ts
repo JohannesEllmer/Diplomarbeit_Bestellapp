@@ -16,7 +16,6 @@ export class DishEditor {
     name: '',
     description: '',
     price: 0,
-    image: null,
     category: '',
     allergens: [],
     vegetarian: false,
@@ -41,7 +40,6 @@ export class DishEditor {
 
     const reader = new FileReader();
     reader.onload = () => {
-      this.dish.image = reader.result as string;
       this.cdr.detectChanges();
     };
     reader.readAsDataURL(file);

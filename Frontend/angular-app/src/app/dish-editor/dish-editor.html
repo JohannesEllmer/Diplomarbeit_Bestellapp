@@ -39,13 +39,11 @@
               }
             </div>
           </div>
-          <div class="input-group">
-            <div class="vegetarian-container">
-              <label>
-                Vegetarisch
-                <input type="checkbox" id="dish-vegetarian" [(ngModel)]="dish.vegetarian"/>
-              </label>
-            </div>
+          <div class="input-group vegetarian-group">
+            <label class="vegetarian-label">
+              <input type="checkbox" id="dish-vegetarian" [(ngModel)]="dish.vegetarian"/>
+              Vegetarisch
+            </label>
           </div>
         </div>
         <div class="input-group menu-title">

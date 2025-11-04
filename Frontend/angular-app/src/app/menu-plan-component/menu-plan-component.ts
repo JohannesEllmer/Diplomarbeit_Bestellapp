@@ -53,14 +53,14 @@ export class MenuPlanComponent implements OnInit {
   get filteredItems(): MenuItem[] {
     return this.menuItems.filter(item => {
       // Suchfilter
-      const searchMatch = !this.searchTerm || 
-        item.title.toLowerCase().includes(this.searchTerm.toLowerCase());
-      
+      const searchMatch = !this.searchTerm ||
+        item.name.toLowerCase().includes(this.searchTerm.toLowerCase());
+
       // Kategorienfilter
       const isDrink = item.category === 'Getränke';
       const categoryMatch =
         this.activeCategory === 'Alle'
-          ? !isDrink 
+          ? !isDrink
           : item.category === this.activeCategory;
 
       // Vegetarisch-Filter

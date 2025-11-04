@@ -230,8 +230,67 @@
 }
 
 @media (max-width: 768px) {
+  /* Target vegetarian group input styling */
+  .vegetarian-group,
+  .vegetarian-container {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    height: auto !important;
+  }
+
+  .vegetarian-label {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    width: auto;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .vegetarian-label input[type="checkbox"] {
+    margin: 0 !important; /* align with text */
+  }
+
   .input-row {
     flex-direction: column;
     gap: 1.2rem;
+    align-items: stretch;
+  }
+
+  .input-row,
+  .input-group,
+  .input-group > *,
+  .input-group input,
+  .input-group textarea,
+  .input-group select,
+  .image-upload-container,
+  .allergens-container > div {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 97% !important;
+    box-sizing: border-box;
+  }
+
+  .allergens-output-container {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .dish-editor-body {
+    flex-direction: column-reverse;
+  }
+
+  .dish-preview-container {
+    min-width: 100%;
+  }
+
+  .dish-inputs-container {
+    min-width: 85%;
   }
 }

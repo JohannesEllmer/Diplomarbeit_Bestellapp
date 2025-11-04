@@ -25,7 +25,7 @@
         <div class="order-details" *ngIf="order.showDetails">
           <ul class="order-items">
             <li *ngFor="let item of order.items">
-              <span class="item-title">{{ item.menuItem.title }}</span>
+              <span class="item-title">{{ item.menuItem.name }}</span>
               <span class="item-quantity">x{{ item.quantity }}</span>
               <span class="item-price">
                 {{ item.menuItem.price * item.quantity | currency:'EUR' }}
@@ -65,7 +65,7 @@
         <div class="order-details" *ngIf="order.showDetails">
           <ul class="order-items">
             <li *ngFor="let item of order.items">
-              <span class="item-title">{{ item.menuItem.title }}</span>
+              <span class="item-title">{{ item.menuItem.name }}</span>
               <span class="item-quantity">x{{ item.quantity }}</span>
               <span class="item-price">
                 {{ item.menuItem.price * item.quantity | currency:'EUR' }}
