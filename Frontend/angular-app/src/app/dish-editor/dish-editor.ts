@@ -19,10 +19,11 @@ export class DishEditor {
     category: '',
     allergens: [],
     vegetarian: false,
-    id: 0,
+    id: '0',
     available: true
   }
   menu: Menu = {
+    id: '0',
     title: '',
     dish: this.dish,
     drink: '',

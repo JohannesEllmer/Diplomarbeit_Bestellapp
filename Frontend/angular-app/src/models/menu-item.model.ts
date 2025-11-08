@@ -1,5 +1,5 @@
 export interface MenuItem {
-  id: number;
+  id: string;
   name: string;
   description: string;
   price: number;
@@ -14,25 +14,25 @@ export interface OrderItem {
   user: User;
   note: string;
   quantity: number;
-  
+
   delivered?: boolean;
   deliveryTime?: string;
 }
 
 
 export interface Order {
-  id: number;
+  id: string;
   user: User;
   items: OrderItem[];
   totalPrice: number;
   createdAt: Date;
   status: "open" | "closed";
   showDetails?: boolean;
-  qrCodeUrl?: string; 
+  qrCodeUrl?: string;
 }
 
 export interface User {
-  id: number;
+  id: string;
   name: string;
   email: string;
   class: string;
@@ -48,13 +48,13 @@ export interface User {
 export interface DailyStats {
   date: string; // YYYY-MM-DD
   revenue: number;
-  orders: number;     
-  customers: number;  
-  ordersList: Order[]; 
+  orders: number;
+  customers: number;
+  ordersList: Order[];
 }
 
 export interface StatisticsResponse {
-  days: DailyStats[]; 
+  days: DailyStats[];
   totals: {
     totalOrders: number;
     totalCustomers: number;

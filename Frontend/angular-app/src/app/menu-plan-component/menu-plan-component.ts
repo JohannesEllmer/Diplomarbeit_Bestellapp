@@ -29,7 +29,7 @@ export class MenuPlanComponent implements OnInit {
   menuItems: MenuItem[] = [];
 
   currentUser: User = {
-    id: 999,
+    id: '999',
     name: 'Ellmer Johannes',
     email: 'ellmer@example.com',
     class: '5C',
@@ -45,13 +45,13 @@ export class MenuPlanComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-  
+
     this.menuService.getMenuItems().subscribe(items => {
       this.menuItems = items;
     });
 
-    
-  
+
+
     this.cartService.getCartItems();
   }
 

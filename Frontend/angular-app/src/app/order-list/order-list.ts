@@ -4,8 +4,6 @@ import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { OrderItem } from '../../models/menu-item.model';
 import { OrderService } from '../services/order/order-service';
-
-// ↓ html5-qrcode Imports
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 
 type Camera = { id: string; label?: string };
@@ -44,10 +42,6 @@ export class OrderListComponent implements OnInit, OnDestroy {
     this.loadOrders();
   }
 
-
-
-
-
   ngOnDestroy(): void {
     this.stopScanner().catch(() => {});
   }
@@ -60,7 +54,6 @@ export class OrderListComponent implements OnInit, OnDestroy {
     });
   }
 
-  
   /** Pagination aktualisieren */
   updatePagination(): void {
     const start = (this.currentPage - 1) * this.itemsPerPage;
@@ -113,17 +106,11 @@ export class OrderListComponent implements OnInit, OnDestroy {
     }, {} as { [key: string]: OrderItem[] });
   }
 
-  // --------- FEHLENDE METHODE: toggleDelivered ---------
+  // --------- Lieferstatus umschalten ---------
   toggleDelivered(item: OrderItem): void {
-    // Hier die Logik zum Aktualisieren des Lieferstatus implementieren
-    // Beispiel: Service aufrufen, um Status zu speichern
     console.log('Bestellstatus geändert:', item.menuItem.name, 'Geliefert:', item.delivered);
-    
-    // Optional: Service aufrufen, um Änderung zu persistieren
-    // this.orderService.updateOrderStatus(item.id, item.delivered).subscribe({
-    //   next: () => console.log('Status erfolgreich aktualisiert'),
-    //   error: (err) => console.error('Fehler beim Aktualisieren:', err)
-    // });
+    // Optional persistieren:
+    // this.orderService.toggleDelivered(item.menuItem.id, !!item.delivered).subscribe();
   }
 
   // --------- QR: Öffnen & Schließen ---------
@@ -150,12 +137,10 @@ export class OrderListComponent implements OnInit, OnDestroy {
 
   // --------- QR: Kamera-Handling ---------
   private async initCameras(): Promise<void> {
-    // Liste verfügbarer Kameras
     const devices = await Html5Qrcode.getCameras();
     this.cameras = (devices || []).map(d => ({ id: d.id, label: d.label }));
     if (!this.cameras.length) throw new Error('Keine Kamera gefunden.');
     if (!this.selectedCameraId) {
-      // Bevorzugt Rückkamera (meist "back"), sonst erste
       const back = this.cameras.find(c => (c.label || '').toLowerCase().includes('back'));
       this.selectedCameraId = (back || this.cameras[0]).id;
     }
@@ -165,25 +150,22 @@ export class OrderListComponent implements OnInit, OnDestroy {
     if (this.scanningInProgress) return;
     this.scanningInProgress = true;
 
-    // Container existiert nur, wenn Overlay sichtbar ist
     const elementId = 'qr-reader';
     if (this.html5?.isScanning) {
-      await this.stopScanner(); // Safety
+      await this.stopScanner();
     }
     this.html5 = new Html5Qrcode(elementId, {
       verbose: false,
-      formatsToSupport: [
-        Html5QrcodeSupportedFormats.QR_CODE
-      ]
+      formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
     });
 
     await this.html5.start(
       { deviceId: { exact: this.selectedCameraId! } },
       {
         fps: 10,
-        qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-          const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-          const boxSize = Math.floor(minEdge * 0.6); // 60% des kleineren Rands
+        qrbox: (vw: number, vh: number) => {
+          const minEdge = Math.min(vw, vh);
+          const boxSize = Math.floor(minEdge * 0.6);
           return { width: boxSize, height: boxSize };
         },
         aspectRatio: this.resolution.w / this.resolution.h
@@ -208,7 +190,6 @@ export class OrderListComponent implements OnInit, OnDestroy {
   }
 
   async switchCamera(): Promise<void> {
-    // Kamera-Wechsel nur, wenn bereits am Scannen
     if (this.html5) {
       this.scanMessage = 'Wechsle Kamera …';
       await this.restartScanner();
@@ -222,20 +203,17 @@ export class OrderListComponent implements OnInit, OnDestroy {
 
   // --------- QR: Scan Events ---------
   private onScanSuccess(decodedText: string): void {
-    // Optional: Vibration auf Mobile
     try { navigator.vibrate?.(50); } catch {}
 
     const code = decodedText?.trim();
     if (!code) return;
 
-    // Direkt abschließen
     const item = this.pendingItem;
     if (!item) return;
 
     this.scanMessage = 'Code erkannt. Bestellung wird abgeschlossen …';
     this.orderService.completeOrder(item.menuItem.id, code).subscribe({
       next: async () => {
-        // Bestellung aus der Liste entfernen + UI updaten
         this.orderItems = this.orderItems.filter(i => i !== item);
         this.updatePagination();
         await this.closeScanner();
@@ -249,13 +227,12 @@ export class OrderListComponent implements OnInit, OnDestroy {
     });
   }
 
-  private onScanError(msg: string): void {
-    // Hier kein Spam – nur ggf. für Debugging:
-    // console.debug('Scan error', msg);
+  private onScanError(_msg: string): void {
+    // optional debug
   }
 
   // --------- Navigation ---------
-  navigateToUser(userId: number): void {
+  navigateToUser(userId: string): void {
     this.router.navigate(['/user', userId]).catch(() => {
       this.router.navigate(['/user']);
     });

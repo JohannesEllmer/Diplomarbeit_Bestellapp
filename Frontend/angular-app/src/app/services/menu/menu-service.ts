@@ -13,7 +13,7 @@ export class MenuService {
 
   private readonly mockMenuItems: MenuItem[] = [
     {
-      id: 1,
+      id: '1',
       name: 'Kürbiscremesuppe',
       description: 'Cremige Suppe mit Kürbis und Ingwer',
       price: 4.90,
@@ -21,10 +21,10 @@ export class MenuService {
       available: true,
       vegetarian: true,
       allergens: ['G', 'L'],
-     
+
     },
     {
-      id: 2,
+      id: '2',
       name: 'Wiener Schnitzel',
       description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
       price: 12.50,
@@ -32,10 +32,10 @@ export class MenuService {
       available: true,
       vegetarian: false,
       allergens: ['G', 'E', 'M'],
-      
+
     },
      {
-      id: 3,
+      id: '3',
       name: 'Wiener Schnitzel',
       description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
       price: 12.50,
@@ -43,10 +43,10 @@ export class MenuService {
       available: true,
       vegetarian: false,
       allergens: ['G', 'E', 'M'],
-      
+
     },
      {
-      id: 4,
+      id: '4',
       name: 'Wiener Schnitzel',
       description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
       price: 12.50,
@@ -54,10 +54,10 @@ export class MenuService {
       available: true,
       vegetarian: false,
       allergens: ['G', 'E', 'M'],
-     
+
     },
      {
-      id: 5,
+      id: '5',
       name: 'Wiener Schnitzel',
       description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
       price: 12.50,
@@ -65,10 +65,10 @@ export class MenuService {
       available: true,
       vegetarian: false,
       allergens: ['G', 'E', 'M'],
-      
+
     },
      {
-      id: 6,
+      id: '6',
       name: 'Wiener Schnitzel',
       description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
       price: 12.50,
@@ -76,10 +76,10 @@ export class MenuService {
       available: true,
       vegetarian: false,
       allergens: ['G', 'E', 'M'],
-    
+
     },
     {
-      id: 5,
+      id: '5',
       name: 'Cola',
       description: 'Erfrischungsgetränk',
       price: 3.50,
@@ -87,7 +87,7 @@ export class MenuService {
       available: true,
       vegetarian: true,
       allergens: [],
-     
+
     }
   ];
 
