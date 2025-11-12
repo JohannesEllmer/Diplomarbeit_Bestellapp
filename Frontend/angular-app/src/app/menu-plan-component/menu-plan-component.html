@@ -1,25 +1,25 @@
 <div class="menu-container">
-
   <header class="menu-header">
     <h1>Menüplan</h1>
   </header>
 
   <div class="search-controls">
     <div class="search-field">
-      <input 
-        type="text" 
+      <input
+        type="text"
         [(ngModel)]="searchTerm"
         (input)="onSearchChange()"
         placeholder="Nach Gerichten suchen..."
         class="search-input"
       />
-      <button *ngIf="searchTerm" (click)="clearSearch()" class="clear-search" title="Suche löschen">
-        ✕
-      </button>
+      <button *ngIf="searchTerm" (click)="clearSearch()" class="clear-search" title="Suche löschen">✕</button>
     </div>
-    
+
     <div class="search-info" *ngIf="searchTerm">
-      <span>{{ filteredItems.length }} von {{ menuItems.length }} Gerichten gefunden</span>
+      <span>
+        {{ filteredMenus.length + filteredItems.length }}
+        von {{ menus.length + menuItems.length }} Einträgen gefunden
+      </span>
     </div>
   </div>
 
@@ -28,10 +28,11 @@
     <div class="filter-group">
       <span>Kategorie:</span>
       @for (category of categories; track category) {
-        <button 
+        <button
           class="filter-btn"
           [class.active]="activeCategory === category"
-          (click)="activeCategory = category">
+          (click)="activeCategory = category"
+        >
           {{ category }}
         </button>
       }
@@ -40,86 +41,104 @@
     <div class="filter-group">
       <span>Filter:</span>
       @for (filter of filters; track filter) {
-        <button 
+        <button
           class="filter-btn"
           [class.active]="activeFilter === filter"
-          (click)="activeFilter = filter">
+          (click)="activeFilter = filter"
+        >
           {{ filter }}
         </button>
       }
     </div>
   </div>
 
-  <!-- MENÜ ITEMS -->
-  <main class="menu-items">
-    @for (item of filteredItems; track item.id) {
-      <app-menu-item 
-        [item]="item"
-        (addItem)="addToOrder(item, $event)">
-      </app-menu-item>
-    }
-    
-    <!-- Hinweis wenn keine Gerichte gefunden wurden -->
-    <div *ngIf="filteredItems.length === 0" class="no-results">
-      <p *ngIf="searchTerm">Keine Gerichte mit "{{ searchTerm }}" gefunden.</p>
-      <p *ngIf="!searchTerm && menuItems.length === 0">Keine Gerichte vorhanden.</p>
-    </div>
-  </main>
+  <!-- MENÜ-KOMBIS (vorgefertigte Menüs) -->
+  <section class="menu-section" *ngIf="filteredMenus.length > 0">
+    <h2 class="section-title">Vorgefertigte Menüs</h2>
 
-<footer class="menu-footer">
-  <div class="footer-grid">
-    <div class="footer-item">
-      <i class="icon-wallet"></i>
-      <div class="footer-text">
-        <span>Guthaben</span>
-        <strong>{{ balance | currency: 'EUR' }}</strong>
+    <div class="menu-items">
+      @for (m of filteredMenus; track m.id) {
+        <app-menu-item
+          [item]="m.dish"
+          [menu]="m"
+          (addItem)="addToOrder(m.dish, $event)"
+        ></app-menu-item>
+      }
+    </div>
+  </section>
+
+  <!-- EINZELGERICHTE -->
+  <section class="menu-section">
+    <h2 class="section-title">Einzelgerichte</h2>
+    <main class="menu-items">
+      @for (item of filteredItems; track item.id) {
+        <app-menu-item [item]="item" (addItem)="addToOrder(item, $event)"></app-menu-item>
+      }
+
+      <!-- Hinweis wenn nichts gefunden -->
+      <div *ngIf="filteredItems.length === 0 && filteredMenus.length === 0" class="no-results">
+        <p *ngIf="searchTerm">Keine Treffer für "{{ searchTerm }}".</p>
+        <p *ngIf="!searchTerm && menuItems.length === 0 && menus.length === 0">Keine Gerichte vorhanden.</p>
+      </div>
+    </main>
+  </section>
+
+  <footer class="menu-footer">
+    <div class="footer-grid">
+      <div class="footer-item">
+        <i class="icon-wallet"></i>
+        <div class="footer-text">
+          <span>Guthaben</span>
+          <strong>{{ balance | currency: 'EUR' }}</strong>
+        </div>
+      </div>
+
+      <div class="footer-item">
+        <i class="icon-receipt"></i>
+        <div class="footer-text">
+          <span>Summe</span>
+          <strong>{{ totalCost | currency: 'EUR' }}</strong>
+        </div>
+      </div>
+
+      <button
+        class="checkout-btn"
+        (click)="navigateToCart()
+        "
+        [disabled]="cartItemCount === 0"
+        [class.pulse]="cartItemCount > 0"
+      >
+        <i class="icon-shopping-cart"></i>
+        <span>Bestellen</span>
+        <div class="badge">{{ cartItemCount }}</div>
+      </button>
+    </div>
+
+    <!-- Impressum Desktop -->
+    <div class="impressum-desktop">
+      <span>Firma Muster GmbH</span>
+      <span>Musterstraße 1, 12345 Musterstadt</span>
+      <span>Tel: 01234 / 567890</span>
+      <span>E-Mail: info@musterfirma.de</span>
+    </div>
+
+    <!-- Impressum Mobile -->
+    <div class="impressum-mobile">
+      <button class="impressum-btn" (click)="showImpressumPopup = true">Impressum</button>
+    </div>
+
+    <!-- Popup für Impressum -->
+    <div class="impressum-popup-overlay" *ngIf="showImpressumPopup" (click)="showImpressumPopup = false">
+      <div class="impressum-popup" (click)="$event.stopPropagation()">
+        <h2>Impressum</h2>
+        <div class="impressum-details">
+          <p><strong>Firma Muster GmbH</strong></p>
+          <p>Musterstraße 1, 12345 Musterstadt</p>
+          <p>Tel: 01234 / 567890</p>
+          <p>E-Mail: info@musterfirma.de</p>
+        </div>
+        <button class="close-btn" (click)="showImpressumPopup = false">Schließen</button>
       </div>
     </div>
-
-    <div class="footer-item">
-      <i class="icon-receipt"></i>
-      <div class="footer-text">
-        <span>Summe</span>
-        <strong>{{ totalCost | currency: 'EUR' }}</strong>
-      </div>
-    </div>
-
-    <button class="checkout-btn"
-            (click)="navigateToCart()"
-            [disabled]="cartItemCount === 0"
-            [class.pulse]="cartItemCount > 0">
-      <i class="icon-shopping-cart"></i>
-      <span>Bestellen</span>
-      <div class="badge">{{ cartItemCount }}</div>
-    </button>
-  </div>
-
-  <!-- Impressum Desktop -->
-  <div class="impressum-desktop">
-    <span>Firma Muster GmbH</span> 
-    <span>Musterstraße 1, 12345 Musterstadt</span> 
-    <span>Tel: 01234 / 567890</span> 
-    <span>E-Mail: info@musterfirma.de</span>
-  </div>
-
-  <!-- Impressum Mobile -->
-  <div class="impressum-mobile">
-    <button class="impressum-btn" (click)="showImpressumPopup = true">Impressum</button>
-  </div>
-
-  <!-- Popup für Impressum -->
-  <div class="impressum-popup-overlay" *ngIf="showImpressumPopup" (click)="showImpressumPopup = false">
-    <div class="impressum-popup" (click)="$event.stopPropagation()">
-      <h2>Impressum</h2>
-      <div class="impressum-details">
-        <p><strong>Firma Muster GmbH</strong></p>
-        <p>Musterstraße 1, 12345 Musterstadt</p>
-        <p>Tel: 01234 / 567890</p>
-        <p>E-Mail: info@musterfirma.de</p>
-      </div>
-      <button class="close-btn" (click)="showImpressumPopup = false">Schließen</button>
-    </div>
-  </div>
-</footer>
-
+  </footer>
 </div>

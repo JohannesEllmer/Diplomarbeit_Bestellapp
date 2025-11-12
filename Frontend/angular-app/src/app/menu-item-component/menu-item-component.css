@@ -1,10 +1,16 @@
-/* Basis-Styling */
+/* =======================
+   BASIS-STYLING DER KARTE
+   ======================= */
 .menu-card {
+  position: relative;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
   overflow: hidden;
   background: white;
   transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .menu-card:not(.unavailable):hover {
@@ -27,13 +33,21 @@
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-weight: bold;
+  font-size: 0.75rem;
 }
 
-/* Inhaltsbereich */
+/* =======================
+   INHALT / STRUKTUR
+   ======================= */
 .card-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-grow: 1;
   padding: 1rem;
 }
 
+/* Header */
 .card-header {
   margin-bottom: 0.5rem;
 }
@@ -41,6 +55,26 @@
 .card-header h3 {
   margin: 0;
   font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Menü-Badge (wenn Menü angezeigt wird) */
+.badge {
+  background: #0d55c9;
+  color: white;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.menu-subtitle {
+  font-size: 0.9rem;
+  color: #475569;
+  margin: 0.25rem 0 0;
 }
 
 /* Tags */
@@ -66,6 +100,27 @@
   font-size: 0.75rem;
 }
 
+/* Beschreibung */
+.menu-desc,
+.description {
+  color: #475569;
+  font-size: 0.95rem;
+  margin: 0.5rem 0;
+  flex-shrink: 0;
+}
+
+/* Menü-Extras (Getränk / Dessert) */
+.menu-extras {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+.menu-extras li + li {
+  margin-top: 0.25rem;
+}
+
 /* Allergene */
 .allergens {
   font-size: 0.85rem;
@@ -89,6 +144,42 @@
   resize: vertical;
 }
 
+/* =======================
+   FOOTER MIT PREIS + BUTTON
+   ======================= */
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto; /* Footer bleibt unten */
+}
+
+.price {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #0f172a;
+}
+
+/* Buttons */
+.add-btn {
+  background: #0284c7;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.add-btn:disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.add-btn:hover:not(:disabled) {
+  background: #0284c7;
+}
+
 .confirm-btn {
   background: #0284c7;
   color: white;
@@ -109,61 +200,7 @@
   cursor: pointer;
 }
 
-/* Footer mit Preis und Button */
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 1rem;
-}
-
-.price {
-  font-weight: bold;
-  font-size: 1.1rem;
-  color: #0f172a;
-}
-
-.add-btn {
-  background: #0284c7;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.add-btn:disabled {
-  background: #cbd5e1;
-  cursor: not-allowed;
-}
-
-.add-btn:hover:not(:disabled) {
-  background: #0284c7;
-}
-
-/* === Header wie cart-page === */
-.menu-header {
-  background: linear-gradient(135deg, #0ea5e9, #0284c7);
-  color: white;
-  padding: 1.5rem;
-  text-align: center;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  width: 100%;
-  box-sizing: border-box;
-  flex-shrink: 0;
-  margin-bottom: 0;
-}
-
-.menu-header h1 {
-  margin: 0;
-  font-size: clamp(1.5rem, 2.5vw, 2rem);
-  font-weight: 700;
-}
-
-/* === Button-Styling wie cart-page === */
+/* Einheitliches Button-Design */
 .add-btn,
 .confirm-btn,
 .cancel-btn {
@@ -197,7 +234,48 @@
   background: #b91c1c;
 }
 
-/* === Footer wie cart-page === */
+/* =======================
+   EINHEITLICHE HÖHE / GRID
+   ======================= */
+.menu-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.menu-card .card-header h3 {
+  min-height: 2.5rem; /* gleiche Zeilenhöhe für Titel */
+}
+
+.menu-card .menu-desc {
+  min-height: 3rem; /* gleiche Höhe für Beschreibung */
+}
+
+/* =======================
+   HEADER / FOOTER WIE CART-PAGE
+   ======================= */
+.menu-header {
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  color: white;
+  padding: 1.5rem;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
+
+.menu-header h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 700;
+}
+
+/* Footer wie cart-page */
 .menu-footer {
   display: flex;
   flex-direction: column;
@@ -218,6 +296,7 @@
   width: 100%;
 }
 
+/* Impressum */
 .impressum-desktop,
 .impressum-mobile {
   width: 100%;

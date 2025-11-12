@@ -60,7 +60,7 @@
         <div class="order-card closed" *ngFor="let order of closedOrders">
           <div class="order-header" (click)="toggleDetails(order)">
             <div class="order-info">
-              <h3>{{ order.user?.name || 'Ich' }}</h3>
+              <h3>{{ order.use || 'Ich' }}</h3>
               <span class="order-date">{{ order.createdAt | date: 'dd.MM.yyyy HH:mm' }}</span>
             </div>
             <div class="order-price">

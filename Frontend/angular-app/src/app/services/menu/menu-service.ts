@@ -1,118 +1,166 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { MenuItem, OrderItem } from '../../../models/menu-item.model';
 import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { Menu } from '../../../models/menu.model';
+import { MenuItem, OrderItem } from '../../../models/menu-item.model';
 import { environment } from '../../env';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MenuService {
-  private readonly apiUrl = 'https://your-backend-api.com/menu'; // Backend-URL für Menü
+  // Basis-URL deines Backends
+  private readonly apiUrl = 'https://your-backend-api.com/menu';
+
+  // Lokaler Storage (wie bisher)
   private readonly storageKey = 'cartItems';
 
+  // -----------------------
+  // Mock-Daten (bereinigt)
+  // -----------------------
   private readonly mockMenuItems: MenuItem[] = [
     {
       id: '1',
       name: 'Kürbiscremesuppe',
       description: 'Cremige Suppe mit Kürbis und Ingwer',
-      price: 4.90,
+      price: 4.9,
       category: 'Vorspeisen',
       available: true,
       vegetarian: true,
-      allergens: ['G', 'L'],
-
+      allergens: ['G', 'L']
     },
     {
       id: '2',
       name: 'Wiener Schnitzel',
       description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
-      price: 12.50,
+      price: 12.5,
       category: 'Hauptgerichte',
       available: true,
       vegetarian: false,
-      allergens: ['G', 'E', 'M'],
-
+      allergens: ['A', 'C', 'G']
     },
-     {
+    {
       id: '3',
-      name: 'Wiener Schnitzel',
-      description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
-      price: 12.50,
+      name: 'Gemüselasagne',
+      description: 'Mit Spinat und Ricotta',
+      price: 8.5,
       category: 'Hauptgerichte',
       available: true,
-      vegetarian: false,
-      allergens: ['G', 'E', 'M'],
-
+      vegetarian: true,
+      allergens: ['A', 'C', 'G']
     },
-     {
+    {
       id: '4',
-      name: 'Wiener Schnitzel',
-      description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
-      price: 12.50,
-      category: 'Hauptgerichte',
+      name: 'Apfelstrudel',
+      description: 'Mit Vanillesoße',
+      price: 3.0,
+      category: 'Süßes',
       available: true,
-      vegetarian: false,
-      allergens: ['G', 'E', 'M'],
-
-    },
-     {
-      id: '5',
-      name: 'Wiener Schnitzel',
-      description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
-      price: 12.50,
-      category: 'Hauptgerichte',
-      available: true,
-      vegetarian: false,
-      allergens: ['G', 'E', 'M'],
-
-    },
-     {
-      id: '6',
-      name: 'Wiener Schnitzel',
-      description: 'Kalbfleischschnitzel mit Petersilienkartoffeln',
-      price: 12.50,
-      category: 'Hauptgerichte',
-      available: true,
-      vegetarian: false,
-      allergens: ['G', 'E', 'M'],
-
+      vegetarian: true,
+      allergens: ['A', 'C', 'G']
     },
     {
       id: '5',
-      name: 'Cola',
+      name: 'Cola 0,5l',
       description: 'Erfrischungsgetränk',
-      price: 3.50,
+      price: 3.5,
       category: 'Getränke',
       available: true,
       vegetarian: true,
-      allergens: [],
+      allergens: []
+    },
+    {
+      id: '6',
+      name: 'Mineralwasser 0,5l',
+      description: 'Prickelnd',
+      price: 1.8,
+      category: 'Getränke',
+      available: true,
+      vegetarian: true,
+      allergens: []
+    }
+  ];
 
+  private readonly mockMenus: Menu[] = [
+    {
+      id: 'm1',
+      title: 'Mittagsmenü Klassik',
+      dish: {
+        id: '10',
+        name: 'Schnitzel mit Pommes',
+        description: 'Knusprig paniert, mit Zitrone',
+        price: 8.9,
+        category: 'Hauptgerichte',
+        available: true,
+        vegetarian: false,
+        allergens: ['A', 'C', 'G']
+      },
+      drink: 'Apfelsaft gespritzt',
+      dessert: 'Schokopudding'
+    },
+    {
+      id: 'm2',
+      title: 'Veggie Menü',
+      dish: {
+        id: '11',
+        name: 'Gemüse-Curry',
+        description: 'Mildes Curry mit Basmatireis',
+        price: 8.2,
+        category: 'Hauptgerichte',
+        available: true,
+        vegetarian: true,
+        allergens: []
+      },
+      drink: 'Mineralwasser',
+      dessert: 'Obstsalat'
     }
   ];
 
   constructor(private http: HttpClient) {}
 
-  /** Holt Menü vom Backend oder aus Mockdaten */
+  // -------------------------------------------------
+  // Einzelgerichte (Items)
+  // -------------------------------------------------
   getMenuItems(): Observable<MenuItem[]> {
     if (environment.useMockData) {
       return of(this.mockMenuItems);
     }
-    return this.http.get<MenuItem[]>(this.apiUrl);
+    return this.http
+      .get<MenuItem[]>(`${this.apiUrl}/items`)
+      .pipe(
+        // Fallback auf Mock, falls Backend nicht erreichbar ist
+        catchError(() => of(this.mockMenuItems))
+      );
   }
 
-  /** Speichert aktuelle Auswahl lokal */
+  // -------------------------------------------------
+  // Vorgefertigte Menüs (Combos)
+  // -------------------------------------------------
+  getMenus(): Observable<Menu[]> {
+    if (environment.useMockData) {
+      return of(this.mockMenus);
+    }
+    return this.http
+      .get<Menu[]>(`${this.apiUrl}/menus`)
+      .pipe(
+        // Fallback auf Mock
+        catchError(() => of(this.mockMenus))
+      );
+  }
+
+  // -------------------------------------------------
+  // Lokaler Warenkorb (beibehalten, auch wenn i.d.R. CartService zuständig ist)
+  // -------------------------------------------------
   saveOrderItems(orderItems: OrderItem[]): void {
     localStorage.setItem(this.storageKey, JSON.stringify(orderItems));
   }
 
-  /** Holt gespeicherte Auswahl */
   getOrderItems(): OrderItem[] {
     const stored = localStorage.getItem(this.storageKey);
     return stored ? JSON.parse(stored) : [];
   }
 
-  /** Löscht gespeicherte Auswahl */
   clearOrderItems(): void {
     localStorage.removeItem(this.storageKey);
   }
