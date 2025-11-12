@@ -23,7 +23,7 @@
         <div class="order-card" *ngFor="let order of openOrders">
           <div class="order-header" (click)="toggleDetails(order)">
             <div class="order-info">
-              <h3>{{ order.user?.name || 'Ich' }}</h3>
+              <h3>{{  'Ich' }}</h3>
               <span class="order-date">{{ order.createdAt | date: 'dd.MM.yyyy HH:mm' }}</span>
             </div>
             <div class="order-price">
