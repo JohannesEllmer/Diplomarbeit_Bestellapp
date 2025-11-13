@@ -4,49 +4,21 @@ import { Observable, of } from 'rxjs';
 import { User } from '../../../models/user.model';
 import { environment } from '../../env';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class UserService {
   private mockUsers: User[] = [
-    {
-      id: 101,
-      name: 'Anna Müller',
-      email: 'anna@example.com',
-      class: '3A',
-      orderCount: 5,
-      balance: 10.00,
-      blocked: false,
-    },
-    {
-      id: 102,
-      name: 'Max Mustermann',
-      email: 'max@example.com',
-      class: '4B',
-      orderCount: 3,
-      balance: 5.00,
-      blocked: false,
-    },
-    {
-      id: 103,
-      name: 'Lisa Schmidt',
-      email: 'lisa@example.com',
-      class: '5C',
-      orderCount: 7,
-      balance: 8.50,
-      blocked: false,
-    }
+    { id: '101', name: 'Anna Müller', email: 'anna@example.com', class: '3A', orderCount: 5, balance: 10.00, blocked: false },
+    { id: '102', name: 'Max Mustermann', email: 'max@example.com', class: '4B', orderCount: 3, balance: 5.00, blocked: false },
+    { id: '103', name: 'Lisa Schmidt', email: 'lisa@example.com', class: '5C', orderCount: 7, balance: 8.50, blocked: false }
   ];
 
   constructor(private http: HttpClient) {}
 
   getUsers(): Observable<User[]> {
-    return environment.useMockData
-      ? of(this.mockUsers)
-      : this.http.get<User[]>('/api/users');
+    return environment.useMockData ? of(this.mockUsers) : this.http.get<User[]>('/api/users');
   }
 
-  deleteUser(userId: number): Observable<void> {
+  deleteUser(userId: string): Observable<void> {
     if (environment.useMockData) {
       this.mockUsers = this.mockUsers.filter(u => u.id !== userId);
       return of();

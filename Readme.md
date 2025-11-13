@@ -61,9 +61,9 @@ Datum   Zeitaufwand     Titel                   Autor   genauere Beschreibung wa
 
 16.10   4 h            Frontend                  Chris   Menüplaner und Gerichte Verwaltung mobile Ansicht
 
-16.10   4 h            Nix                       Hons    Goa nix
-
-
+10.9 - 16.10   30h          Pflichtenheft                       Hons    
+06. + 09.11  6h               Backend + DB      Hons            Erstellung der DB als Docker Component und Einrichtung der Backendservices für den DB-Zugriff inkl. DTOs
+09.11          2h           Frontend            Hons            Anpassungen der IDs im Frontend von int auf strings um UUID zu verwenden.
 
 
 

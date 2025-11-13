@@ -234,6 +234,15 @@
   box-sizing: border-box;
 }
 
+/* >>> Neu: h2 wie Panels einrücken (gleiche Breite/Einrückung wie .menu-items) */
+.menu-container h2 {
+  max-width: 1400px;
+  margin: 0 auto 0.5rem auto;
+  padding: 0 1.5rem;
+  box-sizing: border-box;
+  width: 100%;
+}
+
 /* === Footer === */
 .menu-footer {
   display: flex;
@@ -518,6 +527,15 @@
     box-sizing: border-box;
     overflow-y: auto;
   }
+
+  /* >>> Neu: h2-Einrückung analog zu mobiler Panels-Padding */
+  .menu-container h2 {
+    max-width: 100vw;
+    margin: 0 auto 0.5rem auto;
+    padding: 0 0.7rem;
+    box-sizing: border-box;
+    width: 100%;
+  }
   
   .footer-grid {
     grid-template-columns: 1fr;
@@ -651,6 +669,11 @@
     padding: 0.75rem;
     margin-bottom: 140px;
   }
+
+  /* >>> Neu: h2-Einrückung für 480px */
+  .menu-container h2 {
+    padding: 0 0.75rem;
+  }
   
   .footer-grid {
     gap: 0.5rem;
@@ -693,6 +716,11 @@
   .menu-items {
     padding: 0.5rem;
     margin-bottom: 150px;
+  }
+
+  /* >>> Neu: h2-Einrückung für 360px */
+  .menu-container h2 {
+    padding: 0 0.5rem;
   }
   
   .footer-item {

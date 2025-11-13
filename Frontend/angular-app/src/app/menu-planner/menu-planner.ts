@@ -22,18 +22,14 @@ export class MenuPlanner implements OnInit {
   menuTitle = '';
 
   selectedDishes: Dish[] = [
-    { name: 'Spaghetti Bolognese' },
-    { name: 'Caesar Salad' },
-    { name: 'Grilled Chicken' },
-    { name: 'Vegetable Stir Fry' }
+    { id: '1',name: 'Spaghetti Bolognese' },
+
   ];
   unselectedDishes: Dish[] = [
-    { name: 'Pizza Margherita' },
-    { name: 'Schnitzel' },
-    { name: 'Tomato Soup' },
-    { name: 'Chicken Curry' }
+    {id: '2', name: 'Pizza Margherita' },
+
   ];
-  menu: MealPlan = { title: '', dishes: [] };
+  menu: MealPlan = { id: '1', title: '', dishes: [] };
 
   constructor(private router: Router) {}
 

@@ -1,86 +1,93 @@
 <div class="menu-container">
   <header class="menu-header">
     <h1>Meine Bestellungen</h1>
-    <button class="back-btn" (click)="navigateBack()" title="Zum Menüplan zurückkehren">
-      ←
-    </button>
+    <button class="back-btn" (click)="navigateBack()" title="Zum Menüplan zurückkehren">←</button>
   </header>
+
   <main class="order-sections">
-    <section>
-      <h2>Offene Bestellungen</h2>
-      <div *ngIf="openOrders.length === 0" class="no-results">
-        <p>Keine offenen Bestellungen vorhanden.</p>
-      </div>
+    <!-- Ladezustand -->
+    <div *ngIf="loading" class="loading">Lade deine Bestellungen …</div>
 
-      <div class="order-card" *ngFor="let order of openOrders">
-        <div class="order-header" (click)="toggleDetails(order)">
-          <div class="order-info">
-            <h3>{{ order.user.name }}</h3>
-            <span class="order-date">{{ order.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
-          </div>
-          <div class="order-price">
-            {{ order.totalPrice | currency:'EUR' }}
-          </div>
+    <!-- Fehlerzustand -->
+    <div *ngIf="!loading && error" class="error">{{ error }}</div>
+
+    <!-- Inhalt -->
+    <ng-container *ngIf="!loading && !error">
+      <section>
+        <h2>Offene Bestellungen</h2>
+
+        <div *ngIf="openOrders.length === 0" class="no-results">
+          <p>Keine offenen Bestellungen vorhanden.</p>
         </div>
 
-        <div class="order-details" *ngIf="order.showDetails">
-          <ul class="order-items">
-            <li *ngFor="let item of order.items">
-              <span class="item-title">{{ item.menuItem.name }}</span>
-              <span class="item-quantity">x{{ item.quantity }}</span>
-              <span class="item-price">
-                 {{ item.menuItem.price * item.quantity | currency:'EUR' }}
-              </span>
-            </li>
-          </ul>
+        <div class="order-card" *ngFor="let order of openOrders">
+          <div class="order-header" (click)="toggleDetails(order)">
+            <div class="order-info">
+              <h3>{{  'Ich' }}</h3>
+              <span class="order-date">{{ order.createdAt | date: 'dd.MM.yyyy HH:mm' }}</span>
+            </div>
+            <div class="order-price">
+              {{ order.totalPrice | currency: 'EUR' }}
+            </div>
+          </div>
 
-          <div class="qr-section">
-            <h4>QR-Code zur Abholung</h4>
-            <img
-              [src]="'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Order-' + order.id"
-              alt="QR Code"
-            />
+          <div class="order-details" *ngIf="order['showDetails']">
+            <ul class="order-items">
+              <li *ngFor="let item of order.items">
+                <span class="item-title">{{ item.menuItem.name }}</span>
+                <span class="item-quantity">x{{ item.quantity }}</span>
+                <span class="item-price">
+                  {{ item.menuItem.price * item.quantity | currency: 'EUR' }}
+                </span>
+              </li>
+            </ul>
+
+            <div class="qr-section">
+              <h4>QR-Code zur Abholung</h4>
+              <img [src]="order.qrCodeUrl" alt="QR Code" />
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section>
-      <h2>Abgeschlossene Bestellungen</h2>
-      <div *ngIf="closedOrders.length === 0" class="no-results">
-        <p>Keine abgeschlossenen Bestellungen vorhanden.</p>
-      </div>
+      <section>
+        <h2>Abgeschlossene Bestellungen</h2>
 
-      <div class="order-card closed" *ngFor="let order of closedOrders">
-        <div class="order-header" (click)="toggleDetails(order)">
-          <div class="order-info">
-            <h3>{{ order.user.name }}</h3>
-            <span class="order-date">{{ order.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
-          </div>
-          <div class="order-price">
-            {{ order.totalPrice | currency:'EUR' }}
-          </div>
+        <div *ngIf="closedOrders.length === 0" class="no-results">
+          <p>Keine abgeschlossenen Bestellungen vorhanden.</p>
         </div>
 
-        <div class="order-details" *ngIf="order.showDetails">
-          <ul class="order-items">
-            <li *ngFor="let item of order.items">
-              <span class="item-title">{{ item.menuItem.name }}</span>
-              <span class="item-quantity">x{{ item.quantity }}</span>
-              <span class="item-price">
-                {{ item.menuItem.price * item.quantity | currency:'EUR' }}
-              </span>
-            </li>
-          </ul>
+        <div class="order-card closed" *ngFor="let order of closedOrders">
+          <div class="order-header" (click)="toggleDetails(order)">
+            <div class="order-info">
+              <h3>{{ 'Meine Bestellungen' }}</h3>
+              <span class="order-date">{{ order.createdAt | date: 'dd.MM.yyyy HH:mm' }}</span>
+            </div>
+            <div class="order-price">
+              {{ order.totalPrice | currency: 'EUR' }}
+            </div>
+          </div>
 
-      <div class="qr-section" *ngIf="order.qrCodeUrl">
-        <h4>QR-Code zur Abholung</h4>
-        <img [src]="order.qrCodeUrl" alt="QR Code" />
-      </div>
+          <div class="order-details" *ngIf="order['showDetails']">
+            <ul class="order-items">
+              <li *ngFor="let item of order.items">
+                <span class="item-title">{{ item.menuItem.name }}</span>
+                <span class="item-quantity">x{{ item.quantity }}</span>
+                <span class="item-price">
+                  {{ item.menuItem.price * item.quantity | currency: 'EUR' }}
+                </span>
+              </li>
+            </ul>
 
+            <!-- Bei abgeschlossenen Bestellungen in der Regel kein QR -->
+            <div class="qr-section" *ngIf="order.qrCodeUrl">
+              <h4>QR-Code zur Abholung</h4>
+              <img [src]="order.qrCodeUrl" alt="QR Code" />
+            </div>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </ng-container>
   </main>
 
   <footer class="menu-footer">

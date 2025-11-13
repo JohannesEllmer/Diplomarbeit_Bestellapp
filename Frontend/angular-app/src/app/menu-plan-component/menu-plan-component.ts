@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { MenuItem, OrderItem } from '../../models/menu-item.model';
+import { MenuItem } from '../../models/menu-item.model';
+import { Menu } from '../../models/menu.model';
 import { User } from '../../models/user.model';
 import { MenuItemComponent } from '../menu-item-component/menu-item-component';
 import { MenuService } from '../services/menu/menu-service';
@@ -20,21 +21,23 @@ export class MenuPlanComponent implements OnInit {
   showImpressumPopup = false;
   activeCategory: string = 'Alle';
   activeFilter: string = 'Alle';
-  balance: number = 14.00;
+  balance: number = 14.0;
   searchTerm: string = '';
 
   categories = ['Alle', 'Hauptgerichte', 'Süßes', 'Getränke'];
   filters = ['Alle', 'Vegetarisch'];
 
+  // Daten
   menuItems: MenuItem[] = [];
+  menus: Menu[] = [];
 
   currentUser: User = {
-    id: 999,
+    id: '999',
     name: 'Ellmer Johannes',
     email: 'ellmer@example.com',
     class: '5C',
     orderCount: 0,
-    balance: 14.00,
+    balance: 14.0,
     blocked: false
   };
 
@@ -45,36 +48,44 @@ export class MenuPlanComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-  
-    this.menuService.getMenuItems().subscribe(items => {
-      this.menuItems = items;
-    });
+    this.menuService.getMenuItems().subscribe(items => (this.menuItems = items || []));
 
-    
-  
+    // vorgefertigte Menüs laden (falls Service vorhanden)
+    this.menuService.getMenus().subscribe(ms => (this.menus = ms || []));
+
+    // Warenkorb initial laden
     this.cartService.getCartItems();
   }
 
-  // Filterfunktion für Menü-Items
+  // ---------- Filter ----------
   get filteredItems(): MenuItem[] {
-    return this.menuItems.filter(item => {
-      const searchMatch = !this.searchTerm || item.name.toLowerCase().includes(this.searchTerm.toLowerCase());
-      const isDrink = item.category === 'Getränke';
-      const categoryMatch = this.activeCategory === 'Alle' ? !isDrink : item.category === this.activeCategory;
-      const filterMatch = this.activeFilter !== 'Vegetarisch' || item.vegetarian;
-      return searchMatch && categoryMatch && filterMatch;
-    });
+    return this.menuItems.filter(item => this.matchesSearchFilterAndCategory(item));
   }
 
-  onSearchChange(): void {
-    // filteredItems aktualisieren sich automatisch
+  get filteredMenus(): Menu[] {
+    return this.menus.filter(m => this.matchesSearchFilterAndCategory(m.dish));
   }
 
+  private matchesSearchFilterAndCategory(item: MenuItem): boolean {
+    const term = this.searchTerm?.trim().toLowerCase();
+    const searchMatch =
+      !term ||
+      item.name.toLowerCase().includes(term) ||
+      (item.description ?? '').toLowerCase().includes(term);
+
+    const isDrink = item.category === 'Getränke';
+    const categoryMatch = this.activeCategory === 'Alle' ? !isDrink : item.category === this.activeCategory;
+    const filterMatch = this.activeFilter !== 'Vegetarisch' || item.vegetarian;
+
+    return !!item && searchMatch && categoryMatch && filterMatch;
+  }
+
+  onSearchChange(): void {}
   clearSearch(): void {
     this.searchTerm = '';
   }
 
-  // Item in den Warenkorb legen
+  // ---------- Warenkorb ----------
   addToOrder(menuItem: MenuItem, note: string = '', deliveryTime: string = '12:00'): void {
     let items = this.cartService.getCartItems();
     const existing = items.find(
@@ -93,7 +104,6 @@ export class MenuPlanComponent implements OnInit {
         deliveryTime
       });
     }
-
     this.cartService.saveCartItems(items);
   }
 
