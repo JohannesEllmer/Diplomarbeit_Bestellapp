@@ -10,9 +10,9 @@ describe('UserManagementComponent', () => {
   let mockUserService: jasmine.SpyObj<UserService>;
 
   const mockUsers: User[] = [
-    { id: 1, name: 'Max', email: 'max@example.com', class: '10A', orderCount: 5, balance: 20, blocked: false },
-    { id: 2, name: 'Lisa', email: 'lisa@example.com', class: '10B', orderCount: 3, balance: 15, blocked: false },
-    { id: 3, name: 'Tom', email: 'tom@example.com', class: '10C', orderCount: 2, balance: 10, blocked: false }
+    { id: "1", name: 'Max', email: 'max@example.com', class: '10A', orderCount: 5, balance: 20, blocked: false },
+    { id: "2", name: 'Lisa', email: 'lisa@example.com', class: '10B', orderCount: 3, balance: 15, blocked: false },
+    { id: "3", name: 'Tom', email: 'tom@example.com', class: '10C', orderCount: 2, balance: 10, blocked: false }
   ];
 
   beforeEach(async () => {
@@ -45,7 +45,7 @@ describe('UserManagementComponent', () => {
     component.usersPerPage = 1;
     component.changePage(2);
     expect(component.currentPage).toBe(2);
-    expect(component.paginatedUsers[0].id).toBe(2);
+    expect(component.paginatedUsers[0].id).toBe("2");
   });
 
   it('should change users per page and reset to page 1', () => {
@@ -59,8 +59,8 @@ describe('UserManagementComponent', () => {
    mockUserService.deleteUser.and.returnValue(of(undefined));
 
     component.deleteUser(mockUsers[0]);
-    expect(mockUserService.deleteUser).toHaveBeenCalledWith(1);
-    expect(component.users.find(u => u.id === 1)).toBeUndefined();
+    expect(mockUserService.deleteUser).toHaveBeenCalledWith("1");
+    expect(component.users.find(u => u.id == "1")).toBeUndefined();
   });
 
   it('should block user and update list', () => {
@@ -70,6 +70,6 @@ describe('UserManagementComponent', () => {
     component.blockUser(mockUsers[1]);
 
     expect(mockUserService.toggleBlockUser).toHaveBeenCalledWith(mockUsers[1]);
-    expect(component.users.find(u => u.id === 2)?.blocked).toBeTrue();
+    expect(component.users.find(u => u.id == "2")?.blocked).toBeTrue();
   });
 });

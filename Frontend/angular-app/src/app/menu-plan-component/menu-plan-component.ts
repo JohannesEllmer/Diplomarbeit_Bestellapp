@@ -50,14 +50,12 @@ export class MenuPlanComponent implements OnInit {
   ngOnInit(): void {
     this.menuService.getMenuItems().subscribe(items => (this.menuItems = items || []));
 
-    // vorgefertigte Menüs laden (falls Service vorhanden)
     this.menuService.getMenus().subscribe(ms => (this.menus = ms || []));
 
-    // Warenkorb initial laden
     this.cartService.getCartItems();
   }
 
-  // ---------- Filter ----------
+  //Filter
   get filteredItems(): MenuItem[] {
     return this.menuItems.filter(item => this.matchesSearchFilterAndCategory(item));
   }
@@ -85,7 +83,7 @@ export class MenuPlanComponent implements OnInit {
     this.searchTerm = '';
   }
 
-  // ---------- Warenkorb ----------
+  //Warenkorb 
   addToOrder(menuItem: MenuItem, note: string = '', deliveryTime: string = '12:00'): void {
     let items = this.cartService.getCartItems();
     const existing = items.find(

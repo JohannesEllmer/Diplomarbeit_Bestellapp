@@ -7,7 +7,7 @@ import autoTable, { RowInput } from 'jspdf-autotable';
 
 Chart.register(...registerables);
 
-interface Order { id: number; user?: { name: string }; totalPrice: number; } // BRUTTO
+interface Order { id: number; user?: { name: string }; totalPrice: number; } 
 interface DayData { date: string; ordersList: Order[]; }
 interface WeekData { weekLabel: string; totalRevenue: number; totalOrders: number; }
 
@@ -136,7 +136,7 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
     this.trendRevenue   = this.totalRevenue >= this.previousRevenue ? 'up' : 'down';
   }
 
-  // --- Finance Rows & Alerts 
+  // Finance 
   recalculateFinance(): void {
     const rows: FinanceRow[] = [];
     if (this.displayMode === 'days') {
@@ -169,11 +169,10 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
     if (!this.days.length) {
       alerts.push({ severity:'danger', message: 'Keine Bestelldaten im gewählten Zeitraum.' });
     }
-    // Hinweise zu MwSt./Deckungsbeitrag entfernt
     this.alerts = alerts;
   }
 
-  // --- Chart (unverändert) ---
+  //Chart 
   toggleChartType(type: ChartType): void {
     if (type === 'line' && this.days.length < 5) return;
     this.selectedChartType = type;
@@ -247,7 +246,6 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
     doc.setFont('helvetica','normal'); doc.setFontSize(10);
     doc.text(`Zeitraum: ${this.startDate} bis ${this.endDate}`, 40, 58);
 
-    // Chart 
     const chartEl = this.chartCanvas?.nativeElement;
     if (chartEl) {
       const png = chartEl.toDataURL('image/png', 1.0);

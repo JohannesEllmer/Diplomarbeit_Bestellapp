@@ -10,7 +10,6 @@
   font-family: 'Segoe UI', sans-serif;
 }
 
-/* Header */
 .menu-header {
   background: #0284c7;
   color: white;
@@ -25,7 +24,6 @@
   font-size: 1.75rem;
 }
 
-/* Filter / Pagination */
 .filter-container {
   display: flex;
   gap: 2rem;
@@ -64,7 +62,6 @@
   border-color: #0ea5e9;
 }
 
-/* Suchfeld Styles */
 .search-controls {
   margin-bottom: 20px;
   padding: 0 20px;
@@ -118,7 +115,6 @@
   color: #666;
 }
 
-/* Keine Ergebnisse */
 .no-results {
   text-align: center;
   padding: 40px;
@@ -126,7 +122,6 @@
   font-style: italic;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .search-field {
     max-width: 100%;
@@ -137,7 +132,6 @@
   }
 }
 
-/* User Cards Grid */
 .user-list {
   display: grid;
   margin-top: 0;
@@ -148,7 +142,6 @@
   overflow-y: auto;
 }
 
-/* Footer */
 .menu-footer {
   background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
   padding: 1rem 0;

@@ -31,7 +31,7 @@ export class OrderOverviewComponent implements OnInit {
 
     this.orderService.getMyOrders().subscribe({
       next: (orders) => {
-        // QR-URL nur für offene
+        // QR-URL 
         this.orders = this.orderService.addQrForOpenOrders(
           orders.map(o => ({
             ...o,

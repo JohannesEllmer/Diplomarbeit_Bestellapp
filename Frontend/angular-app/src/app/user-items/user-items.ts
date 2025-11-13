@@ -52,6 +52,6 @@ export class UserItemsComponent {
 
   navigateToUser(event: Event): void {
     event.stopPropagation();
-    this.router.navigate(['/users', this.user.id]); // korrigierter Pfad
+    this.router.navigate(['/users', this.user.id]); 
   }
 }

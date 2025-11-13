@@ -5,13 +5,11 @@
   </header>
 
   <main class="order-sections">
-    <!-- Ladezustand -->
+
     <div *ngIf="loading" class="loading">Lade deine Bestellungen …</div>
 
-    <!-- Fehlerzustand -->
     <div *ngIf="!loading && error" class="error">{{ error }}</div>
 
-    <!-- Inhalt -->
     <ng-container *ngIf="!loading && !error">
       <section>
         <h2>Offene Bestellungen</h2>

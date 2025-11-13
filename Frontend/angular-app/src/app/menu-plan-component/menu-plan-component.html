@@ -52,7 +52,7 @@
     </div>
   </div>
 
-  <!-- MENÜ-KOMBIS (vorgefertigte Menüs) -->
+  <!-- MENÜS -->
   <section class="menu-section" *ngIf="filteredMenus.length > 0">
     <h2 class="section-title">Vorgefertigte Menüs</h2>
 
@@ -67,7 +67,7 @@
     </div>
   </section>
 
-  <!-- EINZELGERICHTE -->
+  <!--GERICHTE -->
   <section class="menu-section">
     <h2 class="section-title">Einzelgerichte</h2>
     <main class="menu-items">
@@ -75,7 +75,6 @@
         <app-menu-item [item]="item" (addItem)="addToOrder(item, $event)"></app-menu-item>
       }
 
-      <!-- Hinweis wenn nichts gefunden -->
       <div *ngIf="filteredItems.length === 0 && filteredMenus.length === 0" class="no-results">
         <p *ngIf="searchTerm">Keine Treffer für "{{ searchTerm }}".</p>
         <p *ngIf="!searchTerm && menuItems.length === 0 && menus.length === 0">Keine Gerichte vorhanden.</p>
@@ -114,7 +113,7 @@
       </button>
     </div>
 
-    <!-- Impressum Desktop -->
+    <!-- Impressum  -->
     <div class="impressum-desktop">
       <span>Firma Muster GmbH</span>
       <span>Musterstraße 1, 12345 Musterstadt</span>
@@ -122,12 +121,10 @@
       <span>E-Mail: info@musterfirma.de</span>
     </div>
 
-    <!-- Impressum Mobile -->
     <div class="impressum-mobile">
       <button class="impressum-btn" (click)="showImpressumPopup = true">Impressum</button>
     </div>
-
-    <!-- Popup für Impressum -->
+    
     <div class="impressum-popup-overlay" *ngIf="showImpressumPopup" (click)="showImpressumPopup = false">
       <div class="impressum-popup" (click)="$event.stopPropagation()">
         <h2>Impressum</h2>

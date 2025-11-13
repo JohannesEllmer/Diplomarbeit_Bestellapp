@@ -26,7 +26,7 @@ export class OrderListComponent implements OnInit, OnDestroy {
   itemsPerPage = 5;
   pages: number[] = [];
 
-  // --- Scanner State ---
+//Scanner 
   scanning = false;
   private html5?: Html5Qrcode;
   cameras: Camera[] = [];
@@ -46,7 +46,6 @@ export class OrderListComponent implements OnInit, OnDestroy {
     this.stopScanner().catch(() => {});
   }
 
-  /** Orders laden und Pagination setzen */
   loadOrders(): void {
     this.orderService.getOrders().subscribe(items => {
       this.orderItems = items;
@@ -54,7 +53,6 @@ export class OrderListComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Pagination aktualisieren */
   updatePagination(): void {
     const start = (this.currentPage - 1) * this.itemsPerPage;
     const end = start + this.itemsPerPage;
@@ -106,14 +104,11 @@ export class OrderListComponent implements OnInit, OnDestroy {
     }, {} as { [key: string]: OrderItem[] });
   }
 
-  // --------- Lieferstatus umschalten ---------
   toggleDelivered(item: OrderItem): void {
     console.log('Bestellstatus geändert:', item.menuItem.name, 'Geliefert:', item.delivered);
-    // Optional persistieren:
-    // this.orderService.toggleDelivered(item.menuItem.id, !!item.delivered).subscribe();
   }
 
-  // --------- QR: Öffnen & Schließen ---------
+  
   async openScanner(item: OrderItem): Promise<void> {
     this.pendingItem = item;
     this.scanning = true;
@@ -135,7 +130,7 @@ export class OrderListComponent implements OnInit, OnDestroy {
     this.scanMessage = '';
   }
 
-  // --------- QR: Kamera-Handling ---------
+  // QR
   private async initCameras(): Promise<void> {
     const devices = await Html5Qrcode.getCameras();
     this.cameras = (devices || []).map(d => ({ id: d.id, label: d.label }));
@@ -201,7 +196,7 @@ export class OrderListComponent implements OnInit, OnDestroy {
     await this.startScanner();
   }
 
-  // --------- QR: Scan Events ---------
+  // QR: Scan Events 
   private onScanSuccess(decodedText: string): void {
     try { navigator.vibrate?.(50); } catch {}
 
@@ -228,10 +223,8 @@ export class OrderListComponent implements OnInit, OnDestroy {
   }
 
   private onScanError(_msg: string): void {
-    // optional debug
   }
 
-  // --------- Navigation ---------
   navigateToUser(userId: string): void {
     this.router.navigate(['/user', userId]).catch(() => {
       this.router.navigate(['/user']);

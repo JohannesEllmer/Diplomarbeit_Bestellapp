@@ -52,18 +52,14 @@ export class CartPageComponent implements OnInit {
   }
 
   onOrder(): void {
-    // Prüfen, ob ausgewählte Lieferzeit gültig ist
     if (!this.cartService.isValidTimeFormat(this.selectedTime)) {
       this.timeError = 'Bitte gib eine gültige Uhrzeit im Format HH:mm ein.';
       return;
     }
-
-    // Prüfen, ob aktuelle Zeit vor 11:20 Uhr liegt
     const now = new Date();
     const cutoff = new Date();
-    cutoff.setHours(11, 20, 0, 0); // 11:20 Uhr heute
+    cutoff.setHours(13, 20, 0, 0); // 11:20 Uhr heute
 
-    // Prüfen, ob heute Montag bis Freitag ist (0=Sonntag, 6=Samstag)
     const weekday = now.getDay();
     if (weekday === 0 || weekday === 6) {
       this.timeError = 'Bestellungen sind nur von Montag bis Freitag möglich.';
@@ -75,7 +71,6 @@ export class CartPageComponent implements OnInit {
       return;
     }
 
-    // Alles OK → Bestellung erstellen
     this.timeError = '';
     const bestellung = {
       zeit: this.selectedTime,
@@ -92,7 +87,6 @@ export class CartPageComponent implements OnInit {
 
     this.cartService.submitOrder(bestellung).subscribe({
       next: () => {
-        //Bestellung erfolgreich
         this.cartService.clearCart();
         this.cartItems = [];
         this.selectedTime = '';
