@@ -1,6 +1,3 @@
-/* =======================
-   BASIS-STYLING DER KARTE
-   ======================= */
 .menu-card {
   position: relative;
   border: 2px solid #e2e8f0;
@@ -18,7 +15,6 @@
   box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
 
-/* Nicht verfügbare Items */
 .menu-card.unavailable {
   opacity: 0.7;
   background: #f8fafc;
@@ -36,9 +32,6 @@
   font-size: 0.75rem;
 }
 
-/* =======================
-   INHALT / STRUKTUR
-   ======================= */
 .card-content {
   display: flex;
   flex-direction: column;
@@ -47,7 +40,6 @@
   padding: 1rem;
 }
 
-/* Header */
 .card-header {
   margin-bottom: 0.5rem;
 }
@@ -60,7 +52,6 @@
   gap: 0.5rem;
 }
 
-/* Menü-Badge (wenn Menü angezeigt wird) */
 .badge {
   background: #0d55c9;
   color: white;
@@ -77,7 +68,6 @@
   margin: 0.25rem 0 0;
 }
 
-/* Tags */
 .tags {
   display: flex;
   gap: 0.5rem;
@@ -100,7 +90,6 @@
   font-size: 0.75rem;
 }
 
-/* Beschreibung */
 .menu-desc,
 .description {
   color: #475569;
@@ -109,7 +98,7 @@
   flex-shrink: 0;
 }
 
-/* Menü-Extras (Getränk / Dessert) */
+
 .menu-extras {
   list-style: none;
   padding: 0;
@@ -121,14 +110,12 @@
   margin-top: 0.25rem;
 }
 
-/* Allergene */
 .allergens {
   font-size: 0.85rem;
   color: #64748b;
   margin: 0.5rem 0;
 }
 
-/* Bemerkungsfeld */
 .note-input {
   margin: 0.5rem 0;
 }
@@ -144,14 +131,11 @@
   resize: vertical;
 }
 
-/* =======================
-   FOOTER MIT PREIS + BUTTON
-   ======================= */
 .card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: auto; /* Footer bleibt unten */
+  margin-top: auto; 
 }
 
 .price {
@@ -160,7 +144,6 @@
   color: #0f172a;
 }
 
-/* Buttons */
 .add-btn {
   background: #0284c7;
   color: white;
@@ -200,11 +183,10 @@
   cursor: pointer;
 }
 
-/* Einheitliches Button-Design */
 .add-btn,
 .confirm-btn,
 .cancel-btn {
-  background: #0f172a;
+  background: #0d55c9;
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -234,9 +216,6 @@
   background: #b91c1c;
 }
 
-/* =======================
-   EINHEITLICHE HÖHE / GRID
-   ======================= */
 .menu-items {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -245,16 +224,13 @@
 }
 
 .menu-card .card-header h3 {
-  min-height: 2.5rem; /* gleiche Zeilenhöhe für Titel */
+  min-height: 2.5rem;
 }
 
 .menu-card .menu-desc {
-  min-height: 3rem; /* gleiche Höhe für Beschreibung */
+  min-height: 3rem; 
 }
 
-/* =======================
-   HEADER / FOOTER WIE CART-PAGE
-   ======================= */
 .menu-header {
   background: linear-gradient(135deg, #0ea5e9, #0284c7);
   color: white;
@@ -275,7 +251,6 @@
   font-weight: 700;
 }
 
-/* Footer wie cart-page */
 .menu-footer {
   display: flex;
   flex-direction: column;

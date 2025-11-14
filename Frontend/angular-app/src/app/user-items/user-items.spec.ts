@@ -12,7 +12,7 @@ describe('UserItemsComponent', () => {
   let mockUserService: jasmine.SpyObj<UserService>;
 
   const mockUser: User = {
-    id: 1,
+    id: "1",
     name: 'Max Mustermann',
     email: 'max@example.com',
     class: '10A',

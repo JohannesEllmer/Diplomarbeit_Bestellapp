@@ -31,7 +31,7 @@ export class OrderOverviewComponent implements OnInit {
 
     this.orderService.getMyOrders().subscribe({
       next: (orders) => {
-        // QR-URL nur für offene
+        // QR-URL 
         this.orders = this.orderService.addQrForOpenOrders(
           orders.map(o => ({
             ...o,
@@ -49,6 +49,23 @@ export class OrderOverviewComponent implements OnInit {
 
   toggleDetails(order: Order) {
     (order as any).showDetails = !(order as any).showDetails;
+  }
+
+  getOrderTitle(order: Order): string {
+    if (!order.items || order.items.length === 0) {
+      return 'Leere Bestellung';
+    }
+
+    const parts = order.items.map(item =>
+      `${item.quantity}× ${item.menuItem.name}`
+    );
+
+    if (parts.length === 1) return parts[0];
+
+    const [first, second, ...rest] = parts;
+    if (parts.length === 2) return `${first}, ${second}`;
+
+    return `${first}, ${second} (+${rest.length} weitere)`;
   }
 
   get openOrders(): Order[] {

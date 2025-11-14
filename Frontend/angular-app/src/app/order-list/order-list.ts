@@ -23,10 +23,11 @@ export class OrderListComponent implements OnInit, OnDestroy {
   orderItems: OrderItem[] = [];
   paginatedItems: OrderItem[] = [];
   currentPage = 1;
-  itemsPerPage = 5;
+  itemsPerPage = 10;
   pages: number[] = [];
+  completedItems: OrderItem[] = [];
+  completedCollapsed = true;
 
-  // --- Scanner State ---
   scanning = false;
   private html5?: Html5Qrcode;
   cameras: Camera[] = [];
@@ -46,15 +47,18 @@ export class OrderListComponent implements OnInit, OnDestroy {
     this.stopScanner().catch(() => {});
   }
 
-  /** Orders laden und Pagination setzen */
   loadOrders(): void {
     this.orderService.getOrders().subscribe(items => {
-      this.orderItems = items;
+      const all = items ?? [];
+
+      this.orderItems = all.filter(i => !i.delivered);
+      this.completedItems = all.filter(i => i.delivered);
+
+      this.currentPage = 1;
       this.updatePagination();
     });
   }
 
-  /** Pagination aktualisieren */
   updatePagination(): void {
     const start = (this.currentPage - 1) * this.itemsPerPage;
     const end = start + this.itemsPerPage;
@@ -79,7 +83,9 @@ export class OrderListComponent implements OnInit, OnDestroy {
   }
 
   get totalPages(): number {
-    return Math.ceil(this.orderItems.length / this.itemsPerPage);
+    return this.orderItems.length === 0
+      ? 1
+      : Math.ceil(this.orderItems.length / this.itemsPerPage);
   }
 
   get totalSum(): number {
@@ -106,14 +112,10 @@ export class OrderListComponent implements OnInit, OnDestroy {
     }, {} as { [key: string]: OrderItem[] });
   }
 
-  // --------- Lieferstatus umschalten ---------
-  toggleDelivered(item: OrderItem): void {
-    console.log('Bestellstatus geändert:', item.menuItem.name, 'Geliefert:', item.delivered);
-    // Optional persistieren:
-    // this.orderService.toggleDelivered(item.menuItem.id, !!item.delivered).subscribe();
+  toggleCompletedOrders(): void {
+    this.completedCollapsed = !this.completedCollapsed;
   }
 
-  // --------- QR: Öffnen & Schließen ---------
   async openScanner(item: OrderItem): Promise<void> {
     this.pendingItem = item;
     this.scanning = true;
@@ -135,7 +137,6 @@ export class OrderListComponent implements OnInit, OnDestroy {
     this.scanMessage = '';
   }
 
-  // --------- QR: Kamera-Handling ---------
   private async initCameras(): Promise<void> {
     const devices = await Html5Qrcode.getCameras();
     this.cameras = (devices || []).map(d => ({ id: d.id, label: d.label }));
@@ -201,9 +202,10 @@ export class OrderListComponent implements OnInit, OnDestroy {
     await this.startScanner();
   }
 
-  // --------- QR: Scan Events ---------
   private onScanSuccess(decodedText: string): void {
-    try { navigator.vibrate?.(50); } catch {}
+    try {
+      navigator.vibrate?.(50);
+    } catch {}
 
     const code = decodedText?.trim();
     if (!code) return;
@@ -215,6 +217,10 @@ export class OrderListComponent implements OnInit, OnDestroy {
     this.orderService.completeOrder(item.menuItem.id, code).subscribe({
       next: async () => {
         this.orderItems = this.orderItems.filter(i => i !== item);
+
+        item.delivered = true;
+        this.completedItems = [...this.completedItems, item];
+
         this.updatePagination();
         await this.closeScanner();
         alert('Bestellung erfolgreich abgeschlossen!');
@@ -228,10 +234,8 @@ export class OrderListComponent implements OnInit, OnDestroy {
   }
 
   private onScanError(_msg: string): void {
-    // optional debug
   }
 
-  // --------- Navigation ---------
   navigateToUser(userId: string): void {
     this.router.navigate(['/user', userId]).catch(() => {
       this.router.navigate(['/user']);

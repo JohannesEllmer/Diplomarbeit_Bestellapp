@@ -15,7 +15,7 @@ describe('MenuPlanComponent', () => {
 
   const mockMenuItems: MenuItem[] = [
     {
-      id: 1,
+      id: "1",
       name: 'Salat',
       description: 'Frischer Salat',
       price: 5,
@@ -26,7 +26,7 @@ describe('MenuPlanComponent', () => {
      
     },
     {
-      id: 2,
+      id: "2",
       name: 'Cola',
       description: 'Erfrischungsgetränk',
       price: 2,

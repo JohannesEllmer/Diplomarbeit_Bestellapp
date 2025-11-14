@@ -5,13 +5,11 @@
   </header>
 
   <main class="order-sections">
-    <!-- Ladezustand -->
+
     <div *ngIf="loading" class="loading">Lade deine Bestellungen …</div>
 
-    <!-- Fehlerzustand -->
     <div *ngIf="!loading && error" class="error">{{ error }}</div>
 
-    <!-- Inhalt -->
     <ng-container *ngIf="!loading && !error">
       <section>
         <h2>Offene Bestellungen</h2>
@@ -23,7 +21,7 @@
         <div class="order-card" *ngFor="let order of openOrders">
           <div class="order-header" (click)="toggleDetails(order)">
             <div class="order-info">
-              <h3>{{  'Ich' }}</h3>
+              <h3>{{ getOrderTitle(order) }}</h3>
               <span class="order-date">{{ order.createdAt | date: 'dd.MM.yyyy HH:mm' }}</span>
             </div>
             <div class="order-price">
@@ -60,7 +58,7 @@
         <div class="order-card closed" *ngFor="let order of closedOrders">
           <div class="order-header" (click)="toggleDetails(order)">
             <div class="order-info">
-              <h3>{{ 'Meine Bestellungen' }}</h3>
+              <h3>{{ getOrderTitle(order) }}</h3>
               <span class="order-date">{{ order.createdAt | date: 'dd.MM.yyyy HH:mm' }}</span>
             </div>
             <div class="order-price">
