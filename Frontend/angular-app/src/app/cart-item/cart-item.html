@@ -1,8 +1,14 @@
 <article class="cart-card">
-   <div class="cart-content">
+  <div class="cart-content">
     <div class="cart-header">
       <div>
-        <h3>{{ item.menuItem.title }}</h3>
+        <h3>
+          {{ item.menuItem.name }}
+          <span class="badge" *ngIf="isMenu">Menü</span>
+        </h3>
+
+        <p class="menu-subtitle" *ngIf="isMenu">{{ menuTitle }}</p>
+
         <div class="tags">
           <span class="category-tag">{{ item.menuItem.category }}</span>
           <span class="vegetarian-tag" *ngIf="item.menuItem.vegetarian">Vegetarisch</span>
@@ -13,12 +19,19 @@
       </div>
     </div>
 
-    <div class="allergens">
-      <strong>Allergene:</strong> {{ item.menuItem.allergens.join(', ') || 'Keine' }}
+    <p class="menu-desc" *ngIf="item.menuItem.description">{{ item.menuItem.description }}</p>
+
+    <ul class="menu-extras" *ngIf="isMenu && (menuDrink || menuDessert)">
+      <li *ngIf="menuDrink">Getränk: {{ menuDrink }}</li>
+      <li *ngIf="menuDessert">Dessert: {{ menuDessert }}</li>
+    </ul>
+
+    <div class="allergens" *ngIf="item.menuItem.allergens?.length">
+      <strong>Allergene:</strong> {{ item.menuItem.allergens.join(', ') }}
     </div>
 
     <div class="note-input">
-      <textarea [(ngModel)]="item.note" placeholder="Anmerkung..."></textarea>
+      <textarea [(ngModel)]="displayNote" placeholder="Anmerkung..."></textarea>
     </div>
 
     <div class="quantity-control">

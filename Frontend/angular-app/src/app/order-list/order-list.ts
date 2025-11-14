@@ -23,10 +23,11 @@ export class OrderListComponent implements OnInit, OnDestroy {
   orderItems: OrderItem[] = [];
   paginatedItems: OrderItem[] = [];
   currentPage = 1;
-  itemsPerPage = 5;
+  itemsPerPage = 10;
   pages: number[] = [];
+  completedItems: OrderItem[] = [];
+  completedCollapsed = true;
 
-//Scanner 
   scanning = false;
   private html5?: Html5Qrcode;
   cameras: Camera[] = [];
@@ -48,7 +49,12 @@ export class OrderListComponent implements OnInit, OnDestroy {
 
   loadOrders(): void {
     this.orderService.getOrders().subscribe(items => {
-      this.orderItems = items;
+      const all = items ?? [];
+
+      this.orderItems = all.filter(i => !i.delivered);
+      this.completedItems = all.filter(i => i.delivered);
+
+      this.currentPage = 1;
       this.updatePagination();
     });
   }
@@ -77,7 +83,9 @@ export class OrderListComponent implements OnInit, OnDestroy {
   }
 
   get totalPages(): number {
-    return Math.ceil(this.orderItems.length / this.itemsPerPage);
+    return this.orderItems.length === 0
+      ? 1
+      : Math.ceil(this.orderItems.length / this.itemsPerPage);
   }
 
   get totalSum(): number {
@@ -104,11 +112,10 @@ export class OrderListComponent implements OnInit, OnDestroy {
     }, {} as { [key: string]: OrderItem[] });
   }
 
-  toggleDelivered(item: OrderItem): void {
-    console.log('Bestellstatus geändert:', item.menuItem.name, 'Geliefert:', item.delivered);
+  toggleCompletedOrders(): void {
+    this.completedCollapsed = !this.completedCollapsed;
   }
 
-  
   async openScanner(item: OrderItem): Promise<void> {
     this.pendingItem = item;
     this.scanning = true;
@@ -130,7 +137,6 @@ export class OrderListComponent implements OnInit, OnDestroy {
     this.scanMessage = '';
   }
 
-  // QR
   private async initCameras(): Promise<void> {
     const devices = await Html5Qrcode.getCameras();
     this.cameras = (devices || []).map(d => ({ id: d.id, label: d.label }));
@@ -196,9 +202,10 @@ export class OrderListComponent implements OnInit, OnDestroy {
     await this.startScanner();
   }
 
-  // QR: Scan Events 
   private onScanSuccess(decodedText: string): void {
-    try { navigator.vibrate?.(50); } catch {}
+    try {
+      navigator.vibrate?.(50);
+    } catch {}
 
     const code = decodedText?.trim();
     if (!code) return;
@@ -210,6 +217,10 @@ export class OrderListComponent implements OnInit, OnDestroy {
     this.orderService.completeOrder(item.menuItem.id, code).subscribe({
       next: async () => {
         this.orderItems = this.orderItems.filter(i => i !== item);
+
+        item.delivered = true;
+        this.completedItems = [...this.completedItems, item];
+
         this.updatePagination();
         await this.closeScanner();
         alert('Bestellung erfolgreich abgeschlossen!');

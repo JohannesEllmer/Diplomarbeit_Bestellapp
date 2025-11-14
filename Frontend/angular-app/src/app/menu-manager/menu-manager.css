@@ -104,7 +104,6 @@ html, body {
   min-width: 0;
   /* Updated properties for line breaking */
   display: -webkit-box;
-  -webkit-line-clamp: 2; /* Show max 2 lines */
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
