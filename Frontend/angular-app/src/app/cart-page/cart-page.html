@@ -1,11 +1,5 @@
 <div class="menu-container">
-  <div class="menu-header">
-    <h1>Ihre Bestellung</h1>
-    <button class="back-top-btn" (click)="navigateBack()">
-      <span class="btn-icon">←</span>
-      <span class="btn-text">Zurück zum Menüplan</span>
-    </button>
-  </div>
+  
 
   <div class="main-content">
     <div class="menu-items">
@@ -27,7 +21,7 @@
           <div class="summary-line">
             <span class="item-name">{{ item.menuItem.name }}</span>
             <span class="item-quantity">x{{ item.quantity }}</span>
-            <span class="item-price"> {{ item.menuItem.price | currency: 'EUR' }}</span>
+            <span class="item-price"> {{ item.menuItem.price | currency: 'EUR' }}</span>
           </div>
         }
       </div>
@@ -68,7 +62,6 @@
         <button class="impressum-btn" (click)="showImpressumPopup = true">Impressum</button>
       </div>
 
-      <!-- Popup für Impressum -->
       <div class="impressum-popup-overlay" *ngIf="showImpressumPopup" (click)="showImpressumPopup = false">
         <div class="impressum-popup" (click)="$event.stopPropagation()">
           <h2>Impressum</h2>
@@ -84,4 +77,10 @@
     </div>
   </footer>
 
+  <button
+    class="back-fab"
+    (click)="navigateBack()"
+    aria-label="Zurück zum Menüplan">
+    <span class="back-fab-icon">←</span>
+  </button>
 </div>

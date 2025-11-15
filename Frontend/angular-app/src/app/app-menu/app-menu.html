@@ -1,0 +1,103 @@
+<header class="app-header">
+  <div class="header-bar">
+    <!-- Links: Logo + App-Name -->
+    <div class="header-left">
+      <div class="logo-circle">
+        <span>B</span>
+      </div>
+      <div class="title-block" *ngIf="!isMobile">
+        <span class="app-name">HungerSatt Bestellsystem</span>
+        <span class="app-subtitle">Bestellen · Verwalten · Guthaben: {{ getGuthaben()}}</span>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <h1 class="current-page-title">{{ getCurrentPageTitle() }}</h1>
+    </div>
+
+    <div class="header-right">
+      <nav class="nav-desktop">
+        <div class="nav-stack">
+        
+          <div class="nav-row">
+            <span class="nav-tag">Kunde</span>
+            <div class="nav-pill-row">
+              <a
+                *ngFor="let link of customerLinks"
+                [routerLink]="link.route"
+                routerLinkActive="active-link"
+                [routerLinkActiveOptions]="{ exact: true }"
+                class="nav-pill"
+              >
+                {{ link.label }}
+              </a>
+            </div>
+          </div>
+
+          <div class="nav-row">
+            <span class="nav-tag nav-tag-secondary">Inhaber</span>
+            <div class="nav-pill-row">
+              <a
+                *ngFor="let link of ownerLinks"
+                [routerLink]="link.route"
+                routerLinkActive="active-link"
+                class="nav-pill"
+              >
+                {{ getShortLabel(link.label) }}
+              </a>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <button
+        type="button"
+        class="mobile-menu-btn"
+        (click)="toggleMobile()"
+        aria-label="Navigation umschalten"
+        [attr.aria-expanded]="mobileOpen"
+      >
+        <span class="burger-line" [class.open]="mobileOpen"></span>
+        <span class="burger-line" [class.open]="mobileOpen"></span>
+        <span class="burger-line" [class.open]="mobileOpen"></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-overlay" [class.open]="mobileOpen" (click)="closeMobile()"></div>
+
+  <div class="mobile-nav" [class.open]="mobileOpen">
+    <div class="mobile-nav-header">
+      <span class="mobile-nav-title">{{ getCurrentPageTitle() }}</span>
+      <button class="mobile-close-btn" (click)="closeMobile()">×</button>
+    </div>
+    <div class="mobile-nav-inner">
+      <div class="mobile-link-column">
+        <a
+          *ngFor="let link of customerLinks"
+          [routerLink]="link.route"
+          routerLinkActive="active-link"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="mobile-link"
+          (click)="closeMobile()"
+        >
+          {{ link.label }}
+        </a>
+      </div>
+
+      <hr class="mobile-divider" />
+
+      <div class="mobile-link-column">
+        <a
+          *ngFor="let link of ownerLinks"
+          [routerLink]="link.route"
+          routerLinkActive="active-link"
+          class="mobile-link"
+          (click)="closeMobile()"
+        >
+          {{ link.label }}
+        </a>
+      </div>
+    </div>
+  </div>
+</header>

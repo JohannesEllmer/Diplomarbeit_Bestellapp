@@ -64,6 +64,7 @@ Datum   Zeitaufwand     Titel                   Autor   genauere Beschreibung wa
 10.9 - 16.10   30h          Pflichtenheft                       Hons    
 06. + 09.11  6h               Backend + DB      Hons            Erstellung der DB als Docker Component und Einrichtung der Backendservices für den DB-Zugriff inkl. DTOs
 09.11          2h           Frontend            Hons            Anpassungen der IDs im Frontend von int auf strings um UUID zu verwenden.
+16.11           3h          Frontend            Hons            Menu + Anpassungen am Styling und Responsiveness Changed color in footer and header from #0284c7 to   box-shadow: 0 8px 32px rgba(2, 132, 199, 0.25);
 
 
 

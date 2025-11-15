@@ -1,7 +1,4 @@
 <div class="menu-container">
-  <header class="menu-header">
-    <h1>Menüplan</h1>
-  </header>
 
   <div class="search-controls">
     <div class="search-field">
@@ -23,8 +20,7 @@
     </div>
   </div>
 
-  <!-- FILTER -->
-  <div class="filter-container">
+   <div class="filter-container">
     <div class="filter-group">
       <span>Kategorie:</span>
       @for (category of categories; track category) {
@@ -52,7 +48,6 @@
     </div>
   </div>
 
-  <!-- MENÜS -->
   <section class="menu-section" *ngIf="filteredMenus.length > 0">
     <h2 class="section-title">Vorgefertigte Menüs</h2>
 
@@ -67,7 +62,6 @@
     </div>
   </section>
 
-  <!--GERICHTE -->
   <section class="menu-section">
     <h2 class="section-title">Einzelgerichte</h2>
     <main class="menu-items">
@@ -113,7 +107,6 @@
       </button>
     </div>
 
-    <!-- Impressum  -->
     <div class="impressum-desktop">
       <span>Firma Muster GmbH</span>
       <span>Musterstraße 1, 12345 Musterstadt</span>

@@ -1,308 +1,418 @@
-html, body {
-  overflow-y: hidden;
-}
-
 .menu-manager-container {
   display: flex;
   flex-direction: column;
-  max-width: 199vh;
-  margin: 0 auto;
-  padding: 0; /* Remove horizontal padding */
+  max-width: 1400px;
+  width: 100%;
+  margin: 7rem auto 0 auto;
+  padding: 0 1.5rem;
+  box-sizing: border-box;
   background: #f8fafc;
+  min-height: calc(100vh - 7rem); 
 }
 
 .menu-manager-header {
   background: #0ea5e9;
   color: white;
-  padding: 1.5rem 0; /* Keep vertical padding, remove horizontal padding */
+  padding: 1rem 1.5rem;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(14,165,233,0.08);
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.12);
   margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 5vh;
-  max-height: 5vh;
-  position: sticky;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  width: 100vw; /* Make it full viewport width */
-  margin-left: calc(-50vw + 50%); /* Center it regardless of parent container */
+  min-height: 56px;
+  border-radius: 14px;
+  position: relative;
+  z-index: 10;
 }
 
 .menu-manager-header h1 {
   margin: 0;
-  font-size: 1.75rem;
+  font-size: 1.6rem;
   letter-spacing: 0.02em;
 }
 
-/* Add padding to the main content area */
 .menus-container {
-  margin: 0 20px; /* Add margin to maintain spacing for content */
-  /* ... other properties remain unchanged ... */
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.25rem;
-  padding: 2rem 1.5rem;
-  max-height: 65vh;
+  gap: 1.5rem;             
+  padding: 1.75rem 1.5rem;
+  margin-top: 0.5rem;
+
+  max-height: calc(100vh - 20rem);
   overflow-y: auto;
-  background: white;
-  border: 1px solid #000000;
+
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(56,189,248,0.08);
+  box-shadow: 0 4px 16px rgba(56, 189, 248, 0.08);
+  box-sizing: border-box;
+  position: relative;
 }
 
 .menu-container {
   display: flex;
   flex-direction: column;
-  border: 1.5px solid black;
+  border: 1px solid #cbd5e1;
   border-radius: 12px;
   background: white;
-  padding: 1rem;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
-  transition: box-shadow 0.2s, border-color 0.2s;
-  min-width: 39vh;
-  max-width: 39vh;
-  height: 280px;
+  padding: 1.25rem 1rem 1rem 1rem;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  min-width: 0;
+  min-height: 280px;
+  position: relative;
 }
 
-.menu-header {
+.menu-container:hover {
+  border-color: #0ea5e9;
+  box-shadow: 0 6px 18px rgba(14, 165, 233, 0.16);
+  transform: translateY(-2px);
+}
+
+.menu-container.selected {
+  border: 2px solid #0ea5e9;
+  box-shadow: 0 6px 18px rgba(14, 165, 233, 0.18);
+}
+
+.menu-header-row {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 1rem;
-  border-radius: 10px;
-  min-height: 50px; /* Increased to accommodate two lines */
-  max-height: 50px;
-  gap: 0.5rem;
-  overflow: visible;
-}
-
-.menu-dishes {
-  height: 200px;
-  overflow-y: auto;
-  padding: 0.5rem;
-  border-top: 1px solid #e5e7eb;
-}
-
-.menu-dish {
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
-  background: #f8fafc;
-  border-radius: 6px;
-  height: 40px; /* Fixed height for each dish */
-  display: flex;
-  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  min-height: 3rem;
 }
 
 .menu-title {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   flex: 1;
   min-width: 0;
-  /* Updated properties for line breaking */
+  margin: 0;
+
   display: -webkit-box;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: normal; /* Changed from nowrap to normal */
-  line-height: 1.2; /* Control line height */
-  max-height: 2.4em; /* 2 lines × 1.2 line-height */
+  line-height: 1.3;
+  max-height: 2.6em;
 }
 
 .menu-actions {
   display: flex;
   gap: 0.5rem;
-  height: 100%;
-  align-items: flex-start; /* Changed from center to align with top */
+  align-items: flex-start;
   flex-shrink: 0;
-  padding-top: 0.25rem; /* Add some top padding to align with text */
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .menu-actions button {
-  padding: 1rem 0.5rem;
+  padding: 0.4rem 0.9rem;
   border: 1px solid #38bdf8;
-  border-radius: 10px;
+  border-radius: 8px;
   background: white;
   color: #0ea5e9;
   font-weight: 500;
-  font-size: 0.3rem;
+  font-size: 0.8rem;
   cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 1px 2px rgba(56,189,248,0.04);
-  height: 30px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(56, 189, 248, 0.06);
   display: flex;
   align-items: center;
   justify-content: center;
+  white-space: nowrap;
+  min-width: 60px;
 }
 
 .menu-actions button:hover {
   background: #0ea5e9;
   color: white;
   border-color: #0ea5e9;
-  box-shadow: 0 2px 8px rgba(14,165,233,0.10);
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.18);
 }
 
-@media (max-width: 768px) {
-  /* Make overall container padding smaller and adjust width constraints */
-  .menu-manager-container {
-    padding: 0 6px;
-    max-width: 100vw;
-  }
-
-  /* Header: reduce padding and font size for space */
-  .menu-manager-header {
-    padding: 1rem 0.5rem;
-    min-height: 44px;
-    max-height: 54px;
-  }
-  .menu-manager-header h1 {
-    font-size: 1.2rem;
-  }
-
-  /* Single column for menu cards, remove side paddings */
-  .menus-container {
-    grid-template-columns: 1fr;
-    padding: 1rem 2px;
-    max-height: none;
-    gap: 0.75rem;
-    border-radius: 8px;
-  }
-
-  /* Menu card width fit to device, no min/max */
-  .menu-container {
-    min-width: unset;
-    max-width: 100vw;
-    width: 100%;
-    height: auto;
-    padding: 0.75rem 0.5rem;
-    border-radius: 10px;
-  }
-
-  /* Reduce menu header size and space */
-  .menu-header {
-    min-height: 40px;
-    max-height: 52px;
-    margin-bottom: 0.5rem;
-    gap: 0.25rem;
-  }
-
-  /* Dishes: shrink height and padding for fitting more */
-  .menu-dishes {
-    height: auto;
-    max-height: 180px;
-    padding: 0.25rem;
-    font-size: 0.98rem;
-  }
-  .menu-dish {
-    height: 36px;
-    padding: 0.4rem;
-    font-size: 0.97rem;
-  }
-
-  /* Menu actions: stack vertically if too many/few space */
-  .menu-actions {
-    flex-direction: row;
-    width: auto;
-    gap: 0.2rem;
-    padding-top: 0;
-  }
-  .menu-actions button {
-    padding: 0.5rem 0.4rem;
-    font-size: 0.83rem;
-    min-width: 32px;
-    min-height: 32px;
-    height: 32px;
-    border-radius: 8px;
-  }
-
-  /* Add menu button: full width and larger touch target */
-  .add-menu-btn-wrapper {
-    justify-content: stretch;
-    width: 100%;
-    margin-top: 0.5vh;
-  }
-  .add-menu-button {
-    min-width: 0;
-    max-width: 100vw;
-    width: 100%;
-    font-size: 1rem;
-    padding: 1rem 0;
-    border-radius: 24px;
-    box-shadow: 0 4px 8px rgba(14,165,233,0.05);
-    margin-top: 0.5vh;
-  }
-
-  /* Optional: Smaller tooltip font */
-  .menu-title:hover::after {
-    font-size: 0.7rem;
-    max-width: 150px;
-    left: 0;
-    top: 110%;
-  }
+.menu-dishes {
+  margin-top: 0.75rem;
+  height: 180px;
+  overflow-y: auto;
+  padding: 0.75rem 0.5rem 0.5rem 0.5rem;
+  border-top: 1px solid #e5e7eb;
+  flex: 1;
 }
 
-/* Add horizontal margin to maintain spacing */
+.menu-dishes::-webkit-scrollbar {
+  width: 6px;
+}
+.menu-dishes::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 999px;
+}
+.menu-dishes::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+.menu-dishes::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.menu-dish {
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 0.5rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  border: 1px solid #e2e8f0;
+  transition: background-color 0.2s ease;
+}
+
+.menu-dish:hover {
+  background: #f1f5f9;
+}
+
 .add-menu-btn-wrapper {
-  margin: 1.1vh 20px auto;
-  /* ... other properties remain unchanged ... */
+  margin: 1.5rem 1.5rem 0 1.5rem;
   display: flex;
   justify-content: flex-end;
-  margin-top: 1.1vh;
-  margin-bottom: auto;
 }
 
 .add-menu-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
-  background: white;
+  gap: 0.6rem;
+  background: #ffffff;
   color: #0ea5e9;
   border: 1px solid #0ea5e9;
-  padding: 0.75rem 1.5rem;
-  border-radius: 50px;
-  font-size: 0.9rem;
+  padding: 0.85rem 1.75rem;
+  border-radius: 12px;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
-  min-width: 23vh;
-  max-width: 23vh;
-  box-shadow: 0 4px 8px rgba(14,165,233,0.10);
-  align-self: flex-end;
-  margin-top: 1vh;
+  transition: all 0.25s ease;
+  min-width: 200px;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);
 }
 
 .add-menu-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(14,165,233,0.15);
+  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.25);
   background: #0ea5e9;
-  color: white;
+  color: #ffffff;
 }
 
-.menu-container.selected {
-  border: 3px solid #0ea5e9;
-  box-shadow: 0 4px 16px rgba(14,165,233,0.15);
+@media (max-width: 1200px) {
+  .menu-manager-container {
+    max-width: 100%;
+    padding: 0 1.25rem;
+  }
+  
+  .menus-container {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem; 
+  }
 }
 
-/* Optional: Add tooltip for full title on hover */
-.menu-title {
-  position: relative;
+@media (max-width: 992px) {
+  .menu-manager-container {
+    padding: 0 1rem;
+    margin-top: 6.5rem;
+  }
+
+  .menus-container {
+    padding: 1.5rem 1rem;
+    max-height: calc(100vh - 18rem);
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .menu-container {
+    padding: 1rem 0.85rem;
+    min-height: 260px;
+  }
+
+  .add-menu-btn-wrapper {
+    margin: 1.25rem 1rem 0 1rem;
+  }
 }
 
-.menu-title:hover::after {
-  content: attr(title);
-  position: absolute;
-  left: 0;
-  top: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  z-index: 1000;
-  white-space: normal;
-  max-width: 200px;
+@media (max-width: 768px) {
+  .menu-manager-container {
+    padding: 0 0.75rem;
+    margin-top: 6rem;
+    min-height: calc(100vh - 6rem);
+  }
+
+  .menu-manager-header {
+    padding: 0.9rem 1rem;
+    border-radius: 12px;
+    margin-bottom: 1.25rem;
+  }
+
+  .menu-manager-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .menus-container {
+    grid-template-columns: 1fr;
+    padding: 1.25rem 0.75rem;
+    max-height: none;
+    gap: 1rem;
+    margin-top: 0.25rem;
+  }
+
+  .menu-container {
+    padding: 1.25rem 1rem;
+    min-height: auto;
+  }
+
+  .menu-header-row {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+
+  .menu-actions {
+    justify-content: flex-start;
+    order: -1;
+    margin-bottom: 0.5rem;
+  }
+
+  .menu-title {
+
+    max-height: 3.9em;
+  }
+
+  .menu-dishes {
+    height: 160px;
+    max-height: 160px;
+  }
+
+  .add-menu-btn-wrapper {
+    margin: 1.25rem 0.75rem 0 0.75rem;
+    justify-content: stretch;
+  }
+
+  .add-menu-button {
+    width: 100%;
+    min-width: 0;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .menu-manager-container {
+    padding: 0 0.5rem;
+    margin-top: 5.5rem;
+  }
+
+  .menu-manager-header {
+    padding: 0.8rem 0.75rem;
+  }
+
+  .menu-manager-header h1 {
+    font-size: 1.3rem;
+  }
+
+  .menus-container {
+    padding: 1rem 0.5rem;
+    gap: 0.85rem;
+  }
+
+  .menu-container {
+    padding: 1rem 0.75rem;
+  }
+
+  .menu-actions {
+    gap: 0.4rem;
+  }
+
+  .menu-actions button {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .menu-dishes {
+    height: 140px;
+    max-height: 140px;
+    padding: 0.5rem 0.25rem;
+  }
+
+  .menu-dish {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .menu-manager-container {
+    margin-top: 5rem;
+    padding: 0 0.4rem;
+  }
+
+  .menu-manager-header {
+    padding: 0.7rem 0.6rem;
+    border-radius: 10px;
+  }
+
+  .menu-manager-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .menus-container {
+    padding: 0.85rem 0.4rem;
+    gap: 0.75rem;
+  }
+
+  .menu-container {
+    padding: 0.9rem 0.6rem;
+    border-radius: 10px;
+  }
+
+  .menu-actions {
+    gap: 0.3rem;
+  }
+
+  .menu-actions button {
+    padding: 0.45rem 0.6rem;
+    font-size: 0.8rem;
+    border-radius: 6px;
+  }
+
+  .menu-title {
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+
+  .add-menu-button {
+    padding: 0.9rem 1.25rem;
+    font-size: 0.95rem;
+    border-radius: 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .menu-manager-container {
+    padding: 0 0.3rem;
+  }
+
+  .menus-container {
+    padding: 0.75rem 0.3rem;
+  }
+
+  .menu-container {
+    padding: 0.8rem 0.5rem;
+  }
+
+  .menu-actions button {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.75rem;
+  }
 }

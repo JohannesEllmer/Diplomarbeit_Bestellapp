@@ -27,7 +27,6 @@ export class MenuPlanComponent implements OnInit {
   categories = ['Alle', 'Hauptgerichte', 'Süßes', 'Getränke'];
   filters = ['Alle', 'Vegetarisch'];
 
-  // Daten
   menuItems: MenuItem[] = [];
   menus: Menu[] = [];
 
@@ -55,7 +54,6 @@ export class MenuPlanComponent implements OnInit {
     this.cartService.getCartItems();
   }
 
-  //Filter
   get filteredItems(): MenuItem[] {
     return this.menuItems.filter(item => this.matchesSearchFilterAndCategory(item));
   }
@@ -83,7 +81,6 @@ export class MenuPlanComponent implements OnInit {
     this.searchTerm = '';
   }
 
-  //Warenkorb 
   addToOrder(menuItem: MenuItem, note: string = '', deliveryTime: string = '12:00'): void {
     let items = this.cartService.getCartItems();
     const existing = items.find(

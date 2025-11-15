@@ -20,6 +20,7 @@ export class UserManagementComponent implements OnInit {
   usersPerPage = 5;
   pages: number[] = [];
   searchTerm = '';
+  showImpressumPopup = false;
 
   constructor(private userService: UserService) {}
 

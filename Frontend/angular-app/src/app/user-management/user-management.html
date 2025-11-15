@@ -1,7 +1,5 @@
 <div class="user-management-container">
-  <header class="menu-header">
-    <h1>Benutzerverwaltung</h1>
-  </header>
+
   <div class="search-controls">
     <div class="search-field">
       <input 
@@ -55,4 +53,30 @@
       <p *ngIf="!searchTerm">Keine Benutzer vorhanden.</p>
     </div>
   </main>
+
+  <footer class="menu-footer">
+    <div class="impressum-desktop">
+      <span>Firma Muster GmbH</span>
+      <span>Musterstraße 1, 12345 Musterstadt</span>
+      <span>Tel: 01234 / 567890</span>
+      <span>E-Mail: info@musterfirma.de</span>
+    </div>
+    <div class="impressum-mobile">
+      <button class="impressum-btn" (click)="showImpressumPopup = true">Impressum</button>
+    </div>
+
+    <div class="impressum-popup-overlay" *ngIf="showImpressumPopup" (click)="showImpressumPopup = false">
+      <div class="impressum-popup" (click)="$event.stopPropagation()">
+        <h2>Impressum</h2>
+        <div class="impressum-details">
+          <p><strong>Firma Muster GmbH</strong></p>
+          <p>Musterstraße 1, 12345 Musterstadt</p>
+          <p>Tel: 01234 / 567890</p>
+          <p>E-Mail: info@musterfirma.de</p>
+        </div>
+        <button class="close-btn" (click)="showImpressumPopup = false">Schließen</button>
+      </div>
+    </div>
+  </footer>
+
 </div>

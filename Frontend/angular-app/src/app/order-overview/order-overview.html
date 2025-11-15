@@ -1,11 +1,5 @@
 <div class="menu-container">
-  <header class="menu-header">
-    <h1>Meine Bestellungen</h1>
-    <button class="back-btn" (click)="navigateBack()" title="Zum Menüplan zurückkehren">←</button>
-  </header>
-
   <main class="order-sections">
-
     <div *ngIf="loading" class="loading">Lade deine Bestellungen …</div>
 
     <div *ngIf="!loading && error" class="error">{{ error }}</div>
@@ -77,7 +71,6 @@
               </li>
             </ul>
 
-            <!-- Bei abgeschlossenen Bestellungen in der Regel kein QR -->
             <div class="qr-section" *ngIf="order.qrCodeUrl">
               <h4>QR-Code zur Abholung</h4>
               <img [src]="order.qrCodeUrl" alt="QR Code" />
@@ -112,4 +105,11 @@
       </div>
     </div>
   </footer>
+
+  <button
+    class="back-fab"
+    (click)="navigateBack()"
+    aria-label="Zurück zum Menüplan">
+    <span class="back-fab-icon">←</span>
+  </button>
 </div>

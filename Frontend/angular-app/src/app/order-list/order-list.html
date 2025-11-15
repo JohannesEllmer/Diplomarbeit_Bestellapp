@@ -1,7 +1,5 @@
 <div class="order-management-container">
-  <header class="menu-header">
-    <h1>Bestellungen</h1>
-  </header>
+
 
   <div class="filter-container">
     <div class="filter-group">
@@ -47,7 +45,6 @@
   </div>
 
   <main class="order-list">
-    <!-- Offene Bestellungen -->
     <section class="open-orders">
       <div *ngFor="let group of groupedOrders | keyvalue">
         <div class="order-group">
