@@ -8,7 +8,7 @@
   left: 0;
   right: 0;
   z-index: 1000;
-  background: #0f172a;
+  background: #0284c7;
   color: #ffffff;
   box-shadow: 0 8px 32px rgba(2, 132, 199, 0.25);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -483,6 +483,3 @@
     height: 36px;
   }
 }
-/* ===========================
-   Footer Impressum Styles
-   =========================== */

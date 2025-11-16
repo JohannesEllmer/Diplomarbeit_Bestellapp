@@ -299,14 +299,18 @@
 }
 
 .order-footer {
-   margin-left: calc(50% - 50vw);
-  background: #0f172a;
+  margin-top: auto; 
+  width: 100vw;     
+  margin-left: calc(50% - 50vw); 
+  
+  background: #0284c7;
   padding: 1.4rem 2.5rem 1.2rem 2.5rem;
   box-shadow: 0 -10px 32px rgba(15, 23, 42, 0.65);
   border-top: 1px solid rgba(148, 163, 184, 0.35);
   flex-shrink: 0;
   box-sizing: border-box;
 }
+
 
 .footer-grid {
   display: flex;

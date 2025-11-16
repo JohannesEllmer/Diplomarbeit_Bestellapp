@@ -1,24 +1,36 @@
 <header class="app-header">
   <div class="header-bar">
-    <!-- Links: Logo + App-Name -->
+    <!-- Links: Logo + Titel -->
     <div class="header-left">
       <div class="logo-circle">
         <span>B</span>
       </div>
+
+      <!-- Desktop: App-Name + Guthaben -->
       <div class="title-block" *ngIf="!isMobile">
         <span class="app-name">HungerSatt Bestellsystem</span>
-        <span class="app-subtitle">Bestellen · Verwalten · Guthaben: {{ getGuthaben()}}</span>
+        <span class="app-subtitle">
+          Bestellen · Verwalten ·
+          <span class="app-subtitle-balance">
+            Guthaben: {{ getGuthaben() }}
+          </span>
+        </span>
+      </div>
+
+      <!-- Mobile: Nur aktueller Seitenname -->
+      <div class="mobile-page-title" *ngIf="isMobile">
+        {{ getCurrentPageTitle() }}
       </div>
     </div>
 
-    <div class="header-center">
+    <!-- Desktop: Seitentitel in der Mitte, Mobile: versteckt -->
+    <div class="header-center" *ngIf="!isMobile">
       <h1 class="current-page-title">{{ getCurrentPageTitle() }}</h1>
     </div>
 
     <div class="header-right">
       <nav class="nav-desktop">
         <div class="nav-stack">
-        
           <div class="nav-row">
             <span class="nav-tag">Kunde</span>
             <div class="nav-pill-row">
@@ -64,6 +76,7 @@
     </div>
   </div>
 
+  <!-- Mobile-Overlay + Drawer bleiben wie gehabt -->
   <div class="mobile-overlay" [class.open]="mobileOpen" (click)="closeMobile()"></div>
 
   <div class="mobile-nav" [class.open]="mobileOpen">

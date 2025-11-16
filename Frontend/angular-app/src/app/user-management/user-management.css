@@ -175,11 +175,12 @@
 }
 
 .menu-footer {
-  margin-top: auto; 
+  margin-top: auto;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
 
-  width: 100%;
   padding: 0.9rem 2rem 0.8rem 2rem;
-  background: #0f172a;
+  background: #0284c7; /* neue Farbe */
   color: #e5e7eb;
   box-shadow: 0 -8px 32px rgba(2, 132, 199, 0.25);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -191,6 +192,7 @@
   align-items: center;
   gap: 0.35rem;
 }
+
 
 .impressum-desktop {
   display: flex;
