@@ -65,7 +65,9 @@ Datum   Zeitaufwand     Titel                   Autor   genauere Beschreibung wa
 06. + 09.11  6h               Backend + DB      Hons            Erstellung der DB als Docker Component und Einrichtung der Backendservices für den DB-Zugriff inkl. DTOs
 09.11          2h           Frontend            Hons            Anpassungen der IDs im Frontend von int auf strings um UUID zu verwenden.
 
+13.11   2h                                      Chris API-Gateway gestarted und Users Endpoint entwickelt
 
+15.11   3h                                      Chris API-Gateway Users Endpoint fertiggestellt und getestet und Orders Endpoint implementiert
 
 
 ----------------------
