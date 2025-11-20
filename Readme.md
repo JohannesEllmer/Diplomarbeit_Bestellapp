@@ -66,7 +66,9 @@ Datum   Zeitaufwand     Titel                   Autor   genauere Beschreibung wa
 09.11          2h           Frontend            Hons            Anpassungen der IDs im Frontend von int auf strings um UUID zu verwenden.
 16.11           3h          Frontend            Hons            Menu + Anpassungen am Styling und Responsiveness Changed color in footer and header from #0284c7 to   box-shadow: 0 8px 32px rgba(2, 132, 199, 0.25);
 
+13.11   2h                                      Chris API-Gateway gestarted und Users Endpoint entwickelt
 
+15.11   3h                                      Chris API-Gateway Users Endpoint fertiggestellt und getestet und Orders Endpoint implementiert
 
 
 ----------------------
