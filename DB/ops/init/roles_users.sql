@@ -1,4 +1,3 @@
--- Laufzeit-Logins anlegen und Rollen zuweisen
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'api_app_user') THEN

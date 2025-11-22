@@ -1,31 +1,76 @@
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link
+  href="https://fonts.googleapis.com/icon?family=Material+Icons"
+  rel="stylesheet"
+/>
+
 <div class="menu-manager-container">
+  <div class="menu-manager-header">
+    <h1>Menüverwaltung</h1>
+  </div>
 
   <div class="menus-container">
-    @for(menu of Menus; track menu.title) {
-      <div class="menu-container"
-           [class.selected]="selectedMenu === menu">
-        <div class="menu-header">
-          <span class="menu-title" [title]="menu.title">{{menu.title}}</span>
-          <div class="menu-actions">
-            <button title="Edit" (click)="goToMenuPlanner(menu)">
+    @for (menu of Menus; track menu.id) {
+      <div
+        class="menu-container"
+        [class.selected]="selectedMenu === menu"
+        (click)="selectMenu(menu)"
+      >
+        <div class="menu-header-row">
+          <h2 class="menu-title" [title]="menu.title">
+            {{ menu.title }}
+          </h2>
+
+          <div class="menu-actions" (click)="$event.stopPropagation()">
+            <!-- Print -->
+            <button
+              class="menu-action-btn"
+              type="button"
+              title="Menü drucken"
+              (click)="printMenu(menu)"
+            >
+              <span class="material-icons">print</span>
+            </button>
+
+            <!-- Edit -->
+            <button
+              class="menu-action-btn"
+              type="button"
+              title="Menü bearbeiten"
+              (click)="goToMenuPlanner(menu)"
+            >
               <span class="material-icons">edit</span>
             </button>
-            <button title="Remove" (click)="removeMenu(menu)">
+
+            <!-- Delete -->
+            <button
+              class="menu-action-btn menu-action-delete"
+              type="button"
+              title="Menü entfernen"
+              (click)="removeMenu(menu)"
+            >
               <span class="material-icons">delete</span>
             </button>
           </div>
         </div>
+
         <div class="menu-dishes">
           @if (menu.dishes.length > 0) {
-            @for(dish of menu.dishes; track dish.name) {
+            @for (dish of menu.dishes; track dish.id) {
               <div class="menu-dish">
-                {{dish.name}}
+                <div class="menu-dish-main">
+                  <span class="dish-name">{{ dish.name }}</span>
+                  <span class="dish-price">
+                    {{ dish.price  }} €
+                  </span>
+                </div>
+                <div class="dish-description">
+                  {{ dish.description }}
+                </div>
               </div>
             }
           } @else {
-            <div class="menu-dish">
-              Keine Gerichte
+            <div class="menu-dish menu-dish-empty">
+              Keine Gerichte vorhanden.
             </div>
           }
         </div>
@@ -34,6 +79,13 @@
   </div>
 
   <div class="add-menu-btn-wrapper">
-    <button class="add-menu-button" (click)="goToMenuPlanner({ id: '1', title: '', dishes: [] })">Hinzufügen</button>
+    <button
+      class="add-menu-button"
+      type="button"
+      (click)="goToMenuPlanner({ id: 'new', title: '', dishes: [] })"
+    >
+      <span class="material-icons">add</span>
+      Neues Menü hinzufügen
+    </button>
   </div>
 </div>

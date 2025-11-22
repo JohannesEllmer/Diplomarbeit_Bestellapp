@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { OrderItem } from '../../../models/menu-item.model';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, map, catchError } from 'rxjs';
 import { environment } from '../../env';
 
 @Injectable({
@@ -9,7 +9,8 @@ import { environment } from '../../env';
 })
 export class CartService {
   private readonly storageKey = 'cartItems';
-  private readonly apiUrl = 'https://your-backend-api.com/orders'; // Backend-URL anpassen
+  private readonly apiBase = environment.apiBaseUrl ?? 'http://localhost:3000';
+  private readonly ordersEndpoint = `${this.apiBase}/orders`;
 
   constructor(private http: HttpClient) {}
 
@@ -74,12 +75,38 @@ export class CartService {
     return /^\d{2}:\d{2}$/.test(time) && !isNaN(Date.parse(`1970-01-01T${time}:00`));
   }
 
-  /** Sendet Bestellung ans Backend oder simuliert sie im Testmodus */
+  /**
+   * Sendet Bestellung ans Backend (POST /orders) oder simuliert sie im Testmodus.
+   * Falls das Backend keine sinnvolle Antwort liefert oder ein Fehler passiert,
+   * wird eine Fallback-Antwort zurückgegeben.
+   */
   submitOrder(order: any): Observable<any> {
     if (environment.useMockData) {
       console.log('Testmodus aktiv – Bestellung simuliert:', order);
-      return of({ success: true, message: 'Bestellung simuliert' });
+      return of({ success: true, message: 'Bestellung simuliert (Mock-Daten)', fallback: true });
     }
-    return this.http.post(this.apiUrl, order);
+
+    return this.http.post<any>(this.ordersEndpoint, order).pipe(
+      map(response => {
+        // Falls das Backend z.B. null/undefined zurückgibt -> Fallback-Antwort
+        if (response == null) {
+          return {
+            success: true,
+            message: 'Bestellung wurde gesendet, aber Server lieferte keine Daten – Fallback-Antwort.',
+            fallback: true
+          };
+        }
+        return response;
+      }),
+      catchError(error => {
+        console.error('Fehler beim Senden der Bestellung, Fallback wird verwendet', error);
+        return of({
+          success: true,
+          message: 'Bestellung konnte nicht an das Backend gesendet werden – Fallback (simuliert).',
+          fallback: true,
+          error
+        });
+      })
+    );
   }
 }

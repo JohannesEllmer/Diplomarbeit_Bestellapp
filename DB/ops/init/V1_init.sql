@@ -1,22 +1,7 @@
--- =====================================================================
---  APP-SCHEMA FÜR SCHOOL-CATERING (komplett, idempotent)
---  Deckt ab:
---   - Users & Klassen
---   - Kategorien, Allergene, MenuItems (+ m:n Allergene)
---   - Dish / MealPlan / MealPlan↔Dish
---   - Menu (verweist auf MenuItem als "dish" wie im Frontend-Interface)
---   - Orders, OrderItems (mit quantity, note, delivered, delivery_time)
---   - Account/Guthaben (mit View v_user_balance)
---   - Views: v_order_total, v_daily_stats
---   - Delivery Slots
---   - RLS (Orders/Account), Rollen & Rechte
--- =====================================================================
-
--- ---------- SCHEMA & EXTENSIONS ----------
 CREATE SCHEMA IF NOT EXISTS app;
 
-CREATE EXTENSION IF NOT EXISTS pgcrypto;  -- gen_random_uuid()
-CREATE EXTENSION IF NOT EXISTS citext;    -- case-insensitive email
+CREATE EXTENSION IF NOT EXISTS pgcrypto;  
+CREATE EXTENSION IF NOT EXISTS citext;    
 
 SET search_path TO app, public;
 

@@ -48,33 +48,38 @@
     </div>
   </div>
 
-  <section class="menu-section" *ngIf="filteredMenus.length > 0">
-    <h2 class="section-title">Vorgefertigte Menüs</h2>
+  <div class="menu-scroll-area">
+    <section class="menu-section" *ngIf="filteredMenus.length > 0">
+      <h2 class="section-title">Vorgefertigte Menüs</h2>
 
-    <div class="menu-items">
-      @for (m of filteredMenus; track m.id) {
-        <app-menu-item
-          [item]="m.dish"
-          [menu]="m"
-          (addItem)="addToOrder(m.dish, $event)"
-        ></app-menu-item>
-      }
-    </div>
-  </section>
-
-  <section class="menu-section">
-    <h2 class="section-title">Einzelgerichte</h2>
-    <main class="menu-items">
-      @for (item of filteredItems; track item.id) {
-        <app-menu-item [item]="item" (addItem)="addToOrder(item, $event)"></app-menu-item>
-      }
-
-      <div *ngIf="filteredItems.length === 0 && filteredMenus.length === 0" class="no-results">
-        <p *ngIf="searchTerm">Keine Treffer für "{{ searchTerm }}".</p>
-        <p *ngIf="!searchTerm && menuItems.length === 0 && menus.length === 0">Keine Gerichte vorhanden.</p>
+      <div class="menu-items">
+        @for (m of filteredMenus; track m.id) {
+          <app-menu-item
+            [item]="m.dish"
+            [menu]="m"
+            (addItem)="addToOrder(m.dish, $event)"
+          ></app-menu-item>
+        }
       </div>
-    </main>
-  </section>
+    </section>
+
+    <section class="menu-section">
+      <h2 class="section-title">Einzelgerichte</h2>
+      <main class="menu-items">
+        @for (item of filteredItems; track item.id) {
+          <app-menu-item
+            [item]="item"
+            (addItem)="addToOrder(item, $event)"
+          ></app-menu-item>
+        }
+
+        <div *ngIf="filteredItems.length === 0 && filteredMenus.length === 0" class="no-results">
+          <p *ngIf="searchTerm">Keine Treffer für "{{ searchTerm }}".</p>
+          <p *ngIf="!searchTerm && menuItems.length === 0 && menus.length === 0">Keine Gerichte vorhanden.</p>
+        </div>
+      </main>
+    </section>
+  </div>
 
   <footer class="menu-footer">
     <div class="footer-grid">
