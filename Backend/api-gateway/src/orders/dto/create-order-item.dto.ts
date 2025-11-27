@@ -1,20 +1,16 @@
-import { IsString, IsNumber, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { MenuItemDto } from './menu-item.dto';
-import { UserRefDto } from './user-ref.dto';
+import { IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 
 export class CreateOrderItemDto {
-  @ValidateNested()
-  @Type(() => MenuItemDto)
-  menuItem: MenuItemDto;
+  @IsUUID()
+  menuItemId!: string;
 
-  @ValidateNested()
-  @Type(() => UserRefDto)
-  user: UserRefDto;
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  quantity!: number;
 
+  @IsOptional()
   @IsString()
-  note: string;
-
-  @IsNumber()
-  quantity: number;
+  note?: string;
 }

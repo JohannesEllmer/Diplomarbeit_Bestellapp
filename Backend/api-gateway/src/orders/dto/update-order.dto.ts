@@ -1,4 +1,15 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateOrderDto } from './create-order.dto';
+import { Type } from 'class-transformer';
+import { IsArray, IsIn, IsOptional, ValidateNested } from 'class-validator';
+import { CreateOrderItemDto } from './create-order-item.dto';
 
-export class UpdateOrderDto extends PartialType(CreateOrderDto) {}
+export class UpdateOrderDto {
+  @IsOptional()
+  @IsIn(['open', 'closed'])
+  status?: 'open' | 'closed';
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateOrderItemDto)
+  items?: CreateOrderItemDto[];
+}

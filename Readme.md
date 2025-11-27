@@ -69,7 +69,7 @@ Datum   Zeitaufwand     Titel                   Autor   genauere Beschreibung wa
 13.11   2h                                      Chris API-Gateway gestarted und Users Endpoint entwickelt
 
 15.11   3h                                      Chris API-Gateway Users Endpoint fertiggestellt und getestet und Orders Endpoint implementiert
-
+22.11   4h                                     Hons Die Services zu "Order" wurden fürs frontend entsprechend erstellt und die einzelnen menüs können als pdf ausgedruckt werden.
 
 ----------------------
 Sonstiges:

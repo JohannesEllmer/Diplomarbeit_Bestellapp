@@ -4,11 +4,16 @@
   max-width: 1400px;
   width: 100%;
   margin: 7rem auto 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 1.5rem 1.5rem 1.5rem;
   box-sizing: border-box;
   background: #f8fafc;
+  height: calc(100vh - 7rem);
   min-height: calc(100vh - 7rem);
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
 }
+
+/* Header (optional) */
 
 .menu-manager-header {
   background: #0ea5e9;
@@ -16,7 +21,7 @@
   padding: 1rem 1.5rem;
   text-align: center;
   box-shadow: 0 2px 8px rgba(14, 165, 233, 0.12);
-  margin-bottom: 1.5rem;
+  margin: 0 0 1.25rem 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -30,6 +35,8 @@
   letter-spacing: 0.02em;
 }
 
+/* Scrollbarer Bereich mit den Menüs */
+
 .menus-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -41,7 +48,29 @@
   border-radius: 16px;
   box-shadow: 0 4px 16px rgba(56, 189, 248, 0.08);
   box-sizing: border-box;
+
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
+
+/* Scrollbar für den ganzen Menübereich */
+.menus-container::-webkit-scrollbar {
+  width: 8px;
+}
+.menus-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 999px;
+}
+.menus-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+.menus-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* einzelne Menü-Karte */
 
 .menu-container {
   display: flex;
@@ -69,6 +98,8 @@
   box-shadow: 0 8px 22px rgba(14, 165, 233, 0.2);
 }
 
+/* Header-Zeile in der Karte */
+
 .menu-header-row {
   display: flex;
   align-items: flex-start;
@@ -76,6 +107,16 @@
   gap: 0.75rem;
   margin-bottom: 0.75rem;
   min-height: 3rem;
+}
+
+/* Titel + Status-Tag */
+
+.menu-title-and-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .menu-title {
@@ -92,6 +133,31 @@
   line-height: 1.3;
   max-height: 2.6em;
 }
+
+/* Aktiv-Tag */
+
+.menu-status-pill {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #22c55e;
+}
+
+/* Aktionen rechts */
 
 .menu-actions {
   display: flex;
@@ -135,6 +201,8 @@
   background: #ef4444;
   border-color: #ef4444;
 }
+
+/* Gerichte innerhalb einer Karte */
 
 .menu-dishes {
   margin-top: 0.75rem;
@@ -202,8 +270,10 @@
   color: #64748b;
 }
 
+/* Button unten */
+
 .add-menu-btn-wrapper {
-  margin: 1.5rem 1.5rem 0 1.5rem;
+  margin: 1.25rem 1.5rem 0 1.5rem;
   display: flex;
   justify-content: flex-end;
 }
@@ -242,7 +312,9 @@
 @media (max-width: 1200px) {
   .menu-manager-container {
     max-width: 100%;
-    padding: 0 1.25rem;
+    padding: 0 1.25rem 1.25rem 1.25rem;
+    height: auto;
+    min-height: calc(100vh - 7rem);
   }
 
   .menus-container {
@@ -252,8 +324,10 @@
 
 @media (max-width: 992px) {
   .menu-manager-container {
-    padding: 0 1rem;
+    padding: 0 1rem 1rem 1rem;
     margin-top: 6.5rem;
+    height: auto;
+    min-height: calc(100vh - 6.5rem);
   }
 
   .menus-container {
@@ -274,7 +348,7 @@
 
 @media (max-width: 768px) {
   .menu-manager-container {
-    padding: 0 0.75rem;
+    padding: 0 0.75rem 1rem 0.75rem;
     margin-top: 6rem;
   }
 
@@ -282,6 +356,7 @@
     grid-template-columns: 1fr;
     padding: 1.25rem 0.75rem;
     gap: 1rem;
+    overflow-y: visible;
   }
 
   .menu-header-row {
@@ -305,7 +380,7 @@
 
 @media (max-width: 480px) {
   .menu-manager-container {
-    padding: 0 0.5rem;
+    padding: 0 0.5rem 0.75rem 0.5rem;
     margin-top: 5.5rem;
   }
 

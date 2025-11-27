@@ -1,34 +1,22 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { OrdersService } from './orders.service';
-import { CreateOrderDto } from './dto/create-order.dto';
-import { UpdateOrderDto } from './dto/update-order.dto';
+// src/orders/my-orders.controller.ts
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { MyOrdersService } from './myorders-service';
+import { CreateOrderDto } from './dto/order.dto';
+import { CurrentUserId } from '../common/decorator/current-user-id.decorator';
+import { AuthGuard } from '../common/guards/auth.guards';
 
+@UseGuards(AuthGuard)
 @Controller('orders')
-export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+export class MyOrdersController {
+  constructor(private readonly svc: MyOrdersService) {}
+
+  @Get('my')
+  getMy(@CurrentUserId() userId: string) {
+    return this.svc.getMyOrders(userId);
+  }
 
   @Post()
-  create(@Body() createOrderDto: CreateOrderDto) {
-    return this.ordersService.create(createOrderDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.ordersService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.ordersService.findOne(id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
-    return this.ordersService.update(id, updateOrderDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.ordersService.remove(id);
+  create(@CurrentUserId() userId: string, @Body() dto: CreateOrderDto) {
+    return this.svc.createOrder(userId, dto);
   }
 }

@@ -1,43 +1,69 @@
 import { Injectable } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
+
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
-import { Order } from './entities/order.entity';
+import { OrderDto } from './dto/order.dto';
 
 @Injectable()
 export class OrdersService {
-  private orders: Order[] = [];
+  private readonly baseUrl: string;
 
-  create(createOrderDto: CreateOrderDto): Order {
-    const newOrder: Order = {
-      id: Date.now().toString(),
-      // map user -> userId; fallback to allow payloads that already have userId
-      userId: createOrderDto.user?.id ?? (createOrderDto as any)['userId'],
-      items: createOrderDto.items,
-      totalPrice: createOrderDto.totalPrice,
-      createdAt: createOrderDto.createdAt,
-      status: createOrderDto.status,
-    };
-    this.orders.push(newOrder);
-    return newOrder;
+  constructor(private readonly http: HttpService) {
+    // URL der NestJS+Postgres-Instanz
+    // z.B. ORDERS_SERVICE_URL=http://orders-db-service:3001
+    this.baseUrl = (process.env.ORDERS_SERVICE_URL ?? 'http://localhost:3001').replace(/\/$/, '');
   }
 
-  findAll(): Order[] {
-    return this.orders;
+  // ---------- User-spezifische Orders (RLS via x-user-id) ----------
+
+  async getMyOrders(userId: string): Promise<OrderDto[]> {
+    const res = await firstValueFrom(
+      this.http.get<OrderDto[]>(`${this.baseUrl}/orders/my`, {
+        headers: {
+          'x-user-id': userId,
+        },
+      }),
+    );
+    return res.data;
   }
 
-  findOne(id: string): Order | undefined {
-    return this.orders.find(o => o.id === id);
+  async createForUser(userId: string, dto: CreateOrderDto): Promise<OrderDto> {
+    const res = await firstValueFrom(
+      this.http.post<OrderDto>(`${this.baseUrl}/orders`, dto, {
+        headers: {
+          'x-user-id': userId,
+        },
+      }),
+    );
+    return res.data;
   }
 
-  remove(id: string): { deleted: boolean } {
-    this.orders = this.orders.filter(o => o.id !== id);
-    return { deleted: true };
+  // ---------- Admin / generische Endpoints ----------
+
+  async findAll(): Promise<OrderDto[]> {
+    const res = await firstValueFrom(
+      this.http.get<OrderDto[]>(`${this.baseUrl}/orders`),
+    );
+    return res.data;
   }
 
-  update(id: string, updateOrderDto: UpdateOrderDto) {
-    const order = this.orders.find(o => o.id === id);
-    if (!order) return undefined;
-    Object.assign(order, updateOrderDto);
-    return order;
+  async findOne(id: string): Promise<OrderDto> {
+    const res = await firstValueFrom(
+      this.http.get<OrderDto>(`${this.baseUrl}/orders/${id}`),
+    );
+    return res.data;
+  }
+
+  async update(id: string, dto: UpdateOrderDto): Promise<OrderDto> {
+    const res = await firstValueFrom(
+      this.http.patch<OrderDto>(`${this.baseUrl}/orders/${id}`, dto),
+    );
+    return res.data;
+  }
+
+  async remove(id: string): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`${this.baseUrl}/orders/${id}`));
   }
 }

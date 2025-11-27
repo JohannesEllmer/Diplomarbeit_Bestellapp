@@ -1,46 +1,144 @@
 <div class="menu-planner-container">
- 
+  <!-- Menü-Titel -->
+  <div class="menu-title-section">
+    <label class="menu-title-label" for="menuTitle">Menü-Titel</label>
+    <input
+      id="menuTitle"
+      class="menu-title-input"
+      [class.menu-title-input-error]="titleError"
+      [(ngModel)]="menuTitle"
+      (ngModelChange)="onTitleChange($event)"
+      placeholder="z. B. Wochenkarte Mittag oder Sonntagsmenü"
+    />
+
+    @if (titleError) {
+      <div class="menu-title-error">
+        {{ titleError }}
+      </div>
+    }
+  </div>
+
+  <!-- Zwei Spalten: Aktuelles Menü / Verfügbare Gerichte -->
   <div class="planner-container">
+    <!-- Linke Spalte: Aktuelles Menü -->
     <div class="selected-dishes-wrapper">
-      <div class="selected-dishes-container"
+      <div class="column-header">
+        <div>
+          <h2 class="column-title">Aktuelles Menü</h2>
+          <p class="column-subtitle">
+            {{ selectedDishes.length }} Gericht{{ selectedDishes.length === 1 ? '' : 'e' }} im Menü
+          </p>
+        </div>
+      </div>
+
+      <div
+        class="selected-dishes-container"
         cdkDropList
+        cdkDropListOrientation="vertical"
         [cdkDropListData]="selectedDishes"
         [cdkDropListConnectedTo]="['unselectedDishesList']"
         (cdkDropListDropped)="drop($event)"
-        id="selectedDishesList">
-
-        <input class="menu-title-input" [(ngModel)]="menuTitle" placeholder="Menü Titel eingeben" />
-
+        id="selectedDishesList"
+      >
         <div class="dishes-list">
-          @for ( dish of selectedDishes; track dish) {
-            <div class="dish-container" (click)="toggleDish(dish, true)" cdkDrag>
-                <span class="dish-title">{{ dish.name }}</span>
+          @if (!selectedDishes.length) {
+            <div class="empty-state">
+              <span class="material-icons">playlist_add</span>
+              <p>Füge die Gerichte dem Menü hinzu.</p>
             </div>
+          } @else {
+            @for (dish of selectedDishes; track dish.id) {
+              <div
+                class="dish-container"
+                cdkDrag
+                (cdkDragStarted)="onDragStarted()"
+                (cdkDragEnded)="onDragEnded()"
+                (click)="onDishClick(dish, true)"
+              >
+                <div class="dish-info">
+                  <p class="dish-title">{{ dish.name }}</p>
+                  <p class="dish-meta">Im Menü</p>
+                </div>
+                <div class="dish-actions">
+                  <button
+                    type="button"
+                    class="dish-action-btn"
+                    (click)="onDishClick(dish, true); $event.stopPropagation()"
+                  >
+                    <span class="material-icons">arrow_forward</span>
+                  </button>
+                </div>
+              </div>
+            }
           }
         </div>
       </div>
-      <div class="save-menu-btn-wrapper">
-        <button class="save-menu-button" (click)="saveMenu()">Speichern</button>
+
+      <div class="buttons-container">
+        <button class="save-menu-button" (click)="saveMenu()">
+          Menü speichern
+        </button>
       </div>
     </div>
-    <div class="unselected-dishes-wrapper">
-      <div class="unselected-dishes-container"
-           cdkDropList
-           [cdkDropListData]="unselectedDishes"
-           [cdkDropListConnectedTo]="['selectedDishesList']"
-           (cdkDropListDropped)="drop($event)"
-           id="unselectedDishesList">
 
+    <!-- Rechte Spalte: Verfügbare Gerichte -->
+    <div class="unselected-dishes-wrapper">
+      <div class="column-header">
+        <div>
+          <h2 class="column-title">Verfügbare Gerichte</h2>
+          <p class="column-subtitle">
+            {{ unselectedDishes.length }} Gericht{{ unselectedDishes.length === 1 ? '' : 'e' }} verfügbar
+          </p>
+        </div>
+      </div>
+
+      <div
+        class="unselected-dishes-container"
+        cdkDropList
+        cdkDropListOrientation="vertical"
+        [cdkDropListData]="unselectedDishes"
+        [cdkDropListConnectedTo]="['selectedDishesList']"
+        (cdkDropListDropped)="drop($event)"
+        id="unselectedDishesList"
+      >
         <div class="dishes-list">
-          @for ( dish of unselectedDishes; track dish) {
-            <div class="dish-container" (click)="toggleDish(dish, false)" cdkDrag>
-              <span class="dish-title">{{ dish.name }}</span>
+          @if (!unselectedDishes.length) {
+            <div class="empty-state">
+              <span class="material-icons">check_circle</span>
+              <p>Alle Gerichte sind bereits im Menü.</p>
             </div>
+          } @else {
+            @for (dish of unselectedDishes; track dish.id) {
+              <div
+                class="dish-container"
+                cdkDrag
+                (cdkDragStarted)="onDragStarted()"
+                (cdkDragEnded)="onDragEnded()"
+                (click)="onDishClick(dish, false)"
+              >
+                <div class="dish-info">
+                  <p class="dish-title">{{ dish.name }}</p>
+                  <p class="dish-meta">Nicht im Menü</p>
+                </div>
+                <div class="dish-actions">
+                  <button
+                    type="button"
+                    class="dish-action-btn"
+                    (click)="onDishClick(dish, false); $event.stopPropagation()"
+                  >
+                    <span class="material-icons">arrow_back</span>
+                  </button>
+                </div>
+              </div>
+            }
           }
         </div>
       </div>
+
       <div class="add-dish-btn-wrapper">
-        <button class="add-dish-button" (click)="goToDishDesigner()">Gericht hinzufügen</button>
+        <button class="add-dish-button" (click)="goToDishDesigner()">
+          Gericht hinzufügen
+        </button>
       </div>
     </div>
   </div>

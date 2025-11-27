@@ -9,5 +9,6 @@ export interface User {
   blocked: boolean;
   showDetails?: boolean;
   editingBalance?: boolean;
+  editingBaseBalance?: number;
   newBalance?: number;
 }
