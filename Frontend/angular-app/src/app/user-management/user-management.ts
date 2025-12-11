@@ -85,12 +85,52 @@ export class UserManagementComponent implements OnInit {
     return Math.ceil(this.filteredUsers.length / this.usersPerPage);
   }
 
+  // --- NEU: User nur löschen, wenn Guthaben 0 ---
+
   deleteUser(user: User): void {
-    this.userService.deleteUser(user.id).subscribe(() => {
-      this.users = this.users.filter(u => u.id !== user.id);
-      this.filterUsers(); 
+    if (user.balance !== 0) {
+      alert(`Benutzer "${user.name}" kann nicht gelöscht werden, solange das Guthaben (${user.balance}) ungleich 0 ist.`);
+      return;
+    }
+
+    const confirmed = confirm(`Benutzer "${user.name}" wirklich löschen?`);
+    if (!confirmed) return;
+
+    this.userService.deleteUser(user.id).subscribe({
+      next: () => {
+        this.users = this.users.filter(u => u.id !== user.id);
+        this.filterUsers();
+      },
+      error: (err) => {
+        console.error(err);
+        if (err?.message === 'NON_ZERO_BALANCE') {
+          alert(`Benutzer "${user.name}" kann nur gelöscht werden, wenn das Guthaben 0 ist.`);
+        } else {
+          alert('Benutzer konnte nicht gelöscht werden.');
+        }
+      }
     });
   }
+
+  // --- NEU: Passwort zurücksetzen ---
+
+  resetPassword(user: User): void {
+    const confirmed = confirm(`Passwort für "${user.name}" wirklich zurücksetzen?`);
+    if (!confirmed) return;
+
+    this.userService.resetPassword(user.id).subscribe({
+      next: (newPassword) => {
+        // In echt würdest du das per Mail schicken – hier nur Simulation:
+        alert(`Neues Passwort für "${user.name}": ${newPassword}`);
+      },
+      error: (err) => {
+        console.error(err);
+        alert('Passwort konnte nicht zurückgesetzt werden.');
+      }
+    });
+  }
+
+  // blockUser bleibt wie gehabt
 
   blockUser(user: User): void {
     this.userService.toggleBlockUser(user).subscribe(updated => {

@@ -16,6 +16,7 @@ export class UserItemsComponent {
   @Input() user!: User;
   @Output() delete = new EventEmitter<User>();
   @Output() block = new EventEmitter<User>();
+  @Output() resetPassword = new EventEmitter<User>();
 
   constructor(private router: Router, private userService: UserService) {}
 
@@ -82,5 +83,8 @@ export class UserItemsComponent {
   navigateToUser(event: Event): void {
     event.stopPropagation();
     this.router.navigate(['/users', this.user.id]);
+  }
+    onResetPasswordClick() {
+    this.resetPassword.emit(this.user);
   }
 }

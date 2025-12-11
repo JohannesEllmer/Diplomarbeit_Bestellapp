@@ -1,73 +1,106 @@
 <header class="app-header">
   <div class="header-bar">
-    <!-- Links: Logo + Titel -->
+    <!-- Logo & Titel -->
     <div class="header-left">
       <div class="logo-circle">
-        <span>B</span>
+        <span>H</span>
       </div>
 
-      <!-- Desktop: App-Name + Guthaben -->
+      <!-- Desktop: Vollständiger Titel -->
       <div class="title-block" *ngIf="!isMobile">
         <span class="app-name">HungerSatt Bestellsystem</span>
         <span class="app-subtitle">
-          Bestellen · Verwalten ·
-          <span class="app-subtitle-balance">
-            Guthaben: {{ getGuthaben() }}
-          </span>
+          Bestellen · Verwalten · Auswerten
         </span>
       </div>
 
-      <!-- Mobile: Nur aktueller Seitenname -->
+      <!-- Mobile: Nur Seitenname -->
       <div class="mobile-page-title" *ngIf="isMobile">
         {{ getCurrentPageTitle() }}
       </div>
     </div>
 
-    <!-- Desktop: Seitentitel in der Mitte, Mobile: versteckt -->
+    <!-- Desktop: Seitenname in Mitte -->
     <div class="header-center" *ngIf="!isMobile">
       <h1 class="current-page-title">{{ getCurrentPageTitle() }}</h1>
     </div>
 
     <div class="header-right">
-      <nav class="nav-desktop">
+      <!-- Desktop Navigation -->
+      <nav
+        class="nav-desktop"
+        *ngIf="!isMobile && (getCustomerLinks().length > 0 || getManagementLinks().length > 0)"
+      >
         <div class="nav-stack">
-          <div class="nav-row">
-            <span class="nav-tag">Kunde</span>
+          <!-- Kundenbereich -->
+          <div class="nav-row" *ngIf="getCustomerLinks().length > 0">
             <div class="nav-pill-row">
               <a
-                *ngFor="let link of customerLinks"
+                *ngFor="let link of getCustomerLinks()"
                 [routerLink]="link.route"
                 routerLinkActive="active-link"
                 [routerLinkActiveOptions]="{ exact: true }"
                 class="nav-pill"
+                [title]="link.label"
               >
-                {{ link.label }}
+                <span class="nav-label">{{ link.label }}</span>
               </a>
             </div>
           </div>
 
-          <div class="nav-row">
-            <span class="nav-tag nav-tag-secondary">Inhaber</span>
+          <!-- Verwaltungsbereich -->
+          <div class="nav-row" *ngIf="getManagementLinks().length > 0">
             <div class="nav-pill-row">
               <a
-                *ngFor="let link of ownerLinks"
+                *ngFor="let link of getManagementLinks()"
                 [routerLink]="link.route"
                 routerLinkActive="active-link"
                 class="nav-pill"
+                [title]="link.label"
               >
-                {{ getShortLabel(link.label) }}
+                <span class="nav-label">{{ getDisplayLabel(link) }}</span>
               </a>
             </div>
           </div>
         </div>
       </nav>
 
+      <!-- Desktop: Benutzerinfo -->
+      <div class="desktop-user-section" *ngIf="!isMobile && hasUser">
+        <div class="guthaben-chip">
+          <span class="chip-label">Guthaben</span>
+          <span class="chip-value"> {{ formatBalance() }} €</span>
+        </div>
+
+        <div class="user-chip">
+          <div class="user-avatar" [style.background-color]="getRoleColor()">
+            {{ userInitials }}
+          </div>
+          <div class="user-meta">
+            <span class="user-name">{{ userName }}</span>
+            <span class="user-role" [style.color]="getRoleColor()">
+              {{ userRoleConfig?.label }}
+            </span>
+          </div>
+          <button
+            class="logout-btn"
+            type="button"
+            (click)="logout()"
+            title="Abmelden"
+            aria-label="Abmelden"
+          >
+            ⎋
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Menü-Button -->
       <button
         type="button"
         class="mobile-menu-btn"
         (click)="toggleMobile()"
-        aria-label="Navigation umschalten"
         [attr.aria-expanded]="mobileOpen"
+        [attr.aria-label]="mobileOpen ? 'Menü schließen' : 'Menü öffnen'"
       >
         <span class="burger-line" [class.open]="mobileOpen"></span>
         <span class="burger-line" [class.open]="mobileOpen"></span>
@@ -76,40 +109,87 @@
     </div>
   </div>
 
-  <!-- Mobile-Overlay + Drawer bleiben wie gehabt -->
-  <div class="mobile-overlay" [class.open]="mobileOpen" (click)="closeMobile()"></div>
+  <!-- Mobile Overlay -->
+  <div
+    class="mobile-overlay"
+    [class.open]="mobileOpen"
+    (click)="closeMobile()"
+    aria-hidden="true"
+  ></div>
 
-  <div class="mobile-nav" [class.open]="mobileOpen">
+  <!-- Mobile Navigation Drawer -->
+  <div
+    class="mobile-nav"
+    [class.open]="mobileOpen"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="'Navigation'"
+  >
     <div class="mobile-nav-header">
-      <span class="mobile-nav-title">{{ getCurrentPageTitle() }}</span>
-      <button class="mobile-close-btn" (click)="closeMobile()">×</button>
+      <div class="mobile-user-info" *ngIf="hasUser">
+        <div class="mobile-user-avatar" [style.background-color]="getRoleColor()">
+          {{ userInitials }}
+        </div>
+        <div class="mobile-user-details">
+          <span class="mobile-user-name">{{ userName }}</span>
+          <span class="mobile-user-role" [style.color]="getRoleColor()">
+            {{ userRoleConfig?.label }}
+          </span>
+          <div class="mobile-balance">
+            <span>Guthaben:</span>
+            <strong>{{ formatBalance() }} €</strong>
+          </div>
+        </div>
+      </div>
+      <button
+        class="mobile-close-btn"
+        (click)="closeMobile()"
+        aria-label="Menü schließen"
+      >
+        ×
+      </button>
     </div>
+
     <div class="mobile-nav-inner">
-      <div class="mobile-link-column">
-        <a
-          *ngFor="let link of customerLinks"
-          [routerLink]="link.route"
-          routerLinkActive="active-link"
-          [routerLinkActiveOptions]="{ exact: true }"
-          class="mobile-link"
-          (click)="closeMobile()"
-        >
-          {{ link.label }}
-        </a>
+      <!-- Kundenlinks -->
+      <div class="mobile-section" *ngIf="getCustomerLinks().length > 0">
+        <div class="mobile-section-title">Kundenbereich</div>
+        <div class="mobile-link-column">
+          <a
+            *ngFor="let link of getCustomerLinks()"
+            [routerLink]="link.route"
+            routerLinkActive="active-link"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="mobile-link"
+            (click)="closeMobile()"
+          >
+            <span class="mobile-link-text">{{ link.label }}</span>
+          </a>
+        </div>
       </div>
 
-      <hr class="mobile-divider" />
+      <!-- Verwaltungslinks -->
+      <div class="mobile-section" *ngIf="getManagementLinks().length > 0">
+        <div class="mobile-section-title">Verwaltung</div>
+        <div class="mobile-link-column">
+          <a
+            *ngFor="let link of getManagementLinks()"
+            [routerLink]="link.route"
+            routerLinkActive="active-link"
+            class="mobile-link"
+            (click)="closeMobile()"
+          >
+            <span class="mobile-link-text">{{ link.label }}</span>
+          </a>
+        </div>
+      </div>
 
-      <div class="mobile-link-column">
-        <a
-          *ngFor="let link of ownerLinks"
-          [routerLink]="link.route"
-          routerLinkActive="active-link"
-          class="mobile-link"
-          (click)="closeMobile()"
-        >
-          {{ link.label }}
-        </a>
+      <!-- Abmelden -->
+      <div class="mobile-logout" *ngIf="hasUser">
+        <button class="mobile-logout-btn" (click)="logout()">
+          <span class="logout-icon">⍈</span>
+          <span>Abmelden</span>
+        </button>
       </div>
     </div>
   </div>

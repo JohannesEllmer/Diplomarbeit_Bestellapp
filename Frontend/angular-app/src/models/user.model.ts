@@ -1,3 +1,4 @@
+export type UserRole = 'KUNDE' | 'INHABER' | 'ADMIN';
 
 export interface User {
   id: string;
@@ -7,6 +8,8 @@ export interface User {
   orderCount: number;
   balance: number;
   blocked: boolean;
+  role: UserRole;
+  isTeacher?: boolean;
   showDetails?: boolean;
   editingBalance?: boolean;
   editingBaseBalance?: number;

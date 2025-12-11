@@ -62,6 +62,7 @@ Datum   Zeitaufwand     Titel                   Autor   genauere Beschreibung wa
 16.10   4 h            Frontend                  Chris   Menüplaner und Gerichte Verwaltung mobile Ansicht
 
 10.9 - 16.10   30h          Pflichtenheft                       Hons    
+10.9 - 16.10   10h      Frontend                 Hons           weitere frontend services erstellt
 06. + 09.11  6h               Backend + DB      Hons            Erstellung der DB als Docker Component und Einrichtung der Backendservices für den DB-Zugriff inkl. DTOs
 09.11          2h           Frontend            Hons            Anpassungen der IDs im Frontend von int auf strings um UUID zu verwenden.
 16.11           3h          Frontend            Hons            Menu + Anpassungen am Styling und Responsiveness Changed color in footer and header from #0284c7 to   box-shadow: 0 8px 32px rgba(2, 132, 199, 0.25);
@@ -70,7 +71,7 @@ Datum   Zeitaufwand     Titel                   Autor   genauere Beschreibung wa
 
 15.11   3h                                      Chris API-Gateway Users Endpoint fertiggestellt und getestet und Orders Endpoint implementiert
 22.11   4h                                     Hons Die Services zu "Order" wurden fürs frontend entsprechend erstellt und die einzelnen menüs können als pdf ausgedruckt werden.
-
+27.11   7h                                     Hons Menu Manager und Menü Planer bekommt service und verbessertes Design. Added services into the api gateway for orders.
 ----------------------
 Sonstiges:
 5.8 neue Idee einer Page Auswertung --> wurde dem Backlog hinzugefügt.

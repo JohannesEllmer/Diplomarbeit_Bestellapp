@@ -44,8 +44,10 @@
       *ngFor="let user of paginatedUsers"
       [user]="user"
       (delete)="deleteUser($event)"
-      (block)="blockUser($event)">
+      (block)="blockUser($event)"
+      (resetPassword)="resetPassword($event)">
     </app-user-items>
+  
     
     
     <div *ngIf="filteredUsers.length === 0" class="no-results">
