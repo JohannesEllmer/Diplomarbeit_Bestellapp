@@ -16,6 +16,7 @@ export class UserItemsComponent {
   @Input() user!: User;
   @Output() delete = new EventEmitter<User>();
   @Output() block = new EventEmitter<User>();
+  @Output() resetPassword = new EventEmitter<User>();
 
   constructor(private router: Router, private userService: UserService) {}
 
@@ -24,20 +25,49 @@ export class UserItemsComponent {
     this.user.showDetails = !this.user.showDetails;
   }
 
+  /**
+   * Editiermodus starten:
+   * - Ausgangsstand merken (editingBaseBalance)
+   * - Eingabefeld mit aktuellem Kontostand vorbefüllen
+   */
   startEditBalance(event: Event): void {
     event.stopPropagation();
     this.user.editingBalance = true;
-    this.user.newBalance = 0;
+    this.user.editingBaseBalance = this.user.balance;
+    this.user.newBalance = this.user.balance;
   }
 
+  /**
+   * Speichern:
+   * - newBalance wird als "gewünschter neuer Kontostand" verstanden
+   * - diff = newBalance - editingBaseBalance
+   * - an den Service wird nur die Differenz übergeben
+   */
   saveBalance(event: Event): void {
     event.stopPropagation();
-    if (this.user.newBalance !== undefined) {
-      this.userService.updateBalance(this.user, this.user.newBalance).subscribe(updated => {
-        this.user.balance = updated.balance;
-        this.user.editingBalance = false;
-      });
+
+    if (this.user.newBalance === undefined || this.user.editingBaseBalance === undefined) {
+      this.user.editingBalance = false;
+      return;
     }
+
+    const base = this.user.editingBaseBalance;
+    const target = this.user.newBalance;
+    const diff = target - base;
+
+    // Wenn sich nichts geändert hat, brauchen wir nichts zu speichern
+    if (diff === 0) {
+      this.user.editingBalance = false;
+      this.user.editingBaseBalance = undefined;
+      return;
+    }
+
+    this.userService.updateBalance(this.user, diff).subscribe(updated => {
+      // Backend hat den neuen Stand berechnet und zurückgegeben
+      this.user.balance = updated.balance;
+      this.user.editingBalance = false;
+      this.user.editingBaseBalance = undefined;
+    });
   }
 
   emitDelete(event: Event): void {
@@ -52,6 +82,9 @@ export class UserItemsComponent {
 
   navigateToUser(event: Event): void {
     event.stopPropagation();
-    this.router.navigate(['/users', this.user.id]); 
+    this.router.navigate(['/users', this.user.id]);
+  }
+    onResetPasswordClick() {
+    this.resetPassword.emit(this.user);
   }
 }

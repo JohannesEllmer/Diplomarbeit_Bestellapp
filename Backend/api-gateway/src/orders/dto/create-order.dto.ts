@@ -7,7 +7,7 @@ import {
   IsArray
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { UserRefDto } from './user-ref.dto';
+import { IsArray, ValidateNested } from 'class-validator';
 import { CreateOrderItemDto } from './create-order-item.dto';
 
 export class CreateOrderDto {

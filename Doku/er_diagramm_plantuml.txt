@@ -1,0 +1,110 @@
+@startuml
+skinparam backgroundColor white
+skinparam linetype ortho
+skinparam class {
+    BackgroundColor #F8F8F8
+    BorderColor #444444
+    FontColor #000000
+    AttributeFontColor #333333
+}
+skinparam ArrowColor #333333
+
+hide circle
+hide methods
+hide stereotypes
+
+' ============================
+' TABLES
+' ============================
+
+class Users {
+  + id : uuid <<PK>>
+  --
+  name        : text
+  email       : text
+  class       : text
+  balance     : numeric(10,2)
+  blocked     : boolean
+  role        : text            ' KUNDE | INHABER | ADMIN
+  created_at  : timestamptz
+  updated_at  : timestamptz
+}
+
+class MenuItems {
+  + id          : uuid <<PK>>
+  --
+  name          : text
+  description   : text
+  price         : numeric(10,2)
+  category      : text
+  available     : boolean
+  vegetarian    : boolean
+  allergens     : text[]        ' z.B. ["GLUTEN","NUSS"]
+}
+
+class Dishes {
+  + id          : uuid <<PK>>
+  --
+  name          : text
+  description   : text
+  price         : numeric(10,2)
+  allergenes    : text[]
+}
+
+class Menus {
+  + id                 : uuid <<PK>>
+  --
+  title               : text
+  dish_menu_item_id   : uuid <<FK>>  ' Hauptgericht als MenuItem
+  drink               : text
+  dessert             : text
+}
+
+class MealPlans {
+  + id          : uuid <<PK>>
+  --
+  title        : text
+}
+
+class MealPlanDishes {
+  + meal_plan_id : uuid <<PK, FK>>
+  + dish_id      : uuid <<PK, FK>>
+}
+
+class Orders {
+  + id          : uuid <<PK>>
+  --
+  user_id      : uuid <<FK>>     ' Besteller
+  total_price  : numeric(10,2)
+  created_at   : timestamptz
+  status       : text            ' "open" | "closed"
+  qr_code_url  : text
+}
+
+class OrderItems {
+  + id            : bigserial <<PK>>
+  --
+  order_id        : uuid <<FK>>
+  menu_item_id    : uuid <<FK>>
+  user_id         : uuid <<FK>>  ' Esser (kann vom Besteller abweichen)
+  note            : text
+  quantity        : int
+  delivered       : boolean
+  delivery_time   : timestamptz
+}
+
+' ============================
+' RELATIONSHIPS
+' ============================
+
+Users "1" o-- "0..*" Orders      : creates >
+Users "1" o-- "0..*" OrderItems  : consumes >
+
+Orders "1" o-- "1..*" OrderItems : contains >
+MenuItems "1" o-- "0..*" OrderItems : ordered as >
+
+MenuItems "1" o-- "0..*" Menus   : main dish in >
+
+MealPlans "1" o-- "1..*" MealPlanDishes : includes >
+Dishes "1" o-- "0..*" MealPlanDishes    : used in >
+@enduml

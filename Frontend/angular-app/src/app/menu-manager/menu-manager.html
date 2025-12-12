@@ -4,9 +4,11 @@
 />
 
 <div class="menu-manager-container">
+  <!-- Optional: Header, falls du ihn wieder nutzen willst
   <div class="menu-manager-header">
     <h1>Menüverwaltung</h1>
   </div>
+  -->
 
   <div class="menus-container">
     @for (menu of Menus; track menu.id) {
@@ -16,10 +18,21 @@
         (click)="selectMenu(menu)"
       >
         <div class="menu-header-row">
-          <h2 class="menu-title" [title]="menu.title">
-            {{ menu.title }}
-          </h2>
+          <!-- Titel + Aktiv-Tag -->
+          <div class="menu-title-and-status">
+            <h2 class="menu-title" [title]="menu.title">
+              {{ menu.title }}
+            </h2>
 
+            @if (selectedMenu === menu) {
+              <span class="menu-status-pill">
+                <span class="status-dot"></span>
+                Aktiviert
+              </span>
+            }
+          </div>
+
+          <!-- Aktionen -->
           <div class="menu-actions" (click)="$event.stopPropagation()">
             <!-- Print -->
             <button
@@ -60,7 +73,7 @@
                 <div class="menu-dish-main">
                   <span class="dish-name">{{ dish.name }}</span>
                   <span class="dish-price">
-                    {{ dish.price  }} €
+                    {{ dish.price }} €
                   </span>
                 </div>
                 <div class="dish-description">

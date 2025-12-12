@@ -37,7 +37,8 @@ export class MenuPlanComponent implements OnInit {
     class: '5C',
     orderCount: 0,
     balance: 14.0,
-    blocked: false
+    blocked: false,
+    role: 'KUNDE'
   };
 
   constructor(

@@ -1,0 +1,52 @@
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h1>Willkommen zurück</h1>
+      <p>Melde dich mit deiner E-Mail an.</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
+      <!-- E-Mail -->
+      <div class="form-group" [class.invalid]="email?.invalid && (email?.touched || email?.dirty)">
+        <label for="email">E-Mail-Adresse</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="z.B. vorname.nachname@htl-saalfelden.at"
+        />
+        <div class="error" *ngIf="email?.errors && (email?.touched || email?.dirty)">
+          <span *ngIf="email?.errors?.['required']">E-Mail ist erforderlich.</span>
+          <span *ngIf="email?.errors?.['email']">Bitte eine gültige E-Mail eingeben.</span>
+        </div>
+      </div>
+
+      <!-- Passwort -->
+      <div class="form-group" [class.invalid]="password?.invalid && (password?.touched || password?.dirty)">
+        <label for="password">Passwort</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          placeholder="Passwort"
+        />
+        <div class="error" *ngIf="password?.errors && (password?.touched || password?.dirty)">
+          <span *ngIf="password?.errors?.['required']">Passwort ist erforderlich.</span>
+        </div>
+      </div>
+
+      <button type="submit" [disabled]="isSubmitting" class="primary-btn">
+        {{ isSubmitting ? 'Anmelden...' : 'Anmelden' }}
+      </button>
+
+      <p class="error global-error" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </p>
+    </form>
+
+    <div class="auth-footer">
+      <span>Noch kein Konto?</span>
+      <a routerLink="/register">Hier registrieren</a>
+    </div>
+  </div>
+</div>

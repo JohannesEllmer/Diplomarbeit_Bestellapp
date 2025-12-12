@@ -1,6 +1,9 @@
-import { IsString } from 'class-validator';
-
 export class UserRefDto {
-  @IsString()
-  id: string;
+  id!: string;
+  name!: string;
+  email!: string;
+  class!: string;
+  orderCount!: number;
+  balance!: number;
+  blocked!: boolean;
 }

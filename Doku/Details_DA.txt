@@ -3,3 +3,14 @@ backend auf proxmox oder local hosten
 
 gutes Styling z.B. Tailwind css
 
+wichtige Codestellen wie jspdf /qrscanner und Drag and drop dokumentieren
+msgraph
+-aus dem Menuplan eine PDF liste ausdrucken für analog
+
+prüfen der Domäne
+
+world4you
+günstigeres Hosting
+mit docker image Verwaltung
++ Domänename
++ keycloak testen und prüfen
