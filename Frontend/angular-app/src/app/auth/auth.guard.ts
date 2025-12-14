@@ -16,7 +16,6 @@ export function authGuard(allowedRoles?: UserRole[]): CanActivateFn {
     if (allowedRoles && allowedRoles.length > 0) {
       const user = auth.getCurrentUser();
       if (!user || !allowedRoles.includes(user.role)) {
-        // z.B. auf Startseite oder "Forbidden"-Seite
         router.navigate(['/']);
         return false;
       }

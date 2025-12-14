@@ -1,32 +1,17 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import {
-  Observable,
-  of,
-  map,
-  delay,
-  catchError,
-  switchMap,
-} from 'rxjs';
+import { Observable, of, map, delay, catchError, switchMap } from 'rxjs';
 import { environment } from '../env';
 import { Order } from '../../../models/menu-item.model';
-import { AuthService } from '../AuthService';
+import { AuthService } from '../../auth/auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class MyOrderService {
-  private readonly apiBase = environment.apiBaseUrl ?? 'http://localhost:3000';
+  private readonly apiBase = environment.apiBaseUrl ?? 'http://localhost:3000/api';
   private readonly ordersEndpoint = `${this.apiBase}/orders`;
 
-  constructor(
-    private http: HttpClient,
-    private auth: AuthService,
-  ) {}
+  constructor(private http: HttpClient, private auth: AuthService) {}
 
-  /**
-   * Lädt die Bestellungen des aktuellen Users.
-   * Gateway: GET /orders/my (User wird im Gateway aus dem Token ermittelt,
-   * Db-Bridge setzt x-user-id, Postgres RLS macht den Rest).
-   */
   getMyOrders(): Observable<Order[]> {
     if (environment.useMockData) {
       return this.getMyOrdersMock();
@@ -34,26 +19,18 @@ export class MyOrderService {
 
     return this.http.get<Order[]>(`${this.ordersEndpoint}/my`).pipe(
       map((orders) => this.addQrForOpenOrders(orders ?? [])),
-      // Falls der User noch keine Bestellungen hat → Mock-Daten
-      switchMap((orders) =>
-        orders.length ? of(orders) : this.getMyOrdersMock(),
-      ),
+      switchMap((orders) => (orders.length ? of(orders) : this.getMyOrdersMock())),
       catchError((error) => {
-        console.error(
-          'Fehler beim Laden der eigenen Bestellungen, Fallback-Daten werden verwendet',
-          error,
-        );
+        console.error('getMyOrders failed, fallback mock:', error);
         return this.getMyOrdersMock();
-      }),
+      })
     );
   }
 
-  /** QR-Code-URL für alle offenen Bestellungen anhängen */
   private addQrForOpenOrders(orders: Order[]): Order[] {
     return orders.map((o) => ({
       ...o,
-      qrCodeUrl:
-        o.status === 'open' ? this.generateQrCode(o.id) : undefined,
+      qrCodeUrl: o.status === 'open' ? this.generateQrCode(o.id) : undefined,
     }));
   }
 
@@ -61,9 +38,8 @@ export class MyOrderService {
     return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Order-${orderId}`;
   }
 
-  /** Mock-Daten für lokale Entwicklung / Storybook */
   private getMyOrdersMock(): Observable<Order[]> {
-    const currentUserId = this.auth.getCurrentUserId();
+    const currentUserId = this.auth.getCurrentUser()?.id ?? 'mock-user';
 
     const user = {
       id: currentUserId,
@@ -73,12 +49,12 @@ export class MyOrderService {
       orderCount: 5,
       balance: 18,
       blocked: false,
-    };  2
+    };
 
-    const pizzaMargherita = {
+    const pizza = {
       id: 'm1',
       name: 'Pizza Margherita',
-      description: 'Klassische Pizza mit Tomaten und Mozzarella',
+      description: 'Klassische Pizza',
       price: 4.5,
       category: 'Hauptspeise',
       available: true,
@@ -86,97 +62,20 @@ export class MyOrderService {
       allergens: ['A', 'G'],
     };
 
-    const cola = {
-      id: 'm2',
-      name: 'Cola 0,5l',
-      description: 'Gekühltes Erfrischungsgetränk',
-      price: 1.8,
-      category: 'Getränk',
-      available: true,
-      vegetarian: true,
-      allergens: [],
-    };
-
-    const pastaBolognese = {
-      id: 'm3',
-      name: 'Pasta Bolognese',
-      description: 'Pasta mit Rindfleischsauce',
-      price: 5.2,
-      category: 'Hauptspeise',
-      available: true,
-      vegetarian: false,
-      allergens: ['A', 'C'],
-    };
-
-    const brownie = {
-      id: 'm4',
-      name: 'Schoko-Brownie',
-      description: 'Saftiger Brownie mit Schokostückchen',
-      price: 2.0,
-      category: 'Dessert',
-      available: true,
-      vegetarian: true,
-      allergens: ['A', 'C', 'G'],
-    };
-
     const openItems = [
-      {
-        menuItem: pizzaMargherita,
-        user,
-        quantity: 2,
-        note: 'Bitte gut durchbacken',
-        delivered: false,
-      },
+      { menuItem: pizza, user, quantity: 2, note: 'Bitte gut durchbacken', delivered: false },
     ];
 
-    const closedItems = [
-      {
-        menuItem: pastaBolognese,
-        user,
-        quantity: 1,
-        note: '',
-        delivered: true,
-      },
-      {
-        menuItem: cola,
-        user,
-        quantity: 1,
-        note: '',
-        delivered: true,
-      },
-      {
-        menuItem: brownie,
-        user,
-        quantity: 1,
-        note: '',
-        delivered: true,
-      },
-    ];
-
-    const calcTotal = (items: any[]) =>
-      items.reduce(
-        (sum, it) => sum + it.menuItem.price * it.quantity,
-        0,
-      );
+    const calcTotal = (items: any[]) => items.reduce((sum, it) => sum + it.menuItem.price * it.quantity, 0);
 
     const mock: Order[] = [
       {
         id: '101',
         user,
-        items: openItems,
+        items: openItems as any,
         totalPrice: calcTotal(openItems),
-        createdAt: new Date(),
+        createdAt: new Date() as any,
         status: 'open',
-        showDetails: true,
-      } as any,
-      {
-        id: '99',
-        user,
-        items: closedItems,
-        totalPrice: calcTotal(closedItems),
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
-        status: 'closed',
-        showDetails: false,
       } as any,
     ];
 

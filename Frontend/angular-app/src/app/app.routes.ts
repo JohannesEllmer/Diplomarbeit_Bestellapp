@@ -12,10 +12,19 @@ import { DishEditor } from './dish-editor/dish-editor';
 import { LoginPageComponent } from './login-page/login-page';
 import { RegisterPageComponent } from './register-page/register-page';
 import { authGuard } from './auth/auth.guard';
+import { VerifyEmailPage } from './register-page/verify-email';
+import { ForgotPasswordPage } from './login-page/forgot-password';
+import { ResetPasswordPage } from './login-page/reset-password';
+import { ChangePasswordPage } from './login-page/change-password';
 
 export const routes: Routes = [
   { path: 'login', component: LoginPageComponent },
   { path: 'register', component: RegisterPageComponent },
+  { path: 'verify-email', component: VerifyEmailPage },
+  { path: 'forgot-password', component: ForgotPasswordPage },
+  { path: 'reset-password', component: ResetPasswordPage },
+  { path: 'change-password', component: ChangePasswordPage, canActivate: [authGuard()] },
+
 
   { path: '', component: MenuPlanComponent, canActivate: [authGuard()] },
   { path: 'warenkorb', component: CartPageComponent, canActivate: [authGuard()] },

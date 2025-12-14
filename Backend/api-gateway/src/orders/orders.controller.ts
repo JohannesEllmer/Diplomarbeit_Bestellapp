@@ -1,22 +1,22 @@
-// src/orders/my-orders.controller.ts
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth.guards';
 import { MyOrdersService } from './myorders-service';
-import { CreateOrderDto } from './dto/order.dto';
-import { CurrentUserId } from '../common/decorator/current-user-id.decorator';
-import { AuthGuard } from '../common/guards/auth.guards';
+import { CreateOrderDto } from './dto/create-order.dto';
 
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('orders')
 export class MyOrdersController {
   constructor(private readonly svc: MyOrdersService) {}
 
   @Get('my')
-  getMy(@CurrentUserId() userId: string) {
+  getMy(@Req() req: any) {
+    const userId = String(req.user?.sub);
     return this.svc.getMyOrders(userId);
   }
 
   @Post()
-  create(@CurrentUserId() userId: string, @Body() dto: CreateOrderDto) {
+  create(@Req() req: any, @Body() dto: CreateOrderDto) {
+    const userId = String(req.user?.sub);
     return this.svc.createOrder(userId, dto);
   }
 }

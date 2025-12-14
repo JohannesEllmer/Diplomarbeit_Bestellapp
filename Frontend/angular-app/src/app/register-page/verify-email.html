@@ -1,0 +1,62 @@
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <header class="auth-header">
+      <h1>{{ title }}</h1>
+      <p>{{ message }}</p>
+    </header>
+
+    <div class="status-area">
+      <!-- Loading -->
+      <div class="status-card" *ngIf="status === 'loading'">
+        <div class="spinner" aria-hidden="true"></div>
+        <div class="status-text">
+          <div class="status-title">Bitte warten…</div>
+          <div class="status-sub">
+            Wir prüfen deinen Bestätigungslink.
+          </div>
+        </div>
+      </div>
+
+      <!-- Success -->
+      <div class="status-card is-success" *ngIf="status === 'success'">
+        <div class="status-icon" aria-hidden="true">✓</div>
+        <div class="status-text">
+          <div class="status-title">E-Mail bestätigt</div>
+          <div class="status-sub">{{ details }}</div>
+        </div>
+      </div>
+
+      <!-- Missing -->
+      <div class="status-card is-warning" *ngIf="status === 'missing'">
+        <div class="status-icon" aria-hidden="true">!</div>
+        <div class="status-text">
+          <div class="status-title">Token fehlt</div>
+          <div class="status-sub">{{ details }}</div>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div class="status-card is-error" *ngIf="status === 'error'">
+        <div class="status-icon" aria-hidden="true">×</div>
+        <div class="status-text">
+          <div class="status-title">{{ title }}</div>
+          <div class="status-sub">{{ details || 'Bitte versuche es erneut.' }}</div>
+        </div>
+
+        <button class="secondary-btn" type="button" (click)="retryNow()">
+          Erneut versuchen
+        </button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary-btn" type="button" (click)="goLogin()">
+        Zum Login
+      </button>
+
+      <p class="hint" *ngIf="status === 'loading'">
+        Tipp: Wenn nichts passiert, prüfe ob dein Backend unter der LAN-IP erreichbar ist.
+      </p>
+    </div>
+  </div>
+</div>

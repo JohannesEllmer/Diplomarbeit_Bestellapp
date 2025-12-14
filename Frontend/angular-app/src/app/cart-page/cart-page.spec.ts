@@ -12,14 +12,14 @@ describe('CartPageComponent', () => {
   let router: jasmine.SpyObj<Router>;
 
   const mockUser: User = {
-    id: 1,
+    id: '1',
     name: 'Max Mustermann',
     email: 'max@example.com',
     class: '10A',
     orderCount: 5,
     balance: 25.50,
     blocked: false,
-    profileImageUrl: 'max.jpg',
+    role: 'KUNDE',
     showDetails: false,
     editingBalance: false,
     newBalance: undefined
@@ -28,7 +28,7 @@ describe('CartPageComponent', () => {
   const mockItems: OrderItem[] = [
     {
       menuItem: {
-        id: 1,
+        id: '1',
         name: 'Pizza',
         description: 'Leckere Pizza mit Tomatensauce',
         price: 10,
@@ -36,7 +36,7 @@ describe('CartPageComponent', () => {
         available: true,
         vegetarian: false,
         allergens: ['Gluten', 'Milch'],
-        image: 'pizza.jpg'
+       
       },
       user: mockUser,
       quantity: 2,

@@ -8,9 +8,10 @@ import {
   transferArrayItem,
   DragDropModule
 } from '@angular/cdk/drag-drop';
+
 import { Dish } from '../../models/dish.model';
 import { MealPlan } from '../../models/meal-plan.model';
-import { MenuService } from '../services/menu-manager/menu-manager';
+import { MenuService } from '../services/menu-planner/menu-planner';
 
 @Component({
   selector: 'app-menu-planner',
@@ -26,7 +27,7 @@ export class MenuPlanner implements OnInit {
   selectedDishes: Dish[] = [];
   unselectedDishes: Dish[] = [];
 
-  // aktuelles Menü, das bearbeitet wird
+  // aktuelles Menü
   menu: MealPlan = { id: 'new', title: '', dishes: [] };
 
   // Flags
@@ -39,10 +40,10 @@ export class MenuPlanner implements OnInit {
     private menuService: MenuService
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     const stateMenu = history.state.menu as MealPlan | undefined;
 
-    if (stateMenu && stateMenu.id) {
+    if (stateMenu?.id) {
       // bestehendes Menü bearbeiten
       this.menu = { ...stateMenu };
       this.menuTitle = stateMenu.title ?? '';
@@ -54,15 +55,11 @@ export class MenuPlanner implements OnInit {
       this.selectedDishes = [];
     }
 
-    // Temporär: Mockdaten für unselectedDishes (kannst du später aus eigenem Dish-Service holen)
     this.initMockUnselectedDishes();
   }
 
-  /**
-   * Mock-Liste für unselektierte Gerichte
-   * TODO: später durch echten Dish-Service ersetzen
-   */
-  private initMockUnselectedDishes() {
+  /** Mock-Liste für unselektierte Gerichte (später durch echten DishService ersetzen) */
+  private initMockUnselectedDishes(): void {
     const mockAllDishes: Dish[] = [
       { id: '1', name: 'Spaghetti Bolognese' },
       { id: '2', name: 'Pizza Margherita' },
@@ -75,13 +72,9 @@ export class MenuPlanner implements OnInit {
     this.unselectedDishes = mockAllDishes.filter(d => !selectedIds.has(d.id));
   }
 
-  drop(event: CdkDragDrop<Dish[]>) {
+  drop(event: CdkDragDrop<Dish[]>): void {
     if (event.previousContainer === event.container) {
-      moveItemInArray(
-        event.container.data,
-        event.previousIndex,
-        event.currentIndex
-      );
+      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
     } else {
       transferArrayItem(
         event.previousContainer.data,
@@ -92,24 +85,20 @@ export class MenuPlanner implements OnInit {
     }
   }
 
-  onDragStarted() {
+  onDragStarted(): void {
     this.isDragging = true;
   }
 
-  onDragEnded() {
-    setTimeout(() => {
-      this.isDragging = false;
-    });
+  onDragEnded(): void {
+    setTimeout(() => (this.isDragging = false));
   }
 
-  onDishClick(dish: Dish, selected: boolean) {
-    if (this.isDragging) {
-      return;
-    }
+  onDishClick(dish: Dish, selected: boolean): void {
+    if (this.isDragging) return;
     this.toggleDish(dish, selected);
   }
 
-  toggleDish(dish: Dish, selected: boolean) {
+  toggleDish(dish: Dish, selected: boolean): void {
     if (selected) {
       this.selectedDishes = this.selectedDishes.filter(d => d !== dish);
       this.unselectedDishes.unshift(dish);
@@ -119,8 +108,12 @@ export class MenuPlanner implements OnInit {
     }
   }
 
-  // Titel-Validierung + Speichern via Service
-  saveMenu() {
+  onTitleChange(value: string): void {
+    this.menuTitle = value;
+    if (this.menuTitle.trim()) this.titleError = '';
+  }
+
+  saveMenu(): void {
     const trimmedTitle = this.menuTitle.trim();
 
     if (!trimmedTitle) {
@@ -132,7 +125,6 @@ export class MenuPlanner implements OnInit {
     this.saveError = null;
     this.saving = true;
 
-    // Menü-Objekt aktualisieren
     this.menu = {
       ...this.menu,
       title: trimmedTitle,
@@ -140,9 +132,8 @@ export class MenuPlanner implements OnInit {
     };
 
     this.menuService.saveMenu(this.menu).subscribe({
-      next: (savedMenu) => {
+      next: (savedMenu: MealPlan) => {
         this.saving = false;
-        // zurück zum Manager, gespeichertes Menü im State mitschicken
         this.router.navigate(['/menu-manager'], { state: { menu: savedMenu } });
       },
       error: (err) => {
@@ -153,15 +144,8 @@ export class MenuPlanner implements OnInit {
     });
   }
 
-  // Beim Tippen Fehler zurücksetzen
-  onTitleChange(value: string) {
-    this.menuTitle = value;
-    if (this.menuTitle.trim()) {
-      this.titleError = '';
-    }
-  }
-
-  goToDishDesigner() {
+  /** ✅ FEHLTE: Template ruft das auf */
+  goToDishDesigner(): void {
     this.router.navigate(['/gericht-verwaltung']);
   }
 }

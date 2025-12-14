@@ -16,7 +16,8 @@
     <div class="auth-body">
       <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
         <div class="form-grid">
-          <!-- Linke Spalte: Schule & (optionale) Klasse -->
+
+          <!-- Linke Spalte -->
           <div class="form-col">
             <section class="form-section">
               <h2 class="section-title">Schule</h2>
@@ -36,6 +37,7 @@
                     {{ type }}
                   </option>
                 </select>
+
                 <div
                   class="error"
                   *ngIf="schoolType?.errors && (schoolType?.touched || schoolType?.dirty)"
@@ -46,7 +48,7 @@
                 </div>
               </div>
 
-              <!-- Klasse (optional) -->
+              <!-- Klasse -->
               <div class="class-row">
                 <div class="form-group">
                   <label for="class">Klasse (optional)</label>
@@ -64,7 +66,7 @@
             </section>
           </div>
 
-          <!-- Rechte Spalte: E-Mail, Namen, Passwort -->
+          <!-- Rechte Spalte -->
           <div class="form-col">
             <section class="form-section">
               <h2 class="section-title">Zugangsdaten</h2>
@@ -87,6 +89,7 @@
                   formControlName="email"
                   placeholder="HTL: vorname.nachname@htl-saalfelden.at · HAK: nachname.vorname@johak.at"
                 />
+
                 <div
                   class="error"
                   *ngIf="email?.errors && (email?.touched || email?.dirty)"
@@ -98,12 +101,13 @@
                     Bitte eine gültige E-Mail eingeben.
                   </span>
                 </div>
+
                 <div class="error" *ngIf="registerForm.hasError('schoolEmailMismatch')">
                   E-Mail passt nicht zum ausgewählten Schultyp.
                 </div>
               </div>
 
-               <!-- Passwort -->
+              <!-- Passwort -->
               <div
                 class="form-group"
                 [class.invalid]="password?.invalid && (password?.touched || password?.dirty)"
@@ -116,6 +120,7 @@
                   formControlName="password"
                   placeholder="mind. 6 Zeichen"
                 />
+
                 <div
                   class="error"
                   *ngIf="password?.errors && (password?.touched || password?.dirty)"
@@ -129,7 +134,7 @@
                 </div>
               </div>
 
-              <!-- Vor-/Nachname (automatisch) -->
+              <!-- Namen -->
               <div class="name-row">
                 <div class="form-group small">
                   <label for="firstName">Vorname (automatisch)</label>
@@ -140,6 +145,7 @@
                     readonly
                   />
                 </div>
+
                 <div class="form-group small">
                   <label for="lastName">Nachname (automatisch)</label>
                   <input
@@ -162,22 +168,51 @@
                   Für die HAK: <code>nachname.vorname@johak.at</code>
                 </span>
               </div>
-
-             
             </section>
           </div>
         </div>
 
         <!-- Aktionen -->
         <div class="form-actions">
-          <button type="submit" [disabled]="isSubmitting" class="primary-btn">
-            {{ isSubmitting ? 'Registriere...' : 'Registrieren' }}
-          </button>
+  <button
+    type="submit"
+    class="primary-btn"
+    [disabled]="isSubmitting || registerForm.invalid"
+  >
+    <span class="btn-row">
+      <span class="spinner" *ngIf="isSubmitting"></span>
+      {{ isSubmitting ? 'Registriere...' : 'Registrieren' }}
+    </span>
+  </button>
 
-          <p class="error global-error" *ngIf="errorMessage">
-            {{ errorMessage }}
-          </p>
-        </div>
+  <!-- Status Card (schöner als plain Text) -->
+  <div class="status-card" *ngIf="errorMessage || infoMessage"
+       [class.is-error]="!!errorMessage"
+       [class.is-success]="infoType === 'success' && !errorMessage"
+       [class.is-warning]="infoType === 'warning' && !errorMessage">
+    <div class="status-icon">
+      <span *ngIf="!!errorMessage">✕</span>
+      <span *ngIf="!errorMessage && infoType==='success'">✓</span>
+      <span *ngIf="!errorMessage && infoType==='warning'">!</span>
+      <span *ngIf="!errorMessage && infoType==='info'">i</span>
+    </div>
+
+    <div class="status-text">
+      <div class="status-title">
+        {{ errorMessage ? 'Fehler' : (infoType === 'success' ? 'Erfolg' : 'Info') }}
+      </div>
+      <div class="status-msg">
+        {{ errorMessage || infoMessage }}
+      </div>
+    </div>
+
+    <button class="status-close" type="button"
+            (click)="errorMessage=''; infoMessage='';">
+      ✕
+    </button>
+  </div>
+</div>
+
       </form>
     </div>
 

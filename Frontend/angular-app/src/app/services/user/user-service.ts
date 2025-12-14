@@ -6,73 +6,51 @@ import { environment } from '../../env';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
+  private readonly apiBase = environment.apiBaseUrl ?? 'http://localhost:3000/api';
+  private readonly usersEndpoint = `${this.apiBase}/users`;
+
   private mockUsers: (User & { password?: string })[] = [
-    { id: '101', name: 'Anna Müller', email: 'anna@example.com', class: '3A', orderCount: 5, balance: 10.00, blocked: false, password: 'anna', role: 'ADMIN' },
-    { id: '102', name: 'Max Mustermann', email: 'max@example.com', class: '4B', orderCount: 3, balance: 5.00, blocked: false, password: 'max', role: 'KUNDE' },
-    { id: '103', name: 'Lisa Schmidt', email: 'lisa@example.com', class: '5C', orderCount: 7, balance: 8.50, blocked: false, password: 'lisa', role: 'INHABER' },
+    { id: '101', name: 'Anna Müller', email: 'anna@example.com', class: '3A', orderCount: 5, balance: 10.0, blocked: false, password: 'anna', role: 'ADMIN' as any },
   ];
 
   constructor(private http: HttpClient) {}
 
   getUsers(): Observable<User[]> {
-    return environment.useMockData
-      ? of(this.mockUsers)
-      : this.http.get<User[]>('/api/users');
+    return environment.useMockData ? of(this.mockUsers) : this.http.get<User[]>(this.usersEndpoint);
   }
-
-  // --- angepasst: Löschen nur bei Guthaben 0 ---
 
   deleteUser(userId: string): Observable<void> {
     if (environment.useMockData) {
       const user = this.mockUsers.find(u => u.id === userId);
-      if (user && user.balance !== 0) {
-        return throwError(() => new Error('NON_ZERO_BALANCE'));
-      }
+      if (user && user.balance !== 0) return throwError(() => new Error('NON_ZERO_BALANCE'));
       this.mockUsers = this.mockUsers.filter(u => u.id !== userId);
       return of(void 0);
     }
-
-    // Im echten Backend sollte die gleiche Regel gelten (Balance prüfen).
-    return this.http.delete<void>(`/api/users/${userId}`);
+    return this.http.delete<void>(`${this.usersEndpoint}/${userId}`);
   }
 
   toggleBlockUser(user: User): Observable<User> {
     const updatedUser = { ...user, blocked: !user.blocked };
-    if (environment.useMockData) {
-      const index = this.mockUsers.findIndex(u => u.id === user.id);
-      if (index !== -1) this.mockUsers[index] = { ...this.mockUsers[index], ...updatedUser };
-      return of(updatedUser);
-    }
-    return this.http.put<User>(`/api/users/${user.id}`, updatedUser);
+    if (environment.useMockData) return of(updatedUser);
+
+    // ⚠️ dein Backend hat PATCH /users/:id (nicht PUT)
+    return this.http.patch<User>(`${this.usersEndpoint}/${user.id}`, { blocked: updatedUser.blocked });
   }
 
   updateBalance(user: User, amount: number): Observable<User> {
-    const updatedUser = { ...user, balance: user.balance + amount };
-    if (environment.useMockData) {
-      const index = this.mockUsers.findIndex(u => u.id === user.id);
-      if (index !== -1) this.mockUsers[index] = { ...this.mockUsers[index], ...updatedUser };
-      return of(updatedUser);
-    }
-    return this.http.put<User>(`/api/users/${user.id}`, updatedUser);
+    const newBalance = user.balance + amount;
+    if (environment.useMockData) return of({ ...user, balance: newBalance });
+
+    // ⚠️ Backend: PATCH /users/:id
+    return this.http.patch<User>(`${this.usersEndpoint}/${user.id}`, { balance: newBalance });
   }
 
-  // --- NEU: Passwort zurücksetzen ---
-
   resetPassword(userId: string): Observable<string> {
-    if (environment.useMockData) {
-      const user = this.mockUsers.find(u => u.id === userId);
-      if (!user) {
-        return throwError(() => new Error('USER_NOT_FOUND'));
-      }
+    if (environment.useMockData) return of('pw-123456');
 
-      const newPassword = 'pw-' + Math.floor(100000 + Math.random() * 900000); // z.B. pw-123456
-      user.password = newPassword;
-      return of(newPassword);
-    }
-
-    // Beispiel-API im echten Backend:
+    // falls du so eine Route hast
     return this.http
-      .post<{ newPassword: string }>(`/api/users/${userId}/reset-password`, {})
+      .post<{ newPassword: string }>(`${this.usersEndpoint}/${userId}/reset-password`, {})
       .pipe(map(res => res.newPassword));
   }
 }

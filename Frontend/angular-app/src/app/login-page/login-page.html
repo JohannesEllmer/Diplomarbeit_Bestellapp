@@ -35,7 +35,16 @@
         </div>
       </div>
 
-      <button type="submit" [disabled]="isSubmitting" class="primary-btn">
+      <!-- ✅ Passwort vergessen -->
+      <div class="auth-links">
+       <a [routerLink]="['/forgot-password']" [state]="{ email: email?.value }">Passwort vergessen?</a>
+      </div>
+
+      <button
+        type="submit"
+        [disabled]="isSubmitting || loginForm.invalid"
+        class="primary-btn"
+      >
         {{ isSubmitting ? 'Anmelden...' : 'Anmelden' }}
       </button>
 

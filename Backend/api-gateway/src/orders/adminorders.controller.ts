@@ -1,42 +1,41 @@
-// src/orders/admin-orders.controller.ts
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth.guards';
 import { AdminOrdersService } from './adminorders-service';
-import { OrderDto } from './dto/order.dto';
-import { AuthGuard } from '../common/guards/auth.guards';
+import { UpdateOrderDto } from './dto/update-order.dto';
+import { Req,  ForbiddenException } from '@nestjs/common';
+import { CompleteOrderDto } from './dto/complete-order.dto';
 
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('admin/orders')
 export class AdminOrdersController {
   constructor(private readonly svc: AdminOrdersService) {}
 
   @Get()
-  findAll(): Promise<OrderDto[]> {
+  findAll() {
     return this.svc.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<OrderDto> {
+  findOne(@Param('id') id: string) {
     return this.svc.findOne(id);
   }
 
   @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() body: Partial<Pick<OrderDto, 'status' | 'items'>>,
-  ): Promise<OrderDto> {
-    return this.svc.update(id, body);
+  update(@Param('id') id: string, @Body() dto: UpdateOrderDto) {
+    return this.svc.update(id, dto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string): Promise<void> {
+  remove(@Param('id') id: string) {
     return this.svc.remove(id);
+  }
+
+      @Patch('complete')
+  completeByQr(@Req() req: any, @Body() body: { code?: string }) {
+    const role = req.user?.role as string | undefined;
+    if (!role || !['ADMIN', 'INHABER'].includes(role)) {
+      throw new ForbiddenException('FORBIDDEN');
+    }
+    return this.svc.completeOrderByQr(body.code ?? '');
   }
 }

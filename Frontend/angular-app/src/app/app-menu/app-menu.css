@@ -9,7 +9,10 @@
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000;
+
+  /* ✅ sehr hoch, damit alles davor liegt */
+  z-index: 9999;
+
   background: #0284c7;
   color: #ffffff;
   box-shadow: 0 8px 32px rgba(2, 132, 199, 0.25);
@@ -22,13 +25,17 @@
   width: 100%;
   margin: 0 auto;
   padding: 0.75rem 2rem;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1.75rem;
+
   box-sizing: border-box;
   min-height: var(--header-height);
-  overflow: hidden;
+
+  /* ✅ WICHTIG: sonst schneidet es Dropdown ab */
+  overflow: visible;
 }
 
 .header-left {
@@ -75,6 +82,7 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -85,6 +93,7 @@
   opacity: 0.8;
   font-weight: 500;
   letter-spacing: 0.05em;
+
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -114,7 +123,7 @@
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* ---------- Rechte Seite (Menü + User) ---------- */
+/* ---------- Rechte Seite ---------- */
 
 .header-right {
   display: flex;
@@ -148,24 +157,6 @@
   min-width: 0;
 }
 
-.nav-tag {
-  font-size: 0.75rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  padding: 0.2rem 0.8rem;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.95);
-  color: rgba(191, 219, 254, 0.95);
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  white-space: nowrap;
-}
-
-.nav-tag-secondary {
-  background: rgba(15, 23, 42, 0.85);
-  color: rgba(191, 219, 254, 0.95);
-  border-color: rgba(148, 163, 184, 0.35);
-}
-
 .nav-pill-row {
   display: flex;
   align-items: center;
@@ -186,6 +177,7 @@
   font-size: 0.95rem;
   white-space: nowrap;
   backdrop-filter: blur(10px);
+
   position: relative;
   overflow: hidden;
   display: inline-flex;
@@ -196,7 +188,6 @@
   white-space: nowrap;
 }
 
-/* Kein Shimmer-Effekt */
 .nav-pill::before {
   display: none;
 }
@@ -216,98 +207,37 @@
   font-weight: 700;
 }
 
-/* ================== DESKTOP USER-BEREICH ================== */
+/* ================= DESKTOP USER DROPDOWN ================= */
 
-.desktop-user-section {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  margin-left: 0.75rem;
+.desktop-user-wrapper {
+  position: relative;
+
+  /* ✅ eigener stacking context + hoch */
+  z-index: 10040;
 }
 
-/* Neue Guthaben-Karte */
-.guthaben-card {
-  display: flex;
-  flex-direction: column;
-  padding: 0.55rem 1rem;
-  border-radius: 1rem;
-  background: radial-gradient(
-                circle at 0 0,
-                rgba(255, 255, 255, 0.25),
-                transparent 55%
-              ),
-              linear-gradient(
-                135deg,
-                rgba(15, 23, 42, 0.95),
-                rgba(15, 23, 42, 0.85)
-              );
-  border: 1px solid rgba(191, 219, 254, 0.6);
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.5);
-  min-width: 150px;
-}
-
-.guthaben-label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.15rem;
-}
-
-.guthaben-label {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: rgba(209, 213, 219, 0.95);
-  font-weight: 600;
-}
-
-.guthaben-tag {
-  font-size: 0.7rem;
-  padding: 0.12rem 0.45rem;
-  border-radius: 999px;
-  background: rgba(56, 189, 248, 0.15);
-  border: 1px solid rgba(56, 189, 248, 0.7);
-  color: #e0f2fe;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-weight: 600;
-}
-
-.guthaben-amount-row {
-  display: flex;
-  align-items: baseline;
-  gap: 0.2rem;
-  margin-bottom: 0.1rem;
-}
-
-.guthaben-amount {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #f9fafb;
-}
-
-.guthaben-currency {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #bae6fd;
-}
-
-.guthaben-caption {
-  font-size: 0.72rem;
-  color: rgba(148, 163, 184, 0.95);
-}
-
-/* User Chip */
-
-.user-chip {
+.desktop-user-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.4rem 0.85rem 0.4rem 0.4rem;
+  gap: 0.55rem;
+  padding: 0.4rem 0.75rem;
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(15, 23, 42, 0.85);
   border: 1px solid rgba(148, 163, 184, 0.6);
+  color: white;
+  cursor: pointer;
   box-shadow: 0 4px 16px rgba(15, 23, 42, 0.45);
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.desktop-user-trigger:hover {
+  background: rgba(15, 23, 42, 0.95);
+  transform: translateY(-1px);
+}
+
+.desktop-user-trigger .caret {
+  font-size: 0.75rem;
+  opacity: 0.8;
 }
 
 .user-avatar {
@@ -341,28 +271,144 @@
   opacity: 0.95;
 }
 
-/* Logout Icon groß & deutlich */
+/* Dropdown */
 
-.logout-btn {
-  margin-left: 0.15rem;
-  border: none;
-  background: rgba(15, 23, 42, 0.85);
-  color: #e5e7eb;
-  cursor: pointer;
-  font-size: 1.4rem;
-  padding: 0.15rem 0.4rem;
+.user-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.6rem);
+  width: 290px;
+  background: #0f172a;
+  border-radius: 1.1rem;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+
+  /* ✅ immer vor allem */
+  z-index: 10050;
+}
+
+.dropdown-user {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.dropdown-avatar {
+  width: 42px;
+  height: 42px;
   border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
-  line-height: 1;
-  transition: background 0.18s ease, transform 0.1s ease, box-shadow 0.18s ease;
+  font-weight: 800;
+  color: #0f172a;
+  background: #e0f2fe;
 }
 
-.logout-btn:hover {
-  background: #ef4444;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.45);
+.dropdown-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.85rem;
+  color: #f1f5f9;
+}
+
+.dropdown-role {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.dropdown-balance {
+  font-size: 0.8rem;
+  margin-top: 0.2rem;
+  color: #e5e7eb;
+}
+
+/* ✅ Admin Switch */
+.dropdown-switch {
+  padding: 0.85rem 0.9rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.switch-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(226, 232, 240, 0.85);
+  margin-bottom: 0.55rem;
+  font-weight: 700;
+}
+
+.switch-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.switch-pill {
+  flex: 1;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f1f5f9;
+  border-radius: 999px;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.switch-pill:hover {
+  background: rgba(255, 255, 255, 0.12);
   transform: translateY(-1px);
+}
+
+.switch-pill.active {
+  background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+  border-color: rgba(255, 255, 255, 0.5);
+  font-weight: 700;
+}
+
+.switch-hint {
+  margin-top: 0.55rem;
+  font-size: 0.72rem;
+  color: rgba(203, 213, 225, 0.85);
+  line-height: 1.25;
+}
+
+/* Actions */
+
+.dropdown-actions {
+  padding: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.dropdown-btn {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.75rem;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.dropdown-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateX(4px);
+}
+
+.dropdown-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #fee2e2;
 }
 
 /* ================== MOBILE BUTTON ================== */
@@ -423,7 +469,7 @@
   width: min(80vw, 320px);
   height: 100vh;
   background: #0f172a;
-  z-index: 1002;
+  z-index: 10020;
   transition: right 0.35s ease;
   box-shadow: -8px 0 40px rgba(0, 0, 0, 0.5);
   display: flex;
@@ -444,8 +490,6 @@
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
 }
-
-/* Mobile User Info */
 
 .mobile-user-info {
   display: flex;
@@ -494,8 +538,6 @@
   color: #facc15;
 }
 
-/* Close Button */
-
 .mobile-close-btn {
   background: rgba(255, 255, 255, 0.1);
   border: none;
@@ -521,8 +563,6 @@
   flex: 1;
   overflow-y: auto;
 }
-
-/* Mobile Sections */
 
 .mobile-section {
   margin-bottom: 1.5rem;
@@ -574,12 +614,43 @@
   box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
 }
 
-/* Mobile Logout */
+.mobile-admin-switch {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.mobile-admin-btn {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  color: #e5e7eb;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.mobile-admin-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
+}
+
+.mobile-admin-btn.active {
+  background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
 
 .mobile-logout {
   margin-top: 0.5rem;
   border-top: 1px solid rgba(148, 163, 184, 0.3);
   padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
 }
 
 .mobile-logout-btn {
@@ -595,7 +666,7 @@
   color: #e5e7eb;
   cursor: pointer;
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 600;
   transition: all 0.2s ease;
 }
 
@@ -608,13 +679,11 @@
   font-size: 1.1rem;
 }
 
-/* Mobile Overlay */
-
 .mobile-overlay {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.8);
-  z-index: 1001;
+  z-index: 10010;
   opacity: 0;
   visibility: hidden;
   transition: all 0.35s ease;
@@ -679,7 +748,7 @@
     justify-content: space-between;
   }
 
-  .desktop-user-section {
+  .desktop-user-wrapper {
     display: none;
   }
 }

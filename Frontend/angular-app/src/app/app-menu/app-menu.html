@@ -9,9 +9,7 @@
       <!-- Desktop: Vollständiger Titel -->
       <div class="title-block" *ngIf="!isMobile">
         <span class="app-name">HungerSatt Bestellsystem</span>
-        <span class="app-subtitle">
-          Bestellen · Verwalten · Auswerten
-        </span>
+        <span class="app-subtitle">Bestellen · Verwalten · Auswerten</span>
       </div>
 
       <!-- Mobile: Nur Seitenname -->
@@ -65,32 +63,86 @@
         </div>
       </nav>
 
-      <!-- Desktop: Benutzerinfo -->
-      <div class="desktop-user-section" *ngIf="!isMobile && hasUser">
-        <div class="guthaben-chip">
-          <span class="chip-label">Guthaben</span>
-          <span class="chip-value"> {{ formatBalance() }} €</span>
-        </div>
-
-        <div class="user-chip">
+      <!-- Desktop: Benutzer Dropdown -->
+      <div class="desktop-user-wrapper" *ngIf="!isMobile && hasUser">
+        <button
+          class="desktop-user-trigger"
+          type="button"
+          (click)="toggleUserMenu($event)"
+          [attr.aria-expanded]="userMenuOpen"
+        >
           <div class="user-avatar" [style.background-color]="getRoleColor()">
             {{ userInitials }}
           </div>
+
           <div class="user-meta">
             <span class="user-name">{{ userName }}</span>
             <span class="user-role" [style.color]="getRoleColor()">
-              {{ userRoleConfig?.label }}
+              {{ getEffectiveRoleLabel() }}
             </span>
           </div>
-          <button
-            class="logout-btn"
-            type="button"
-            (click)="logout()"
-            title="Abmelden"
-            aria-label="Abmelden"
-          >
-            ⎋
-          </button>
+
+          <span class="caret">▾</span>
+        </button>
+
+        <!-- Dropdown -->
+        <div class="user-dropdown" *ngIf="userMenuOpen">
+          <div class="dropdown-user">
+            <div class="dropdown-avatar" [style.background-color]="getRoleColor()">
+              {{ userInitials }}
+            </div>
+            <div class="dropdown-user-info">
+              <strong>{{ userName }}</strong>
+
+              <span class="dropdown-role" [style.color]="getRoleColor()">
+                {{ getEffectiveRoleLabel() }}
+              </span>
+
+              <div class="dropdown-balance">
+                Guthaben: <strong>{{ formatBalance() }} €</strong>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ✅ Admin: Ansicht wechseln -->
+          <div class="dropdown-switch" *ngIf="currentRole === 'ADMIN'">
+            <div class="switch-title">Ansicht wechseln</div>
+
+            <div class="switch-row">
+              <button
+                type="button"
+                class="switch-pill"
+                [class.active]="adminView === 'USER'"
+                (click)="setAdminView('USER')"
+              >
+                Admin – User
+              </button>
+
+              <button
+                type="button"
+                class="switch-pill"
+                [class.active]="adminView === 'MANAGEMENT'"
+                (click)="setAdminView('MANAGEMENT')"
+              >
+                Admin – Management
+              </button>
+            </div>
+
+            <div class="switch-hint">
+              Diese Ansicht ändert nur die Menüpunkte (Frontend). Berechtigungen bleiben Admin.
+            </div>
+          </div>
+
+          <div class="dropdown-actions">
+            <button class="dropdown-btn" type="button" (click)="goToChangePassword()">
+              🔒 Passwort ändern
+            </button>
+
+            <button class="dropdown-btn danger" type="button" (click)="logout()">
+              ⎋ Abmelden
+            </button>
+          </div>
         </div>
       </div>
 
@@ -133,7 +185,7 @@
         <div class="mobile-user-details">
           <span class="mobile-user-name">{{ userName }}</span>
           <span class="mobile-user-role" [style.color]="getRoleColor()">
-            {{ userRoleConfig?.label }}
+            {{ getEffectiveRoleLabel() }}
           </span>
           <div class="mobile-balance">
             <span>Guthaben:</span>
@@ -141,11 +193,8 @@
           </div>
         </div>
       </div>
-      <button
-        class="mobile-close-btn"
-        (click)="closeMobile()"
-        aria-label="Menü schließen"
-      >
+
+      <button class="mobile-close-btn" (click)="closeMobile()" aria-label="Menü schließen">
         ×
       </button>
     </div>
@@ -184,9 +233,38 @@
         </div>
       </div>
 
-      <!-- Abmelden -->
+      <!-- Mobile: Admin Ansicht wechseln -->
+      <div class="mobile-section" *ngIf="currentRole === 'ADMIN'">
+        <div class="mobile-section-title">Admin Ansicht</div>
+
+        <div class="mobile-admin-switch">
+          <button
+            type="button"
+            class="mobile-admin-btn"
+            [class.active]="adminView === 'USER'"
+            (click)="setAdminView('USER')"
+          >
+            Admin – User
+          </button>
+
+          <button
+            type="button"
+            class="mobile-admin-btn"
+            [class.active]="adminView === 'MANAGEMENT'"
+            (click)="setAdminView('MANAGEMENT')"
+          >
+            Admin – Management
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Logout + Change Password -->
       <div class="mobile-logout" *ngIf="hasUser">
-        <button class="mobile-logout-btn" (click)="logout()">
+        <button class="mobile-logout-btn" type="button" (click)="goToChangePassword()">
+          🔒 Passwort ändern
+        </button>
+
+        <button class="mobile-logout-btn" type="button" (click)="logout()">
           <span class="logout-icon">⍈</span>
           <span>Abmelden</span>
         </button>

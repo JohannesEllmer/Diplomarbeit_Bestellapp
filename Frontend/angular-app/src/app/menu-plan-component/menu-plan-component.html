@@ -2,13 +2,13 @@
 
   <div class="search-controls">
     <div class="search-field">
-      <input
-        type="text"
-        [(ngModel)]="searchTerm"
-        (input)="onSearchChange()"
-        placeholder="Nach Gerichten suchen..."
-        class="search-input"
-      />
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="onSearchChange($event)"
+      placeholder="Gericht oder Menü suchen…"
+    />
+
       <button *ngIf="searchTerm" (click)="clearSearch()" class="clear-search" title="Suche löschen">✕</button>
     </div>
 
@@ -87,7 +87,8 @@
         <i class="icon-wallet"></i>
         <div class="footer-text">
           <span>Guthaben</span>
-          <strong>{{ balance | currency: 'EUR' }}</strong>
+         <strong>{{ formatBalance() }} €</strong>
+
         </div>
       </div>
 

@@ -14,6 +14,7 @@ CREATE TABLE users (
   school_type VARCHAR(10) NOT NULL,
   balance    NUMERIC(10,2) NOT NULL DEFAULT 0,
   blocked    BOOLEAN NOT NULL DEFAULT FALSE,
+  email_verified BOOLEAN NOT NULL DEFAULT FALSE,
   role       TEXT NOT NULL,            -- KUNDE | INHABER | ADMIN (per App validiert)
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -21,6 +22,9 @@ CREATE TABLE users (
 
 CREATE INDEX idx_users_role ON users(role);
 CREATE INDEX idx_users_blocked ON users(blocked);
+
+
+
 
 ----------------------
 -- AUTH CREDENTIALS
@@ -114,6 +118,47 @@ CREATE TABLE order_items (
   delivered     BOOLEAN NOT NULL DEFAULT FALSE,
   delivery_time TIMESTAMPTZ
 );
+
+CREATE TABLE app.auth_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  token_type TEXT NOT NULL CHECK (token_type IN ('EMAIL_VERIFY', 'PASSWORD_RESET')),
+  token_hash TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used_at TIMESTAMPTZ NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  CONSTRAINT fk_auth_tokens_user
+    FOREIGN KEY (user_id)
+    REFERENCES app.users(id)
+    ON DELETE CASCADE
+);
+
+-- Für gen_random_uuid()
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+CREATE TABLE IF NOT EXISTS app.pending_registrations (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  email text NOT NULL UNIQUE,
+  payload jsonb NOT NULL,
+  password_hash text NOT NULL,
+
+  token_hash text NOT NULL UNIQUE,
+  expires_at timestamptz NOT NULL,
+  used_at timestamptz NULL,
+
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pending_reg_token_hash
+  ON app.pending_registrations(token_hash);
+
+CREATE INDEX IF NOT EXISTS idx_pending_reg_expires
+  ON app.pending_registrations(expires_at);
+
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 CREATE INDEX idx_order_items_menu_item_id ON order_items(menu_item_id);

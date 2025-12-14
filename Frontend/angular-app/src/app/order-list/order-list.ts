@@ -1,9 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { interval, Subject, takeUntil, filter as rxFilter } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { OrderItem } from '../../models/menu-item.model';
 import { OrderService } from '../services/order/order-service';
+import { AdminOrderService } from '../services/order/admin-order.service';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 
 type Camera = { id: string; label?: string };
@@ -37,13 +39,28 @@ export class OrderListComponent implements OnInit, OnDestroy {
   private pendingItem?: OrderItem;
   private scanningInProgress = false;
 
-  constructor(private router: Router, private orderService: OrderService) {}
+  private destroy$ = new Subject<void>();
+
+  constructor(
+    private router: Router,
+    private adminOrders: AdminOrderService,
+    private orderService: OrderService,
+  ) {}
 
   ngOnInit(): void {
     this.loadOrders();
+
+    interval(5000)
+      .pipe(
+        takeUntil(this.destroy$),
+        rxFilter(() => !this.scanning)
+      )
+      .subscribe(() => this.loadOrders());
   }
 
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
     this.stopScanner().catch(() => {});
   }
 
@@ -202,6 +219,12 @@ export class OrderListComponent implements OnInit, OnDestroy {
     await this.startScanner();
   }
 
+  private extractOrderIdFromQr(code: string): string | null {
+    const c = (code || '').trim();
+    const m = /^Order-([0-9a-fA-F-]{36})$/.exec(c);
+    return m ? m[1] : null;
+  }
+
   private onScanSuccess(decodedText: string): void {
     try {
       navigator.vibrate?.(50);
@@ -210,24 +233,29 @@ export class OrderListComponent implements OnInit, OnDestroy {
     const code = decodedText?.trim();
     if (!code) return;
 
-    const item = this.pendingItem;
-    if (!item) return;
+    const orderId = this.extractOrderIdFromQr(code);
+    if (!orderId) {
+      this.scanMessage = 'Ungültiger QR-Code.';
+      return;
+    }
 
     this.scanMessage = 'Code erkannt. Bestellung wird abgeschlossen …';
-    this.orderService.completeOrder(item.menuItem.id, code).subscribe({
-      next: async () => {
-        this.orderItems = this.orderItems.filter(i => i !== item);
 
-        item.delivered = true;
-        this.completedItems = [...this.completedItems, item];
+    this.adminOrders.completeByQrCode(code).subscribe({
+      next: async (res) => {
+        if (!res?.ok) {
+          await this.closeScanner();
+          alert('Konnte Bestellung nicht abschließen (Backend).');
+          return;
+        }
 
-        this.updatePagination();
+        this.loadOrders();
+
         await this.closeScanner();
         alert('Bestellung erfolgreich abgeschlossen!');
       },
       error: async (err) => {
         await this.closeScanner();
-        this.scanMessage = 'Fehler beim Abschließen: ' + (err?.message || err);
         alert('Fehler beim Abschließen: ' + (err?.message || err));
       }
     });

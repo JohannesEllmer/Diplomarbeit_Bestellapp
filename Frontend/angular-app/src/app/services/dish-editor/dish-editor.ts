@@ -1,118 +1,134 @@
+// src/app/services/dish-editor/dish-editor.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, of, map, catchError } from 'rxjs';
+import { environment } from '../../env';
 import { MenuItem } from '../../../models/menu-item.model';
 
-@Injectable({
-  providedIn: 'root'
-})
-export class DishService {
-  // TODO: an deine echte Backend-URL anpassen
-  private readonly apiUrl = '/api/dishes';
+export interface DishDto {
+  id: string;
+  name: string;
+  description?: string | null;
+  price?: number | null;
+  allergenes?: string[] | null;
+}
 
-  // Mockdaten als Fallback
-  private readonly mockDishes: MenuItem[] = [
-    {
-      id: '1',
-      name: 'Spaghetti Bolognese',
-      description: 'Klassische Pasta mit Rindfleischsauce',
-      price: 11.9,
-      category: 'Hauptgericht',
-      allergens: ['Gluten'],
-      vegetarian: false,
-      available: true
-    },
-    {
-      id: '2',
-      name: 'Margherita',
-      description: 'Pizza mit Tomaten, Mozzarella und Basilikum',
-      price: 9.5,
-      category: 'Pizza',
-      allergens: ['Gluten', 'Milch'],
-      vegetarian: true,
-      available: true
-    }
-  ];
+@Injectable({ providedIn: 'root' })
+export class DishService {
+  private readonly apiBase = environment.apiBaseUrl ?? 'http://localhost:3000/api';
+  private readonly dishesEndpoint = `${this.apiBase}/dishes`;
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * Alle Gerichte laden (z. B. für eine Liste).
-   * Bei Fehler: Mockdaten zurückgeben.
-   */
+  // ------------------------------
+  // Mapper: DishDto -> MenuItem
+  // ------------------------------
+  private toMenuItem(dto: DishDto): MenuItem {
+    return {
+      id: dto.id,
+      name: dto.name ?? '',
+      description: dto.description ?? '',
+      price: Number(dto.price ?? 0),
+
+      // Defaults, weil DishDto diese Felder nicht hat:
+      category: 'Hauptgericht',
+      available: true,
+      vegetarian: false,
+      allergens: (dto.allergenes ?? []) as string[],
+    };
+  }
+
+  // ------------------------------
+  // Mapper: MenuItem -> DishDto
+  // ------------------------------
+  private toDishDto(item: MenuItem): Partial<DishDto> {
+    return {
+      id: item.id,
+      name: item.name,
+      description: item.description ?? '',
+      price: Number(item.price ?? 0),
+      allergenes: item.allergens ?? [],
+    };
+  }
+
+  // ------------------------------
+  // API: Alle Gerichte holen
+  // -> liefert MenuItem[] (Frontend-Model)
+  // ------------------------------
   getDishes(): Observable<MenuItem[]> {
-    return this.http.get<MenuItem[]>(this.apiUrl).pipe(
-      catchError(error => {
-        console.error('Fehler beim Laden der Gerichte, verwende Mockdaten:', error);
-        return of(this.mockDishes);
+    if (environment.useMockData) return of([]);
+
+    return this.http.get<DishDto[]>(this.dishesEndpoint).pipe(
+      map((rows) => (rows ?? []).map((d) => this.toMenuItem(d))),
+      catchError((err) => {
+        console.error('getDishes failed:', err);
+        return of([]);
       })
     );
   }
 
-  /**
-   * Einzelnes Gericht laden.
-   * Bei Fehler: null zurückgeben.
-   */
+  // ------------------------------
+  // API: Gericht by id
+  // -> liefert MenuItem | null
+  // ------------------------------
   getDishById(id: string): Observable<MenuItem | null> {
-    if (!id) {
-      return of(null);
+    if (!id) return of(null);
+    if (environment.useMockData) return of(null);
+
+    return this.http.get<DishDto>(`${this.dishesEndpoint}/${id}`).pipe(
+      map((dto) => (dto ? this.toMenuItem(dto) : null)),
+      catchError((err) => {
+        console.error('getDishById failed:', err);
+        return of(null);
+      })
+    );
+  }
+
+  // ------------------------------
+  // API: Speichern (neu/ändern)
+  // -> nimmt MenuItem und gibt MenuItem zurück
+  // ------------------------------
+  saveDish(dish: MenuItem): Observable<MenuItem> {
+    if (environment.useMockData) {
+      const id = dish.id && dish.id !== '0' && dish.id !== 'new' ? dish.id : crypto.randomUUID();
+      return of({ ...dish, id });
     }
 
-    return this.http.get<MenuItem>(`${this.apiUrl}/${id}`).pipe(
-      catchError(error => {
-        console.error(`Fehler beim Laden des Gerichts (${id}):`, error);
-        // Fallback: versuchen, aus den Mockdaten zu finden
-        const fallback = this.mockDishes.find(d => d.id === id) ?? null;
-        return of(fallback);
-      })
-    );
-  }
+    const payload = this.toDishDto(dish);
 
-  /**
-   * Gericht speichern (neu oder aktualisieren).
-   * - wenn id leer / '0' / 'new' => POST
-   * - sonst => PUT
-   * Bei Fehler: Mock-Fallback mit pseudo-ID.
-   */
-  saveDish(dish: MenuItem): Observable<MenuItem> {
+    // du nutzt im Editor id '0' als neu -> hier korrekt behandeln
     const isNew = !dish.id || dish.id === '0' || dish.id === 'new';
 
-    const payload: MenuItem = {
-      ...dish,
-      available: dish.available ?? true
-    };
-
     if (isNew) {
-      return this.http.post<MenuItem>(this.apiUrl, payload).pipe(
-        catchError(error => {
-          console.error('Fehler beim Anlegen des Gerichts, Mock-Fallback:', error);
-          const fallback: MenuItem = {
-            ...payload,
-            id: String(Date.now())
-          };
-          return of(fallback);
-        })
-      );
-    } else {
-      return this.http.put<MenuItem>(`${this.apiUrl}/${payload.id}`, payload).pipe(
-        catchError(error => {
-          console.error('Fehler beim Aktualisieren des Gerichts, Mock-Fallback:', error);
-          // Wir tun so, als wäre das Update erfolgreich
-          return of(payload);
+      return this.http.post<DishDto>(this.dishesEndpoint, payload).pipe(
+        map((dto) => this.toMenuItem(dto)),
+        catchError((err) => {
+          console.error('saveDish POST failed:', err);
+          // fallback: gib trotzdem das Dish zurück, damit UI nicht stirbt
+          return of({ ...dish, id: dish.id || '0' });
         })
       );
     }
+
+    // Update: bei dir eher PATCH
+    return this.http.patch<DishDto>(`${this.dishesEndpoint}/${dish.id}`, payload).pipe(
+      map((dto) => this.toMenuItem(dto)),
+      catchError((err) => {
+        console.error('saveDish PATCH failed:', err);
+        return of(dish);
+      })
+    );
   }
 
-  /**
-   * Gericht löschen.
-   * Bei Fehler: Fehler loggen, aber kein Crash.
-   */
+  // ------------------------------
+  // API: Löschen
+  // ------------------------------
   deleteDish(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
-      catchError(error => {
-        console.error('Fehler beim Löschen des Gerichts:', error);
+    if (environment.useMockData) return of(void 0);
+
+    return this.http.delete<void>(`${this.dishesEndpoint}/${id}`).pipe(
+      catchError((err) => {
+        console.error('deleteDish failed:', err);
         return of(void 0);
       })
     );

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEmail, IsNumber, IsBoolean, IsOptional } from 'class-validator';
+import { IsString, IsEmail, IsNumber, IsBoolean, IsIn } from 'class-validator';
 
 export class CreateUserDto {
   @ApiProperty()
@@ -10,6 +10,10 @@ export class CreateUserDto {
   @IsEmail()
   email: string;
 
+  @ApiProperty({ enum: ['ADMIN', 'INHABER', 'KUNDE'] })
+  @IsIn(['ADMIN', 'INHABER', 'KUNDE'])
+  role: 'ADMIN' | 'INHABER' | 'KUNDE';
+
   @ApiProperty()
   @IsString()
   class: string;
@@ -19,10 +23,16 @@ export class CreateUserDto {
   orderCount: number;
 
   @ApiProperty()
+  @IsBoolean()
+  blocked: boolean;
+
+  @ApiProperty()
+  @IsString()
+  school_type: string;
+
+  @ApiProperty()
   @IsNumber()
   balance: number;
 
-  @ApiProperty()
-  @IsBoolean()
-  blocked: boolean;
+
 }

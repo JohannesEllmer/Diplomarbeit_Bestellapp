@@ -7,8 +7,8 @@ import {
   IsArray
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { IsArray, ValidateNested } from 'class-validator';
 import { CreateOrderItemDto } from './create-order-item.dto';
+import { UserRefDto } from '../../orders/dto/user-ref.dto';
 
 export class CreateOrderDto {
   @ApiProperty()

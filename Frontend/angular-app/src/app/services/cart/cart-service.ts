@@ -4,12 +4,12 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of, map, catchError } from 'rxjs';
 import { environment } from '../../env';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class CartService {
   private readonly storageKey = 'cartItems';
-  private readonly apiBase = environment.apiBaseUrl ?? 'http://localhost:3000';
+
+  // ✅ apiBaseUrl soll bei dir bereits ".../api" sein
+  private readonly apiBase = environment.apiBaseUrl ?? 'http://localhost:3000/api';
   private readonly ordersEndpoint = `${this.apiBase}/orders`;
 
   constructor(private http: HttpClient) {}
@@ -76,19 +76,39 @@ export class CartService {
   }
 
   /**
-   * Sendet Bestellung ans Backend (POST /orders) oder simuliert sie im Testmodus.
-   * Falls das Backend keine sinnvolle Antwort liefert oder ein Fehler passiert,
-   * wird eine Fallback-Antwort zurückgegeben.
+   * ✅ NEU: baut aus localStorage-Items das passende Backend-Order-DTO
+   * Backend erwartet: { items: [{ menuItemId, quantity, note? }] }
    */
-  submitOrder(order: any): Observable<any> {
+  buildOrderFromCart(items?: OrderItem[]) {
+    const cart = items ?? this.getCartItems();
+
+    return {
+      items: cart.map(i => ({
+        menuItemId: i.menuItem.id,
+        quantity: i.quantity,
+        note: i.note ?? ''
+      })),
+      // optional: wenn du willst – Backend kann das ignorieren/berechnen
+      totalPrice: this.getTotal(cart),
+      createdAt: new Date().toISOString(),
+      status: 'open' as const
+    };
+  }
+
+  /**
+   * Sendet Bestellung ans Backend (POST /orders) oder simuliert sie im Testmodus.
+   */
+  submitOrder(order?: any): Observable<any> {
     if (environment.useMockData) {
       console.log('Testmodus aktiv – Bestellung simuliert:', order);
       return of({ success: true, message: 'Bestellung simuliert (Mock-Daten)', fallback: true });
     }
 
-    return this.http.post<any>(this.ordersEndpoint, order).pipe(
+    // ✅ Wenn kein Order-Objekt übergeben wurde: aus Cart bauen
+    const payload = order ?? this.buildOrderFromCart();
+
+    return this.http.post<any>(this.ordersEndpoint, payload).pipe(
       map(response => {
-        // Falls das Backend z.B. null/undefined zurückgibt -> Fallback-Antwort
         if (response == null) {
           return {
             success: true,
@@ -101,8 +121,8 @@ export class CartService {
       catchError(error => {
         console.error('Fehler beim Senden der Bestellung, Fallback wird verwendet', error);
         return of({
-          success: true,
-          message: 'Bestellung konnte nicht an das Backend gesendet werden – Fallback (simuliert).',
+          success: false,
+          message: 'Bestellung konnte nicht an das Backend gesendet werden.',
           fallback: true,
           error
         });
