@@ -15,7 +15,7 @@ CREATE TABLE users (
   balance    NUMERIC(10,2) NOT NULL DEFAULT 0,
   blocked    BOOLEAN NOT NULL DEFAULT FALSE,
   email_verified BOOLEAN NOT NULL DEFAULT FALSE,
-  role       TEXT NOT NULL,            -- KUNDE | INHABER | ADMIN (per App validiert)
+  role       TEXT NOT NULL,            -- KUNDE | INHABER | ADMIN 
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -23,13 +23,6 @@ CREATE TABLE users (
 CREATE INDEX idx_users_role ON users(role);
 CREATE INDEX idx_users_blocked ON users(blocked);
 
-
-
-
-----------------------
--- AUTH CREDENTIALS
--- 1:1 zu USERS, E-Mail bleibt in USERS
-----------------------
 CREATE TABLE auth_credentials (
   user_id       UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   password_hash TEXT NOT NULL,
@@ -40,9 +33,6 @@ CREATE TABLE auth_credentials (
 
 CREATE INDEX idx_auth_token ON auth_credentials(auth_token);
 
-----------------------
--- MENU ITEMS
-----------------------
 CREATE TABLE menu_items (
   id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name        TEXT NOT NULL,
@@ -54,9 +44,6 @@ CREATE TABLE menu_items (
   allergens   TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]
 );
 
-----------------------
--- DISHES
-----------------------
 CREATE TABLE dishes (
   id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name        TEXT NOT NULL,
@@ -65,9 +52,6 @@ CREATE TABLE dishes (
   allergenes  TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]
 );
 
-----------------------
--- MENUS
-----------------------
 CREATE TABLE menus (
   id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title             TEXT NOT NULL,
@@ -76,9 +60,6 @@ CREATE TABLE menus (
   dessert           TEXT
 );
 
-----------------------
--- MEAL PLANS
-----------------------
 CREATE TABLE meal_plans (
   id    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT NOT NULL
@@ -90,9 +71,6 @@ CREATE TABLE meal_plan_dishes (
   PRIMARY KEY (meal_plan_id, dish_id)
 );
 
-----------------------
--- ORDERS
-----------------------
 CREATE TABLE orders (
   id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id     UUID NOT NULL REFERENCES users(id),
@@ -105,9 +83,6 @@ CREATE TABLE orders (
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_orders_created_at ON orders(created_at);
 
-----------------------
--- ORDER ITEMS
-----------------------
 CREATE TABLE order_items (
   id            BIGSERIAL PRIMARY KEY,
   order_id      UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,

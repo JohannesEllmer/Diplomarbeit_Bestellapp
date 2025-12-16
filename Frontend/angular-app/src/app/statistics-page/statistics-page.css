@@ -208,7 +208,6 @@ width: 90%;
 .trend-up { color: #10b981; }
 .trend-down { color: #ef4444; }
 
-/* Verbesserte Orders-Section */
 .orders-section {
   background: white;
   padding: 1rem;
@@ -621,4 +620,92 @@ width: 90%;
 .order-id {
   color: #64748b;
   font-size: 0.92rem;
+}
+
+.orders-toolbar{
+  display:flex;
+  justify-content: space-between;
+  align-items:flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.orders-filters{
+  display:flex;
+  gap: .8rem;
+  flex-wrap: wrap;
+}
+
+.status-pill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding: .15rem .55rem;
+  border-radius: 999px;
+  font-size: .82rem;
+  font-weight: 700;
+  margin-top: .35rem;
+  width: fit-content;
+}
+.status-pill.delivered{
+  background:#ecfdf5;
+  color:#065f46;
+  border:1px solid #a7f3d0;
+}
+.status-pill.open{
+  background:#eff6ff;
+  color:#1e40af;
+  border:1px solid #bfdbfe;
+}
+
+.modal-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index: 9999;
+  padding: 1rem;
+}
+.modal{
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.18);
+  width: min(520px, 92vw);
+  overflow: hidden;
+}
+.modal-head{
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid #e5e7eb;
+  display:flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items:flex-start;
+}
+.modal-body{
+  padding: 1rem 1.2rem 1.2rem 1.2rem;
+}
+.modal-row{
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+  gap: .8rem;
+  padding: .55rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.modal-row:last-child{
+  border-bottom:none;
+}
+.modal-row .label{
+  color:#64748b;
+  font-weight: 600;
+}
+
+.finance-section{
+  background: white;
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }

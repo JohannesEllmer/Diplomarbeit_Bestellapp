@@ -4,31 +4,22 @@ import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Menu } from '../../../models/menu.model';
 import { MenuItem, OrderItem } from '../../../models/menu-item.model';
-import { environment } from '../../env';
+import { environment } from '../env';
 
 @Injectable({ providedIn: 'root' })
 export class MenuService {
-  // ✅ BaseURL aus environment (inkl. /api)
   private readonly apiBase = environment.apiBaseUrl ?? 'http://localhost:3000/api';
 
-  // ✅ echte Gateway-Endpunkte
-  private readonly menuItemsEndpoint = `${this.apiBase}/menu-items`; // falls bei dir anders: hier ändern
+  private readonly menuItemsEndpoint = `${this.apiBase}/menu-items`; 
   private readonly menusEndpoint = `${this.apiBase}/menus`;
 
-  // Lokaler Storage (wie bisher)
   private readonly storageKey = 'cartItems';
 
-  // -----------------------
-  // Mock-Daten (wie gehabt)
-  // -----------------------
-  private readonly mockMenuItems: MenuItem[] = [/* ...deine mocks wie vorher... */];
-  private readonly mockMenus: Menu[] = [/* ...deine mocks wie vorher... */];
+  private readonly mockMenuItems: MenuItem[] = [];
+  private readonly mockMenus: Menu[] = [];
 
   constructor(private http: HttpClient) {}
 
-  // -------------------------------------------------
-  // Einzelgerichte (Items)
-  // -------------------------------------------------
   getMenuItems(): Observable<MenuItem[]> {
     if (environment.useMockData) {
       return of(this.mockMenuItems);
@@ -41,9 +32,6 @@ export class MenuService {
     );
   }
 
-  // -------------------------------------------------
-  // Vorgefertigte Menüs (Combos)
-  // -------------------------------------------------
   getMenus(): Observable<Menu[]> {
     if (environment.useMockData) {
       return of(this.mockMenus);
@@ -56,9 +44,6 @@ export class MenuService {
     );
   }
 
-  // -------------------------------------------------
-  // Lokaler Warenkorb (beibehalten)
-  // -------------------------------------------------
   saveOrderItems(orderItems: OrderItem[]): void {
     localStorage.setItem(this.storageKey, JSON.stringify(orderItems));
   }

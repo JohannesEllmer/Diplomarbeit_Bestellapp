@@ -6,7 +6,7 @@ export interface AuthJwtPayload {
   sub: string;         // userId
   email: string;
   role: string;
-  sid: string;         // session id
+  sid: string;         
   iat?: number;
   exp?: number;
 }

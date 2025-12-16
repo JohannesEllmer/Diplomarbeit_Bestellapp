@@ -13,12 +13,7 @@ export class OrderService {
   private readonly apiBase = environment.apiBaseUrl ?? 'http://localhost:3000';
   private readonly ordersEndpoint = `${this.apiBase}/orders`;
 
-  /**
-   * Lädt die Bestellungen des aktuellen Users.
-   * Backend: GET /orders (NestJS-Controller)
-   * → Filter nach user.id bzw. userId im Frontend
-   * Fallback: Mock-Daten, wenn keine Ergebnisse oder Fehler.
-   */
+
   getMyOrders(): Observable<Order[]> {
     if (environment.useMockData) {
       return this.getMyOrdersMock();
@@ -33,20 +28,19 @@ export class OrderService {
         const filtered = safeOrders.filter(o =>
           // Order mit eingebettetem User-Objekt
           (o.user as any)?.id === currentUserId ||
-          // Order mit userId-Feld (wie dein Backend-Order-Entity)
+          // Order mit userId-Feld 
           (o as any).userId === currentUserId
         );
 
         return this.addQrForOpenOrders(filtered);
       }),
-      // Falls keine Bestellungen für den User vorhanden sind → Mock-Daten
       switchMap(orders => {
         if (!orders.length) {
           return this.getMyOrdersMock();
         }
         return of(orders);
       }),
-      // Fehler: ebenfalls Fallback auf Mock-Daten
+      // Fehler: Fallback auf Mock-Daten
       catchError(error => {
         console.error('Fehler beim Laden der eigenen Bestellungen, Fallback-Daten werden verwendet', error);
         return this.getMyOrdersMock();
@@ -67,7 +61,6 @@ export class OrderService {
     return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Order-${orderId}`;
   }
 
-  /** Mock-Daten für lokale Entwicklung / Storybook */
   private getMyOrdersMock(): Observable<Order[]> {
     const currentUserId = this.auth.getCurrentUserId();
 
@@ -81,7 +74,6 @@ export class OrderService {
       blocked: false
     };
 
-    // Beispiel-Menüeinträge
     const pizzaMargherita = {
       id: 'm1',
       name: 'Pizza Margherita',
@@ -171,7 +163,7 @@ export class OrderService {
         totalPrice: calcTotal(openItems),
         createdAt: new Date(),
         status: 'open',
-        showDetails: true // optional: für Test gleich aufgeklappt
+        showDetails: true 
       },
       {
         id: '99',

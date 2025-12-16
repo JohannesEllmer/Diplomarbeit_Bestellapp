@@ -4,24 +4,6 @@ SET search_path TO app, public;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- ------------------------------------------------------------
--- 0) Cleanup optional (auskommentiert lassen, wenn du nichts löschen willst)
--- ------------------------------------------------------------
--- TRUNCATE TABLE
---   order_items,
---   orders,
---   meal_plan_dishes,
---   meal_plans,
---   menus,
---   dishes,
---   menu_items,
---   auth_credentials,
---   users
--- RESTART IDENTITY CASCADE;
-
--- ------------------------------------------------------------
--- 1) USERS
--- ------------------------------------------------------------
 INSERT INTO app.users
   (id, name, email, class, school_type, balance, blocked, email_verified, role, created_at, updated_at)
 VALUES
@@ -40,11 +22,6 @@ ON CONFLICT (id) DO UPDATE SET
   role=EXCLUDED.role,
   updated_at=now();
 
--- ------------------------------------------------------------
--- 2) AUTH CREDENTIALS (bcrypt hashes, echte Werte)
--- Passwörter:
---   max12345, anna12345, chef12345, admin12345
--- ------------------------------------------------------------
 INSERT INTO app.auth_credentials (user_id, password_hash, auth_token, created_at, last_used_at)
 VALUES
   ('11111111-1111-1111-1111-111111111111', '$2b$10$q7n3cU0G9t3Iu8aS8hHj2eVjE4gF3Q8tG3YwR0w0o0yH6c9r7cN7u', gen_random_uuid(), now() - interval '30 days', now() - interval '1 day'),
@@ -55,9 +32,6 @@ ON CONFLICT (user_id) DO UPDATE SET
   password_hash=EXCLUDED.password_hash,
   auth_token=EXCLUDED.auth_token;
 
--- ------------------------------------------------------------
--- 3) MENU ITEMS (das sind deine "Einzelgerichte" / Produkte)
--- ------------------------------------------------------------
 INSERT INTO app.menu_items (id, name, description, price, category, available, vegetarian, allergens)
 VALUES
   ('44444444-4444-4444-4444-444444444441', 'Spaghetti Bolognese', 'mit Rindfleischsauce', 5.50, 'Hauptgericht', TRUE, FALSE, ARRAY['GLUTEN']::TEXT[]),
@@ -76,9 +50,6 @@ ON CONFLICT (id) DO UPDATE SET
   vegetarian=EXCLUDED.vegetarian,
   allergens=EXCLUDED.allergens;
 
--- ------------------------------------------------------------
--- 4) DISHES (falls du sie separat nutzt)
--- ------------------------------------------------------------
 INSERT INTO app.dishes (id, name, description, price, allergenes)
 VALUES
   ('55555555-5555-5555-5555-555555555551', 'Pizzastück Margherita', 'mit Tomate und Käse', 2.50, ARRAY['GLUTEN','MILCH']::TEXT[]),
@@ -90,9 +61,6 @@ ON CONFLICT (id) DO UPDATE SET
   price=EXCLUDED.price,
   allergenes=EXCLUDED.allergenes;
 
--- ------------------------------------------------------------
--- 5) MENUS (deine Menüs referenzieren menu_items)
--- ------------------------------------------------------------
 INSERT INTO app.menus (id, title, dish_menu_item_id, drink, dessert)
 VALUES
   ('66666666-6666-6666-6666-666666666661', 'Montagsmenü', '44444444-4444-4444-4444-444444444441', 'Apfelsaft', 'Pudding'),
@@ -106,9 +74,6 @@ ON CONFLICT (id) DO UPDATE SET
   drink=EXCLUDED.drink,
   dessert=EXCLUDED.dessert;
 
--- ------------------------------------------------------------
--- 6) MEAL PLANS + MEAL PLAN DISHES
--- ------------------------------------------------------------
 INSERT INTO app.meal_plans (id, title)
 VALUES
   ('77777777-7777-7777-7777-777777777771', 'Wochenplan KW01'),
@@ -126,9 +91,6 @@ VALUES
   ('77777777-7777-7777-7777-777777777773', '55555555-5555-5555-5555-555555555553')
 ON CONFLICT DO NOTHING;
 
--- ------------------------------------------------------------
--- 7) ORDERS (mehr Daten für Statistik, verteilt über Tage)
--- ------------------------------------------------------------
 INSERT INTO app.orders (id, user_id, total_price, created_at, status, qr_code_url)
 VALUES
   ('88888888-8888-8888-8888-888888888881', '11111111-1111-1111-1111-111111111111', 8.50,  now() - interval '2 days',  'closed', 'https://example.com/qr/1'),
@@ -147,9 +109,7 @@ ON CONFLICT (id) DO UPDATE SET
   status=EXCLUDED.status,
   qr_code_url=EXCLUDED.qr_code_url;
 
--- ------------------------------------------------------------
--- 8) ORDER ITEMS (passend zu Orders)
--- ------------------------------------------------------------
+
 INSERT INTO app.order_items (order_id, menu_item_id, user_id, note, quantity, delivered, delivery_time)
 VALUES
   -- Order 1 (Max)
@@ -179,10 +139,3 @@ VALUES
   ('88888888-8888-8888-8888-888888888887', '44444444-4444-4444-4444-444444444447', '22222222-2222-2222-2222-222222222222', '', 1, TRUE, now() - interval '12 days')
 ON CONFLICT DO NOTHING;
 
--- ------------------------------------------------------------
--- 9) Quick sanity checks (optional)
--- ------------------------------------------------------------
--- SELECT count(*) AS users FROM app.users;
--- SELECT count(*) AS menu_items FROM app.menu_items;
--- SELECT count(*) AS orders FROM app.orders;
--- SELECT count(*) AS order_items FROM app.order_items;

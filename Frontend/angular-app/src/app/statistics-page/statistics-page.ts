@@ -1,6 +1,4 @@
-import {
-  Component,
-  AfterViewInit,
+import { Component, AfterViewInit,
   ViewChild,
   ElementRef,
   OnInit
@@ -85,6 +83,14 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
 
   loading = false;
 
+  orderQuery = '';
+  deliveredFilter: 'all' | 'open' | 'delivered' = 'all';
+  sortOrdersBy: 'newest' | 'oldest' | 'priceDesc' | 'priceAsc' = 'newest';
+
+
+  selectedOrder: StatOrder | null = null;
+  selectedDay: DayData | null = null;
+
   constructor(private stats: StatisticsService) {}
 
   ngOnInit(): void {
@@ -98,8 +104,6 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
     this.loadStatistics();
   }
-
-  /* ---------------- Load ---------------- */
 
   loadStatistics(): void {
     this.loading = true;
@@ -128,7 +132,6 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
     this.updateChart();
   }
 
-  /* ---------------- Calculations ---------------- */
 
   private calculateDisplayMode(): void {
     const diff =
@@ -162,9 +165,7 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
     }
 
     this.totalCustomers = customers.size;
-    this.avgBasket = this.totalOrders
-      ? this.totalRevenue / this.totalOrders
-      : 0;
+    this.avgBasket = this.totalOrders ? this.totalRevenue / this.totalOrders : 0;
   }
 
   calculateTrends(): void {
@@ -175,8 +176,6 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
     this.trendRevenue =
       this.totalRevenue >= this.previousRevenue ? 'up' : 'down';
   }
-
-  /* ---------------- Finance ---------------- */
 
   recalculateFinance(): void {
     const rows: FinanceRow[] = [];
@@ -221,7 +220,7 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
     }
   }
 
-  /* ---------------- Chart ---------------- */
+  // Chart
 
   toggleChartType(type: ChartType): void {
     if (type === 'line' && this.days.length < 5) return;
@@ -267,7 +266,6 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
     if (ctx) this.chart = new Chart(ctx, cfg);
   }
 
-  /* ---------------- PDF ---------------- */
 
   exportFinancePDF(): void {
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
@@ -281,7 +279,7 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
 
     autoTable(doc, {
       startY: 70,
-      head: [['Datum', 'Bestellungen', 'Umsatz']],
+      head: [['Datum / Woche', 'Bestellungen', 'Umsatz']],
       body
     });
 
@@ -300,5 +298,82 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
       const el = this.chartCanvas.nativeElement.parentElement;
       el?.requestFullscreen?.();
     }
+  }
+
+
+get filteredDays(): DayData[] {
+  const q = this.orderQuery.trim().toLowerCase();
+
+  const result: DayData[] = [];
+
+  for (const day of this.days) {
+    let orders = [...day.ordersList];
+
+    // Suche
+    if (q) {
+      orders = orders.filter(o =>
+        o.id.toLowerCase().includes(q) ||
+        (o.user?.name ?? '').toLowerCase().includes(q) ||
+        day.date.toLowerCase().includes(q)
+      );
+    }
+
+    if (this.deliveredFilter === 'delivered') {
+      orders = orders.filter(o => o.delivered === true);
+    } else if (this.deliveredFilter === 'open') {
+      orders = orders.filter(o => o.delivered === false);
+    }
+
+    //Sortierung
+    switch (this.sortOrdersBy) {
+      case 'priceAsc':
+        orders.sort((a, b) => a.totalPrice - b.totalPrice);
+        break;
+      case 'priceDesc':
+        orders.sort((a, b) => b.totalPrice - a.totalPrice);
+        break;
+      case 'oldest':
+        break;
+      case 'newest':
+      default:
+        orders = [...orders].reverse();
+    }
+
+    if (orders.length) {
+      result.push({
+        date: day.date,
+        ordersList: orders
+      });
+    }
+  }
+
+  return result;
+}
+
+
+  deliveredLabel(order: StatOrder): string {
+    return (order as any).delivered ? 'Geliefert' : 'Offen';
+  }
+
+  deliveredClass(order: StatOrder): 'delivered' | 'open' {
+    return (order as any).delivered ? 'delivered' : 'open';
+  }
+
+  openOrder(day: DayData, order: StatOrder): void {
+    this.selectedDay = day;
+    this.selectedOrder = order;
+  }
+
+  closeOrder(): void {
+    this.selectedDay = null;
+    this.selectedOrder = null;
+  }
+
+  stopOverlayClick(e: MouseEvent): void {
+    e.stopPropagation();
+  }
+
+  trackByOrderId(_: number, o: StatOrder): string {
+    return o.id;
   }
 }

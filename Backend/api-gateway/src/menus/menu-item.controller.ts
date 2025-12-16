@@ -10,7 +10,6 @@ import { RolesGuard } from '../roles.guard';
 export class MenuItemsController {
   constructor(private readonly svc: MenuItemsService) {}
 
-  // Lesen darf jeder (optional ohne Auth; wenn du Login brauchst: @UseGuards(JwtAuthGuard) hinzufügen)
   @Get()
   findAll() {
     return this.svc.findAll();
@@ -21,7 +20,6 @@ export class MenuItemsController {
     return this.svc.findOne(id);
   }
 
-  // Schreiben nur INHABER/ADMIN
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INHABER', 'ADMIN')
   @Post()

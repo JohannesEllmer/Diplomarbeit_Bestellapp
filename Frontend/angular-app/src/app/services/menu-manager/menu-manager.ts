@@ -1,14 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, catchError } from 'rxjs';
-import { environment } from '../../env';
+import { environment } from '../env';
 import { MealPlan } from '../../../models/meal-plan.model';
 
 @Injectable({ providedIn: 'root' })
 export class MenuManagerService {
   private readonly apiBase = environment.apiBaseUrl ?? 'http://localhost:3000/api';
 
-  // MealPlans (passen zu MenuPlanner/MealPlan-Model)
   private readonly mealPlansEndpoint = `${this.apiBase}/meal-plans`;
 
   constructor(private http: HttpClient) {}

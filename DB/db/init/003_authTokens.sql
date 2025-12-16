@@ -1,13 +1,10 @@
 SET search_path TO app, public;
 
--- Extension (falls nicht vorhanden)
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- users: email_verified
 ALTER TABLE app.users
 ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE;
 
--- tokens table
 CREATE TABLE IF NOT EXISTS app.auth_tokens (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES app.users(id) ON DELETE CASCADE,

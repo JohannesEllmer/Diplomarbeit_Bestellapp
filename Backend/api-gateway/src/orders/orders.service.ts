@@ -1,7 +1,6 @@
 import { Inject, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { Pool } from 'pg';
 import { PG_POOL } from '../db';
-
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { CreateOrderItemDto } from './dto/create-order-item.dto';
@@ -12,7 +11,6 @@ import { OrderResponseDto, OrderItemResponseDto } from './dto/order-response.dto
 export class OrdersService {
   constructor(@Inject(PG_POOL) private readonly db: Pool) {}
 
-  // ---------- USER ----------
   async getMyOrders(userId: string): Promise<OrderResponseDto[]> {
     const ids = await this.db.query(
       `SELECT id FROM app.orders WHERE user_id = $1 ORDER BY created_at DESC`,
@@ -33,15 +31,12 @@ export class OrdersService {
     const client = await this.db.connect();
     try {
       await client.query('BEGIN');
-
-      // User existiert?
       const uRes = await client.query(
         `SELECT id FROM app.users WHERE id = $1 LIMIT 1`,
         [jwtUserId],
       );
       if (uRes.rowCount === 0) throw new NotFoundException('USER_NOT_FOUND');
 
-      // Order anlegen: created_at NOW, status open
       const orderRes = await client.query(
         `INSERT INTO app.orders (user_id, total_price, created_at, status)
          VALUES ($1, 0, NOW(), 'open')
@@ -50,10 +45,8 @@ export class OrdersService {
       );
       const orderId = String(orderRes.rows[0].id);
 
-      // Items + total berechnen aus menu_items.price
       const total = await this.insertItemsAndComputeTotal(client, orderId, jwtUserId, dto.items);
 
-      // total_price speichern
       await client.query(
         `UPDATE app.orders SET total_price = $2 WHERE id = $1`,
         [orderId, total],
@@ -69,7 +62,6 @@ export class OrdersService {
     }
   }
 
-  // ---------- ADMIN ----------
   async findAll(): Promise<OrderResponseDto[]> {
     const ids = await this.db.query(`SELECT id FROM app.orders ORDER BY created_at DESC`);
     const out: OrderResponseDto[] = [];
@@ -82,12 +74,10 @@ export class OrdersService {
   }
 
   async update(id: string, dto: UpdateOrderDto): Promise<OrderResponseDto> {
-    // Status update
     if (dto.status) {
       await this.db.query(`UPDATE app.orders SET status = $2 WHERE id = $1`, [id, dto.status]);
     }
 
-    // Items update: delete + insert + total neu
     if (dto.items) {
       const client = await this.db.connect();
       try {
@@ -124,7 +114,6 @@ export class OrdersService {
     await this.db.query(`DELETE FROM app.orders WHERE id = $1`, [id]);
   }
 
-  // ---------- Helpers ----------
   private async insertItemsAndComputeTotal(
     client: any,
     orderId: string,
@@ -143,7 +132,6 @@ export class OrdersService {
       const price = Number(mRes.rows[0].price ?? 0);
       total += price * Number(it.quantity);
 
-      // ✅ Wichtig: order_items.user_id NOT NULL -> muss gesetzt werden
       await client.query(
         `INSERT INTO app.order_items (order_id, menu_item_id, user_id, note, quantity)
          VALUES ($1, $2, $3, $4, $5)`,
@@ -155,7 +143,6 @@ export class OrdersService {
   }
 
   private async buildOrderResponse(orderId: string): Promise<OrderResponseDto> {
-    // Order + User
     const orderRes = await this.db.query(
       `SELECT o.id, o.user_id, o.total_price, o.created_at, o.status, o.qr_code_url,
               u.id as u_id, u.name as u_name, u.email as u_email, u.class as u_class,
@@ -169,7 +156,6 @@ export class OrdersService {
     if (orderRes.rowCount === 0) throw new NotFoundException('ORDER_NOT_FOUND');
     const o = orderRes.rows[0];
 
-    // orderCount (users hat kein order_count)
     const countRes = await this.db.query(
       `SELECT COUNT(*)::int AS count FROM orders WHERE user_id = $1`,
       [String(o.user_id)],
@@ -186,7 +172,6 @@ export class OrdersService {
       blocked: !!o.u_blocked,
     };
 
-    // Items + MenuItem
     const itemsRes = await this.db.query(
       `SELECT oi.quantity, oi.note, oi.delivered, oi.delivery_time,
               m.id as m_id, m.name as m_name, m.description as m_description,

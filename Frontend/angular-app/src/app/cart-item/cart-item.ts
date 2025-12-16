@@ -17,7 +17,6 @@ export class CartItemComponent {
   @Output() increase = new EventEmitter<void>();
   @Output() decrease = new EventEmitter<void>();
 
-  private apiBaseUrl = 'http://localhost:3000/api'; // Deine Backend-URL
 
   currentImageUrl: string = '';
 
@@ -59,7 +58,6 @@ export class CartItemComponent {
     return info.raw;
   }
 
-  // Two-way binding helper: show only the user's free-text note in the textarea
   get displayNote(): string {
     const note: string = this.item?.note || '';
     const hint = this.menuHintString;

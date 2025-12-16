@@ -4,7 +4,6 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { OrderItem } from '../../models/menu-item.model';
-import { OrderService } from '../services/order/order-service';
 import { AdminOrderService } from '../services/order/admin-order.service';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 
@@ -44,7 +43,7 @@ export class OrderListComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private adminOrders: AdminOrderService,
-    private orderService: OrderService,
+
   ) {}
 
   ngOnInit(): void {
@@ -65,7 +64,7 @@ export class OrderListComponent implements OnInit, OnDestroy {
   }
 
   loadOrders(): void {
-    this.orderService.getOrders().subscribe(items => {
+    this.adminOrders.getOrdersFlatItems().subscribe(items => {
       const all = items ?? [];
 
       this.orderItems = all.filter(i => !i.delivered);

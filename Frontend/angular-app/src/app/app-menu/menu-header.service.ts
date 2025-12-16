@@ -32,7 +32,6 @@ export class MenuHeaderService {
 
   private readonly headerSubject = new BehaviorSubject<MenuHeader>(EMPTY_HEADER);
 
-  /** ✅ Observable für Komponenten */
   readonly header$ = this.headerSubject.asObservable();
 
   constructor(
@@ -40,21 +39,11 @@ export class MenuHeaderService {
     private auth: AuthService
   ) {}
 
-  /** ✅ Rückwärtskompatibel zu deinem AppMenu: watchHeader() */
   watchHeader(): Observable<MenuHeader> {
     return this.header$;
   }
 
-  /**
-   * 🔁 Lädt den Header neu.
-   * ⚠️ Wichtig: Wenn du refresh() ohne subscribe() aufrufst,
-   * passiert sonst kein HTTP Call.
-   *
-   * Daher: wir subscriben intern, geben aber trotzdem das Observable zurück,
-   * falls du es woanders sauber chainen willst.
-   */
   refresh(): Observable<MenuHeader | null> {
-    // ⛔ niemals API call ohne Token
     if (!this.auth.isLoggedIn()) {
       this.headerSubject.next(EMPTY_HEADER);
       return of(null);
@@ -78,13 +67,11 @@ export class MenuHeaderService {
         })
       );
 
-    // ✅ Damit refresh() auch wirkt, wenn caller nicht subscribed:
     req$.subscribe();
 
     return req$;
   }
 
-  /** z.B. beim Logout */
   clear(): void {
     this.headerSubject.next(EMPTY_HEADER);
   }

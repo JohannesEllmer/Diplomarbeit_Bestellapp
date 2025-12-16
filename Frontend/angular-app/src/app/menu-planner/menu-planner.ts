@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -8,10 +8,14 @@ import {
   transferArrayItem,
   DragDropModule
 } from '@angular/cdk/drag-drop';
+import { Subject } from 'rxjs';
+import { finalize, takeUntil } from 'rxjs/operators';
 
 import { Dish } from '../../models/dish.model';
 import { MealPlan } from '../../models/meal-plan.model';
-import { MenuService } from '../services/menu-planner/menu-planner';
+
+import { MealPlanService } from '../services/menu-planner/meal-plan-service';
+import { DishService } from '../services/dish-editor/dish-editor';
 
 @Component({
   selector: 'app-menu-planner',
@@ -20,69 +24,88 @@ import { MenuService } from '../services/menu-planner/menu-planner';
   templateUrl: './menu-planner.html',
   styleUrls: ['./menu-planner.css']
 })
-export class MenuPlanner implements OnInit {
+export class MenuPlanner implements OnInit, OnDestroy {
   menuTitle = '';
   titleError = '';
 
   selectedDishes: Dish[] = [];
   unselectedDishes: Dish[] = [];
 
-  // aktuelles Menü
   menu: MealPlan = { id: 'new', title: '', dishes: [] };
 
-  // Flags
   private isDragging = false;
+  loadingDishes = false;
   saving = false;
+
+  loadError: string | null = null;
   saveError: string | null = null;
+
+  private destroy$ = new Subject<void>();
 
   constructor(
     private router: Router,
-    private menuService: MenuService
+    private mealPlans: MealPlanService,
+    private dishes: DishService
   ) {}
 
   ngOnInit(): void {
     const stateMenu = history.state.menu as MealPlan | undefined;
 
     if (stateMenu?.id) {
-      // bestehendes Menü bearbeiten
       this.menu = { ...stateMenu };
       this.menuTitle = stateMenu.title ?? '';
       this.selectedDishes = [...(stateMenu.dishes ?? [])];
     } else {
-      // neues Menü
       this.menu = { id: 'new', title: '', dishes: [] };
       this.menuTitle = '';
       this.selectedDishes = [];
     }
 
-    this.initMockUnselectedDishes();
+    this.loadAllDishesAndSplit();
   }
 
-  /** Mock-Liste für unselektierte Gerichte (später durch echten DishService ersetzen) */
-  private initMockUnselectedDishes(): void {
-    const mockAllDishes: Dish[] = [
-      { id: '1', name: 'Spaghetti Bolognese' },
-      { id: '2', name: 'Pizza Margherita' },
-      { id: '3', name: 'Gemischter Salat' },
-      { id: '4', name: 'Kartoffelsuppe' },
-      { id: '5', name: 'Tiramisu' }
-    ];
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
-    const selectedIds = new Set(this.selectedDishes.map(d => d.id));
-    this.unselectedDishes = mockAllDishes.filter(d => !selectedIds.has(d.id));
+  private loadAllDishesAndSplit(): void {
+    this.loadingDishes = true;
+    this.loadError = null;
+
+   this.dishes.getDishes()
+  .pipe(
+    takeUntil(this.destroy$),
+    finalize(() => (this.loadingDishes = false))
+  )
+  .subscribe({
+    next: (all: Dish[]) => {
+      const selectedIds = new Set((this.selectedDishes ?? []).map((d: Dish) => d.id));
+      this.unselectedDishes = (all ?? []).filter((d: Dish) => !selectedIds.has(d.id));
+    },
+    error: (err: unknown) => {
+      console.error('[MenuPlanner] load dishes failed:', err);
+      this.loadError = 'Gerichte konnten nicht geladen werden.';
+      this.unselectedDishes = [];
+    }
+  });
+
   }
 
   drop(event: CdkDragDrop<Dish[]>): void {
+    if (!event?.container?.data) return;
+
     if (event.previousContainer === event.container) {
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
-    } else {
-      transferArrayItem(
-        event.previousContainer.data,
-        event.container.data,
-        event.previousIndex,
-        event.currentIndex
-      );
+      return;
     }
+
+    transferArrayItem(
+      event.previousContainer.data,
+      event.container.data,
+      event.previousIndex,
+      event.currentIndex
+    );
   }
 
   onDragStarted(): void {
@@ -93,23 +116,29 @@ export class MenuPlanner implements OnInit {
     setTimeout(() => (this.isDragging = false));
   }
 
-  onDishClick(dish: Dish, selected: boolean): void {
+  onDishClick(dish: Dish, isSelectedList: boolean): void {
     if (this.isDragging) return;
-    this.toggleDish(dish, selected);
+    this.toggleDishById(dish, isSelectedList);
   }
 
-  toggleDish(dish: Dish, selected: boolean): void {
-    if (selected) {
-      this.selectedDishes = this.selectedDishes.filter(d => d !== dish);
-      this.unselectedDishes.unshift(dish);
+  private toggleDishById(dish: Dish, fromSelectedList: boolean): void {
+    if (!dish?.id) return;
+
+    if (fromSelectedList) {
+      this.selectedDishes = (this.selectedDishes ?? []).filter(d => d.id !== dish.id);
+      if (!this.unselectedDishes.some(d => d.id === dish.id)) {
+        this.unselectedDishes = [dish, ...(this.unselectedDishes ?? [])];
+      }
     } else {
-      this.unselectedDishes = this.unselectedDishes.filter(d => d !== dish);
-      this.selectedDishes.unshift(dish);
+      this.unselectedDishes = (this.unselectedDishes ?? []).filter(d => d.id !== dish.id);
+      if (!this.selectedDishes.some(d => d.id === dish.id)) {
+        this.selectedDishes = [dish, ...(this.selectedDishes ?? [])];
+      }
     }
   }
 
   onTitleChange(value: string): void {
-    this.menuTitle = value;
+    this.menuTitle = (value ?? '').toString();
     if (this.menuTitle.trim()) this.titleError = '';
   }
 
@@ -125,26 +154,30 @@ export class MenuPlanner implements OnInit {
     this.saveError = null;
     this.saving = true;
 
-    this.menu = {
+    const payload: MealPlan = {
       ...this.menu,
       title: trimmedTitle,
-      dishes: this.selectedDishes
+      dishes: [...(this.selectedDishes ?? [])]
     };
 
-    this.menuService.saveMenu(this.menu).subscribe({
-      next: (savedMenu: MealPlan) => {
-        this.saving = false;
-        this.router.navigate(['/menu-manager'], { state: { menu: savedMenu } });
-      },
-      error: (err) => {
-        console.error('Fehler beim Speichern des Menüs:', err);
-        this.saving = false;
-        this.saveError = 'Das Menü konnte nicht gespeichert werden.';
-      }
-    });
+    const req$ =
+      payload.id && payload.id !== 'new'
+        ? this.mealPlans.update(payload.id, payload)
+        : this.mealPlans.create(payload);
+
+    req$
+      .pipe(finalize(() => (this.saving = false)))
+      .subscribe({
+        next: (saved) => {
+          this.router.navigate(['/menu-manager'], { state: { menu: saved } });
+        },
+        error: (err) => {
+          console.error('[MenuPlanner] save failed:', err);
+          this.saveError = 'Das Menü konnte nicht gespeichert werden.';
+        }
+      });
   }
 
-  /** ✅ FEHLTE: Template ruft das auf */
   goToDishDesigner(): void {
     this.router.navigate(['/gericht-verwaltung']);
   }

@@ -1,6 +1,5 @@
 <div class="auth-wrapper">
   <div class="auth-card">
-    <!-- Kopfbereich -->
     <header class="auth-header">
       <div class="auth-title-block">
         <h1>Konto erstellen</h1>
@@ -17,7 +16,6 @@
       <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
         <div class="form-grid">
 
-          <!-- Linke Spalte -->
           <div class="form-col">
             <section class="form-section">
               <h2 class="section-title">Schule</h2>
@@ -25,7 +23,6 @@
                 Wähle deine Schule. Die Klasse ist optional.
               </p>
 
-              <!-- Schultyp -->
               <div
                 class="form-group"
                 [class.invalid]="schoolType?.invalid && (schoolType?.touched || schoolType?.dirty)"
@@ -48,7 +45,6 @@
                 </div>
               </div>
 
-              <!-- Klasse -->
               <div class="class-row">
                 <div class="form-group">
                   <label for="class">Klasse (optional)</label>
@@ -66,7 +62,6 @@
             </section>
           </div>
 
-          <!-- Rechte Spalte -->
           <div class="form-col">
             <section class="form-section">
               <h2 class="section-title">Zugangsdaten</h2>
@@ -134,7 +129,6 @@
                 </div>
               </div>
 
-              <!-- Namen -->
               <div class="name-row">
                 <div class="form-group small">
                   <label for="firstName">Vorname (automatisch)</label>
@@ -171,8 +165,6 @@
             </section>
           </div>
         </div>
-
-        <!-- Aktionen -->
         <div class="form-actions">
   <button
     type="submit"
@@ -185,7 +177,6 @@
     </span>
   </button>
 
-  <!-- Status Card (schöner als plain Text) -->
   <div class="status-card" *ngIf="errorMessage || infoMessage"
        [class.is-error]="!!errorMessage"
        [class.is-success]="infoType === 'success' && !errorMessage"

@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Order } from '../../models/menu-item.model';
-import { OrderService } from '../services/order-overview/order-overview.service';
+import { MyOrderService } from '../services/order-overview/my-order.service';
 
 @Component({
   selector: 'app-order-overview',
@@ -13,7 +13,7 @@ import { OrderService } from '../services/order-overview/order-overview.service'
 })
 export class OrderOverviewComponent implements OnInit {
   private router = inject(Router);
-  private orderService = inject(OrderService);
+  private orderService = inject(MyOrderService);
 
   showImpressumPopup = false;
 

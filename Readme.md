@@ -72,6 +72,9 @@ Datum   Zeitaufwand     Titel                   Autor   genauere Beschreibung wa
 15.11   3h                                      Chris API-Gateway Users Endpoint fertiggestellt und getestet und Orders Endpoint implementiert
 22.11   4h                                     Hons Die Services zu "Order" wurden fürs frontend entsprechend erstellt und die einzelnen menüs können als pdf ausgedruckt werden.
 27.11   7h                                     Hons Menu Manager und Menü Planer bekommt service und verbessertes Design. Added services into the api gateway for orders.
+
+05.12 - 16.12  ~20h Implementierung der Authentifizierung mit Email Verifikation und Laden der Daten aus dem Backend über die erstellte DB. Zu sicherheit wird eine strenge Cors policy mit Authetifizierungstoken verwendet.
 ----------------------
 Sonstiges:
 5.8 neue Idee einer Page Auswertung --> wurde dem Backlog hinzugefügt.
+16.12.  nodemailer und smtp funktioniert im schulwlan nicht dashalb google api verwendet. 

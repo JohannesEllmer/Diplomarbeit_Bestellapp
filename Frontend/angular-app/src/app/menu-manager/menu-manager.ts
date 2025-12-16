@@ -22,7 +22,7 @@ export class MenuManager implements OnInit {
 
   constructor(
     private router: Router,
-    private menuService: MenuManagerService // ✅ richtiger Service
+    private menuService: MenuManagerService 
   ) {}
 
   ngOnInit(): void {
@@ -35,7 +35,6 @@ export class MenuManager implements OnInit {
 
     this.menuService.getMenus().subscribe({
       next: (menus: MealPlan[]) => {
-        // ✅ defensiv: falls dishes undefined ist
         this.Menus = (menus ?? []).map(m => ({
           ...m,
           dishes: m.dishes ?? []

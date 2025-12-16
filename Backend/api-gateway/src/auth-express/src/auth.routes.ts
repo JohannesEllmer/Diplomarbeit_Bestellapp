@@ -3,11 +3,18 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import type { Pool } from 'pg';
-
 import { JWT_SECRET, JWT_EXPIRES_IN, APP_BASE_URL } from './config.js';
 import { sendMail } from './mailer.js';
 import { createRandomToken, hashToken } from './tokenHelper.js';
-// import { requireAuth } from './auth.middleware.js'; // optional
+import { requireAuth } from './auth.middleware.js';
+
+declare global {
+  namespace Express {
+    interface Request {
+      auth?: { sub: string; email: string; role: string; sid: string };
+    }
+  }
+}
 
 function createJwt(payload: { userId: string; email: string; role: string; sessionId: string }) {
   return jwt.sign(
@@ -17,15 +24,8 @@ function createJwt(payload: { userId: string; email: string; role: string; sessi
   );
 }
 
-// ✅ WIEDER: authRouter exportiert – aber als Factory
 export function authRouter(pool: Pool) {
   const router = express.Router();
-
-  router.get('/check-email', async (req, res) => {
-  console.log('[AUTH] check-email HIT');
-  return res.json({ ok: true });
-});
-
 
   router.get('/check-email', async (req, res) => {
     try {
@@ -93,16 +93,168 @@ export function authRouter(pool: Pool) {
       const verifyLink = `${APP_BASE_URL}/verify-email?token=${verifyToken}`;
       console.log('[AUTH] sending verify mail to', emailLower);
 
-      await sendMail(
-        emailLower,
-        'Bitte bestätige deine E-Mail',
-        `<div><p>Hi ${payload.firstName} ${payload.lastName}</p><p><a href="${verifyLink}">E-Mail bestätigen</a></p></div>`,
+      let emailVerificationSent = false;
+      try {
+        await sendMail(
+          emailLower,
+          'Bitte bestätige deine E-Mail',
+          `<div>
+            <p>Hi ${payload.firstName} ${payload.lastName},</p>
+            <p><a href="${verifyLink}">E-Mail bestätigen</a></p>
+            <p>Wenn der Link nicht klickbar ist: ${verifyLink}</p>
+          </div>`,
+        );
+        emailVerificationSent = true;
+      } catch (mailErr: any) {
+        console.error('REGISTER_MAIL_FAILED:', mailErr?.message ?? mailErr);
+      }
+
+      return res.status(200).json({ ok: true, emailVerificationSent });
+    } catch (err: any) {
+      console.error('REGISTER_FAILED:', {
+        message: err?.message,
+        code: err?.code,
+        detail: err?.detail,
+      });
+      return res.status(500).json({ error: 'REGISTER_FAILED' });
+    }
+  });
+
+  // FORGOT PASSWORD
+  router.post('/forgot-password', async (req, res) => {
+    try {
+      const email = String(req.body?.email ?? '').toLowerCase().trim();
+      if (!email) return res.status(400).json({ error: 'EMAIL_REQUIRED' });
+
+      const userRes = await pool.query(
+        `SELECT id, email, name FROM app.users WHERE LOWER(email)=$1 LIMIT 1`,
+        [email],
       );
 
-      return res.status(200).json({ ok: true, emailVerificationSent: true });
+      // Security: immer ok
+      if ((userRes.rowCount ?? 0) === 0) {
+        return res.json({ ok: true });
+      }
+
+      const user = userRes.rows[0];
+
+      const resetToken = createRandomToken();
+      const tokenHash = hashToken(resetToken);
+
+      await pool.query(
+        `INSERT INTO app.auth_tokens (user_id, token_type, token_hash, expires_at)
+         VALUES ($1, 'PASSWORD_RESET', $2, now() + interval '30 minutes')`,
+        [user.id, tokenHash],
+      );
+
+      const link = `${APP_BASE_URL}/reset-password?token=${resetToken}`;
+
+      try {
+        await sendMail(
+          email,
+          'Passwort zurücksetzen',
+          `<div>
+            <p>Hallo ${user.name ?? ''},</p>
+            <p>Klicke hier, um dein Passwort zurückzusetzen:</p>
+            <p><a href="${link}">Passwort zurücksetzen</a></p>
+            <p>Wenn der Link nicht klickbar ist: ${link}</p>
+            <p>Der Link ist 30 Minuten gültig.</p>
+          </div>`,
+        );
+      } catch (mailErr: any) {
+        console.error('FORGOT_PASSWORD_MAIL_FAILED:', mailErr?.message ?? mailErr);
+      }
+
+      return res.json({ ok: true });
     } catch (err: any) {
-      console.error('REGISTER_FAILED:', err?.message ?? err);
-      return res.status(500).json({ error: 'REGISTER_FAILED' });
+      console.error('FORGOT_PASSWORD_FAILED:', err?.message ?? err);
+      return res.status(500).json({ error: 'FORGOT_PASSWORD_FAILED' });
+    }
+  });
+
+  router.post('/reset-password', async (req, res) => {
+    const token = String(req.body?.token ?? '').trim();
+    const newPassword = String(req.body?.newPassword ?? '');
+
+    if (!token) return res.status(400).json({ error: 'TOKEN_REQUIRED' });
+    if (!newPassword || newPassword.length < 6) return res.status(400).json({ error: 'WEAK_PASSWORD' });
+
+    const tokenHash = hashToken(token);
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      const tok = await client.query(
+        `SELECT id, user_id
+         FROM app.auth_tokens
+         WHERE token_type='PASSWORD_RESET'
+           AND token_hash=$1
+           AND used_at IS NULL
+           AND expires_at > now()
+         LIMIT 1`,
+        [tokenHash],
+      );
+
+      if ((tok.rowCount ?? 0) === 0) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'INVALID_OR_EXPIRED_TOKEN' });
+      }
+
+      const row = tok.rows[0];
+      const passwordHash = await bcrypt.hash(newPassword, 10);
+
+      await client.query(
+        `UPDATE app.auth_credentials
+         SET password_hash=$1, last_used_at=now()
+         WHERE user_id=$2`,
+        [passwordHash, row.user_id],
+      );
+
+      await client.query(`UPDATE app.auth_tokens SET used_at=now() WHERE id=$1`, [row.id]);
+
+      await client.query('COMMIT');
+      return res.json({ ok: true });
+    } catch (err: any) {
+      await client.query('ROLLBACK');
+      console.error('RESET_PASSWORD_FAILED:', err?.message ?? err);
+      return res.status(500).json({ error: 'RESET_PASSWORD_FAILED' });
+    } finally {
+      client.release();
+    }
+  });
+
+  router.post('/change-password', requireAuth, async (req, res) => {
+    try {
+      const userId = req.auth!.sub;
+      const currentPassword = String(req.body?.currentPassword ?? '');
+      const newPassword = String(req.body?.newPassword ?? '');
+
+      if (!currentPassword || !newPassword) return res.status(400).json({ error: 'MISSING_FIELDS' });
+      if (newPassword.length < 6) return res.status(400).json({ error: 'WEAK_PASSWORD' });
+
+      const cred = await pool.query(
+        `SELECT password_hash FROM app.auth_credentials WHERE user_id=$1 LIMIT 1`,
+        [userId],
+      );
+      if ((cred.rowCount ?? 0) === 0) return res.status(404).json({ error: 'USER_NOT_FOUND' });
+
+      const ok = await bcrypt.compare(currentPassword, cred.rows[0].password_hash);
+      if (!ok) return res.status(401).json({ error: 'INVALID_CURRENT_PASSWORD' });
+
+      const passwordHash = await bcrypt.hash(newPassword, 10);
+
+      await pool.query(
+        `UPDATE app.auth_credentials
+         SET password_hash=$1, last_used_at=now()
+         WHERE user_id=$2`,
+        [passwordHash, userId],
+      );
+
+      return res.json({ ok: true });
+    } catch (err: any) {
+      console.error('CHANGE_PASSWORD_FAILED:', err?.message ?? err);
+      return res.status(500).json({ error: 'CHANGE_PASSWORD_FAILED' });
     }
   });
 
@@ -132,9 +284,10 @@ export function authRouter(pool: Pool) {
       const row = pr.rows[0];
       const payload = row.payload as any;
 
-      const already = await client.query(`SELECT 1 FROM app.users WHERE LOWER(email)=$1 LIMIT 1`, [
-        String(row.email).toLowerCase(),
-      ]);
+      const already = await client.query(
+        `SELECT 1 FROM app.users WHERE LOWER(email)=$1 LIMIT 1`,
+        [String(row.email).toLowerCase()],
+      );
 
       if ((already.rowCount ?? 0) > 0) {
         await client.query(`UPDATE app.pending_registrations SET used_at=now() WHERE id=$1`, [row.id]);
@@ -197,10 +350,10 @@ export function authRouter(pool: Pool) {
       if (!ok) return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
 
       const newSessionId = uuidv4();
-      await pool.query(`UPDATE app.auth_credentials SET auth_token=$1, last_used_at=now() WHERE user_id=$2`, [
-        newSessionId,
-        row.id,
-      ]);
+      await pool.query(
+        `UPDATE app.auth_credentials SET auth_token=$1, last_used_at=now() WHERE user_id=$2`,
+        [newSessionId, row.id],
+      );
 
       const tokenJwt = createJwt({ userId: row.id, email: row.email, role: row.role, sessionId: newSessionId });
 

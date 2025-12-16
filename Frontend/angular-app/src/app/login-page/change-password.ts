@@ -79,7 +79,7 @@ function passwordsMatch(group: AbstractControl): ValidationErrors | null {
     </div>
   </div>
   `,
-  styleUrls: ['./reset-password.css'] // ✅ du kannst das gleiche CSS wiederverwenden
+  styleUrls: ['./reset-password.css']
 })
 export class ChangePasswordPage {
   loading = false;

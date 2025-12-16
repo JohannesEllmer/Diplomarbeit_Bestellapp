@@ -3,19 +3,41 @@
   <div class="selectors">
     <div class="selector-group">
       <label for="startDate">Von:</label>
-      <input type="date" id="startDate" [(ngModel)]="startDate" (change)="loadStatistics()">
+      <input
+        type="date"
+        id="startDate"
+        [(ngModel)]="startDate"
+        (change)="loadStatistics()"
+      >
     </div>
 
     <div class="selector-group">
       <label for="endDate">Bis:</label>
-      <input type="date" id="endDate" [(ngModel)]="endDate" (change)="loadStatistics()">
+      <input
+        type="date"
+        id="endDate"
+        [(ngModel)]="endDate"
+        (change)="loadStatistics()"
+      >
     </div>
 
     <div class="selector-group">
       <label>Diagrammtyp:</label>
       <div class="chart-type-buttons">
-        <button [class.active]="selectedChartType==='bar'" (click)="toggleChartType('bar')">Balken</button>
-        <button [class.active]="selectedChartType==='line'" [disabled]="days.length < 5" (click)="toggleChartType('line')">Linie</button>
+        <button
+          [class.active]="selectedChartType==='bar'"
+          (click)="toggleChartType('bar')"
+        >
+          Balken
+        </button>
+
+        <button
+          [class.active]="selectedChartType==='line'"
+          [disabled]="days.length < 5"
+          (click)="toggleChartType('line')"
+        >
+          Linie
+        </button>
       </div>
     </div>
 
@@ -61,16 +83,96 @@
   </div>
 
   <section class="orders-section" *ngIf="days?.length">
-    <h2>Bestellungen</h2>
-    <div *ngFor="let day of days" class="day-orders">
-      <h3>{{ day.date }}</h3>
-      <ul>
-        <li *ngFor="let order of day.ordersList">
-          #{{ order.id }} — {{ order.user?.name }} — {{ order.totalPrice | currency:'EUR' }}
-        </li>
-      </ul>
+    <div class="orders-toolbar">
+      <h2>Bestellungen</h2>
+
+      <div class="orders-filters">
+        <div class="selector-group" style="margin:0; min-width:180px;">
+          <label>Suche</label>
+          <input
+            type="text"
+            placeholder="#ID, Kunde, Datum…"
+            [(ngModel)]="orderQuery"
+          >
+        </div>
+
+        <div class="selector-group" style="margin:0; min-width:160px;">
+          <label>Lieferung</label>
+          <select [(ngModel)]="deliveredFilter">
+            <option value="all">Alle</option>
+            <option value="open">Offen</option>
+            <option value="delivered">Geliefert</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="no-orders" *ngIf="filteredDays.length === 0">
+      Keine Bestellungen passend zum Filter.
+    </div>
+
+    <div class="orders-list" *ngIf="filteredDays.length > 0">
+      <div class="order-day-card" *ngFor="let day of filteredDays">
+        <div class="order-day-header">
+          <span class="order-day-date">{{ day.date }}</span>
+          <span class="order-day-count">{{ day.ordersList.length }}</span>
+        </div>
+
+        <ul class="order-day-list">
+          <li
+            class="order-list-item"
+            *ngFor="let order of day.ordersList; trackBy: trackByOrderId"
+            (click)="openOrder(day, order)"
+          >
+            <div class="order-info">
+              <div class="order-id">#{{ order.id }}</div>
+              <div class="order-user">{{ order.user?.name || 'Unbekannt' }}</div>
+              <span class="status-pill" [ngClass]="deliveredClass(order)">
+                {{ deliveredLabel(order) }}
+              </span>
+            </div>
+
+            <div class="order-price">{{ order.totalPrice | currency:'EUR' }}</div>
+          </li>
+        </ul>
+      </div>
     </div>
   </section>
+
+  <div class="modal-overlay" *ngIf="selectedOrder as so" (click)="closeOrder()">
+    <div class="modal" (click)="stopOverlayClick($event)">
+      <div class="modal-head">
+        <div>
+          <h2 style="margin:0;">Bestellung #{{ so.id }}</h2>
+          <div class="muted">
+            {{ selectedDay?.date }} · {{ so.user?.name || 'Unbekannt' }}
+          </div>
+        </div>
+
+        <button class="close-btn" (click)="stopOverlayClick($event); closeOrder()">
+          Schließen
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-row">
+          <span class="label">Status</span>
+          <span class="status-pill" [ngClass]="deliveredClass(so)">
+            {{ deliveredLabel(so) }}
+          </span>
+        </div>
+
+        <div class="modal-row">
+          <span class="label">Preis</span>
+          <strong>{{ so.totalPrice | currency:'EUR' }}</strong>
+        </div>
+
+        <div class="muted" style="margin-top:.8rem;">
+          Hinweis: „Was bestellt wurde“ ist nicht verfügbar, weil dein StatOrder keine Items enthält.
+        </div>
+      </div>
+    </div>
+  </div>
 
   <section class="chart-section" (click)="goFullscreenMobile()">
     <h2>Diagramm</h2>
@@ -80,39 +182,48 @@
     <span class="hint">Tippe auf das Diagramm (Mobil) für Vollbild.</span>
   </section>
 
-<section class="orders-section">
-  <h2>Finanzübersicht</h2>
-  <div class="finance-table-wrap">
-    <table class="finance-table">
-      <thead>
-        <tr>
-          <th>Datum / Woche</th>
-          <th>Bestellungen</th>
-          <th>Umsatz Brutto</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let r of financeRows">
-          <td>{{ r.label }}</td>
-          <td>{{ r.orders }}</td>
-          <td>{{ r.gross | currency:'EUR' }}</td>
-        </tr>
-      </tbody>
-    </table>
-            <div class="impressum-mobile">
-              <button class="impressum-btn" (click)="showImpressumPopup = true">Impressum</button>
-            </div>
+  <section class="finance-section">
+    <h2>Finanzübersicht</h2>
+    <div class="finance-table-wrap">
+      <table class="finance-table">
+        <thead>
+          <tr>
+            <th>Datum / Woche</th>
+            <th>Bestellungen</th>
+            <th>Umsatz Brutto</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of financeRows">
+            <td>{{ r.label }}</td>
+            <td>{{ r.orders }}</td>
+            <td>{{ r.gross | currency:'EUR' }}</td>
+          </tr>
+        </tbody>
+      </table>
 
-            <div class="impressum-popup-overlay" *ngIf="showImpressumPopup" (click)="showImpressumPopup = false">
-              <div class="impressum-popup" (click)="$event.stopPropagation()">
-                <h2>Impressum</h2>
-                <div class="impressum-details">
-                  <p><strong>Firma Muster GmbH</strong></p>
-                  <p>Musterstraße 1, 12345 Musterstadt</p>
-                  <p>Tel: 01234 / 567890</p>
-                  <p>E-Mail: info@musterfirma.de</p>
-                </div>
-                <button class="close-btn" (click)="showImpressumPopup = false">Schließen</button>
-              </div>
-            </div>
+      <div class="impressum-mobile">
+        <button class="impressum-btn" (click)="showImpressumPopup = true">Impressum</button>
+      </div>
+
+      <div
+        class="impressum-popup-overlay"
+        *ngIf="showImpressumPopup"
+        (click)="showImpressumPopup = false"
+      >
+        <div class="impressum-popup" (click)="$event.stopPropagation()">
+          <h2>Impressum</h2>
+          <div class="impressum-details">
+            <p><strong>Firma Muster GmbH</strong></p>
+            <p>Musterstraße 1, 12345 Musterstadt</p>
+            <p>Tel: 01234 / 567890</p>
+            <p>E-Mail: info@musterfirma.de</p>
+          </div>
+          <button class="close-btn" (click)="showImpressumPopup = false">Schließen</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
 </div>

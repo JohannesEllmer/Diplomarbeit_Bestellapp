@@ -1,4 +1,3 @@
-// src/app/menu/menu-header.model.ts
 import { UserRole } from '../../models/user.model';
 
 export interface MenuHeaderDto {

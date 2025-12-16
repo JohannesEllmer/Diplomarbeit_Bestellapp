@@ -27,7 +27,7 @@ export class MyOrderService {
     );
   }
 
-  private addQrForOpenOrders(orders: Order[]): Order[] {
+  public addQrForOpenOrders(orders: Order[]): Order[] {
     return orders.map((o) => ({
       ...o,
       qrCodeUrl: o.status === 'open' ? this.generateQrCode(o.id) : undefined,

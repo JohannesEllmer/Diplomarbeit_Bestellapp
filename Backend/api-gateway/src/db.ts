@@ -15,10 +15,12 @@ export const PG_POOL = Symbol('PG_POOL');
           user: process.env.PG_USER ?? 'app_user',
           password: process.env.PG_PASSWORD ?? 'supersecret',
           database: process.env.PG_DATABASE ?? 'app_db',
+          max: Number(process.env.PG_POOL_MAX ?? 20),
+          idleTimeoutMillis: 30000,
+          connectionTimeoutMillis: 5000,
         });
 
-        // ✅ Schema app als Default
-        pool.on('connect', (client) => {
+        pool.on('connect', client => {
           client.query(`SET search_path TO app, public;`).catch(() => {});
         });
 

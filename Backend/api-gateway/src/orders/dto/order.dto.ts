@@ -1,4 +1,3 @@
-// src/orders/dto/order.dto.ts
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -75,8 +74,6 @@ export class OrderDto {
   status!: 'open' | 'closed';
   qrCodeUrl?: string;
 }
-
-// eigenes Update-DTO (brauchst du für Admin / PATCH)
 export class UpdateOrderDto {
   @IsOptional()
   @IsIn(['open', 'closed'])

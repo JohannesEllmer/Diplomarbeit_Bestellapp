@@ -1,16 +1,17 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-
+import 'dotenv/config';
+import * as path from 'node:path';
+import * as dotenv from 'dotenv';
 import * as express from 'express';
 import type { Pool } from 'pg';
-
 import { authRouter } from './auth-express/src/auth.routes';
-import { PG_POOL } from './db';                 // <- dein Symbol
-import { verifySmtp } from './auth-express/src/mailer';
+import { PG_POOL } from './db';
+import { verifyMailer } from './auth-express/src/mailer';
 import { CORS_ORIGINS } from './auth-express/src/config';
-
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { from } from 'rxjs';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -31,6 +32,9 @@ async function bootstrap() {
     credentials: true,
   });
 
+dotenv.config();
+
+
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Bestellapp API')
     .setDescription('Swagger Doku')
@@ -43,19 +47,22 @@ async function bootstrap() {
     swaggerOptions: { persistAuthorization: true },
   });
 
-  // ✅ HIER DER FIX:
   const pool = app.get<Pool>(PG_POOL);
   app.use('/api/auth', authRouter(pool));
 
   try {
-    await verifySmtp();
+    await verifyMailer();
   } catch (e) {
-    console.error('[SMTP] verify failed:', e);
+    console.error('[MAILER] verify failed:', e);
   }
+
+  
 
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port, '0.0.0.0');
   console.log(`Gateway läuft auf http://0.0.0.0:${port}`);
 }
+
+
 
 bootstrap();

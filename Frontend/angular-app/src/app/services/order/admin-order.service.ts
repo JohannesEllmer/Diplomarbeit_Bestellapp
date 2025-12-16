@@ -24,7 +24,6 @@ export class AdminOrderService {
     );
   }
 
-  // ✅ Backend: PATCH /api/admin/orders/:id { status? , items? }
   setOrderStatus(orderId: string, status: 'open' | 'closed'): Observable<Order> {
     if (environment.useMockData) return of({} as any);
     return this.http.patch<Order>(`${this.adminOrdersEndpoint}/${orderId}`, { status }).pipe(

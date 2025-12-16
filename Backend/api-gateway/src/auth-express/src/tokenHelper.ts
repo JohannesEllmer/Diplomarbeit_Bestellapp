@@ -5,7 +5,6 @@ import { PG_POOL } from '../../db';
 
 export type DbTokenType = 'EMAIL_VERIFY' | 'PASSWORD_RESET';
 
-/* interne Implementationen */
 export function _createRandomToken(): string {
   return crypto.randomBytes(32).toString('hex');
 }
@@ -27,12 +26,10 @@ export async function _createDbToken(params: { userId: string; type: DbTokenType
   return token;
 }
 
-/* öffentliche, exportierte Funktionen (für Express/legacy-Modules) */
 export const createRandomToken = _createRandomToken;
 export const hashToken = _hashToken;
 export const createDbToken = _createDbToken;
 
-/* Nest-Service (für DI) */
 @Injectable()
 export class DbTokenService {
   constructor(@Inject(PG_POOL) private readonly db: Pool) {}

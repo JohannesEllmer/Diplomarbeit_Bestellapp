@@ -1,4 +1,3 @@
-// src/app/app-menu/app-menu.ts
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
@@ -42,7 +41,8 @@ export class AppMenuComponent implements OnInit, OnDestroy {
   userMenuOpen = false;
 
   // ✅ Admin View Override (nur UI)
-  adminView: AdminView = (localStorage.getItem('admin_view') as AdminView) || 'USER';
+  adminView: AdminView =
+    (localStorage.getItem('admin_view') as AdminView) || 'USER';
 
   // ✅ Header vom Backend (Balance etc.)
   header: MenuHeaderDto | null = null;
@@ -59,17 +59,66 @@ export class AppMenuComponent implements OnInit, OnDestroy {
   // Zentrale Menükonfiguration
   readonly NAV_CONFIG: NavLink[] = [
     // Kundenbereich
-    { label: 'Menüplan', route: '/', roles: ['KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
-    { label: 'Warenkorb', route: '/warenkorb', roles: ['KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
-    { label: 'Meine Bestellungen', route: '/my-orders', roles: ['KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
+    {
+      label: 'Menüplan',
+      route: '/',
+      roles: ['KUNDE', 'INHABER', 'ADMIN'],
+      section: 'customer'
+    },
+    {
+      label: 'Warenkorb',
+      route: '/warenkorb',
+      roles: ['KUNDE', 'INHABER', 'ADMIN'],
+      section: 'customer'
+    },
+    {
+      label: 'Meine Bestellungen',
+      route: '/my-orders',
+      roles: ['KUNDE', 'INHABER', 'ADMIN'],
+      section: 'customer'
+    },
 
     // Verwaltungsbereich
-    { label: 'Bestellübersicht', route: '/orders', roles: ['INHABER', 'ADMIN'], section: 'management', shortLabel: 'Bestellungen' },
-    { label: 'Statistiken', route: '/statistics', roles: ['INHABER', 'ADMIN'], section: 'management' },
-    { label: 'Benutzerverwaltung', route: '/user', roles: ['ADMIN'], section: 'management', shortLabel: 'Benutzer' },
-    { label: 'Menü-Manager', route: '/menu-manager', roles: ['INHABER', 'ADMIN'], section: 'management', shortLabel: 'Menüs' },
-    { label: 'Menüplaner', route: '/menuplaner', roles: ['INHABER', 'ADMIN'], section: 'management', shortLabel: 'Planer' },
-    { label: 'Gerichte', route: '/gericht-verwaltung', roles: ['INHABER', 'ADMIN'], section: 'management' }
+    {
+      label: 'Bestellübersicht',
+      route: '/orders',
+      roles: ['INHABER', 'ADMIN'],
+      section: 'management',
+      shortLabel: 'Bestellungen'
+    },
+    {
+      label: 'Statistiken',
+      route: '/statistics',
+      roles: ['INHABER', 'ADMIN'],
+      section: 'management'
+    },
+    {
+      label: 'Benutzerverwaltung',
+      route: '/user',
+      roles: ['ADMIN', 'INHABER'], // ✅ FIX: vorher 'ADMIN, INHABER' als ein String
+      section: 'management',
+      shortLabel: 'Benutzer'
+    },
+    {
+      label: 'Menü-Manager',
+      route: '/menu-manager',
+      roles: ['INHABER', 'ADMIN'],
+      section: 'management',
+      shortLabel: 'Menüs'
+    },
+    {
+      label: 'Menüplaner',
+      route: '/menuplaner',
+      roles: ['INHABER', 'ADMIN'],
+      section: 'management',
+      shortLabel: 'Planer'
+    },
+    {
+      label: 'Gerichte',
+      route: '/gericht-verwaltung',
+      roles: ['INHABER', 'ADMIN'],
+      section: 'management'
+    }
   ];
 
   private onDocClickBound = (ev: MouseEvent) => this.onDocumentClick(ev);
@@ -93,8 +142,7 @@ export class AppMenuComponent implements OnInit, OnDestroy {
         if (this.auth.isLoggedIn()) {
           this.headerService.refresh();
         } else {
-          // optional: Header zurücksetzen, falls Service das nicht selbst macht
-          // this.header = null;
+          this.header = null;
         }
       });
 
@@ -104,9 +152,11 @@ export class AppMenuComponent implements OnInit, OnDestroy {
     document.addEventListener('click', this.onDocClickBound, true);
 
     // ✅ Header abonnieren
-    this.headerSub = this.headerService.watchHeader().subscribe((h: MenuHeader | null) => {
-      this.header = h as MenuHeaderDto;
-    });
+    this.headerSub = this.headerService
+      .watchHeader()
+      .subscribe((h: MenuHeader | null) => {
+        this.header = h as MenuHeaderDto;
+      });
 
     // ✅ Initial: nur wenn eingeloggt
     if (this.auth.isLoggedIn()) {
@@ -148,7 +198,9 @@ export class AppMenuComponent implements OnInit, OnDestroy {
 
   get userRoleConfig(): UserRoleConfig | null {
     const role = this.effectiveRole;
-    return role ? (this.ROLES[role] || { name: role, label: role, color: '#6b7280' }) : null;
+    return role
+      ? this.ROLES[role] || { name: role, label: role, color: '#6b7280' }
+      : null;
   }
 
   get hasUser(): boolean {
@@ -189,18 +241,15 @@ export class AppMenuComponent implements OnInit, OnDestroy {
   }
 
   logout(): void {
-    // ✅ UI schließen
     this.closeUserMenu();
     this.closeMobile();
 
-    // ✅ Auth + Header-State zurücksetzen (verhindert “alte Daten” nach Logout)
     this.auth.logout();
 
     // Wenn dein Service eine clear()-Methode hat, nimm die:
     if (typeof (this.headerService as any).clear === 'function') {
       (this.headerService as any).clear();
     } else {
-      // Fallback: local reset
       this.header = null;
     }
   }
@@ -228,7 +277,9 @@ export class AppMenuComponent implements OnInit, OnDestroy {
   getNavLinks(section: 'customer' | 'management'): NavLink[] {
     const role = this.effectiveRole;
     if (!role) return [];
-    return this.NAV_CONFIG.filter(link => link.section === section && link.roles.includes(role));
+    return this.NAV_CONFIG.filter(
+      link => link.section === section && link.roles.includes(role)
+    );
   }
 
   getCustomerLinks(): NavLink[] {
@@ -260,7 +311,9 @@ export class AppMenuComponent implements OnInit, OnDestroy {
   }
 
   getCurrentPageTitle(): string {
-    const currentLink = this.NAV_CONFIG.find(link => link.route === this.currentRoute);
+    const currentLink = this.NAV_CONFIG.find(
+      link => link.route === this.currentRoute
+    );
     return currentLink ? currentLink.label : 'HungerSatt Bestellsystem';
   }
 

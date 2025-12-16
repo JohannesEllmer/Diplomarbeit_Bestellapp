@@ -37,4 +37,14 @@ export class UsersController {
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }
+
+
+@Patch(':id/balance')
+updateBalance(
+  @Param('id') id: string,
+  @Body() body: { delta: number },
+) {
+  return this.usersService.updateBalanceDelta(id, body.delta);
+}
+
 }

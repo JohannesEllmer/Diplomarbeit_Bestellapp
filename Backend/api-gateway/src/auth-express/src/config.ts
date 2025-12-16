@@ -1,28 +1,17 @@
-// JWT
 export const JWT_SECRET = process.env.JWT_SECRET ?? 'supersecretjwtkey';
 export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN ?? '2h';
 
-// Frontend-URL (für Verify- & Reset-Links)
 export const APP_BASE_URL =
-  process.env.APP_BASE_URL ?? 'http://192.168.0.25:4200';
+  process.env.APP_BASE_URL ?? 'http://172.20.20.139:4200';
 
-// CORS
 export const CORS_ORIGINS =
-  (process.env.CORS_ORIGINS ?? 'http://192.168.0.25:4200,http://localhost:4200')
+  (process.env.CORS_ORIGINS ?? 'http://172.20.20.139:4200,http://localhost:4200')
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
 
-// =====================
-// GMAIL SMTP
-// =====================
-export const SMTP_HOST = 'smtp.gmail.com';
-export const SMTP_PORT = 587; // STARTTLS
+export const GMAIL_SENDER = process.env.GMAIL_SENDER ?? 'hungersatt123@gmail.com';
 
-export const SMTP_USER = 'hungersatt123@gmail.com';
-
-// ⚠️ HIER DAS APP-PASSWORT EINFÜGEN
-export const SMTP_PASS = 'tebudxapfjrjgola';
-
-export const SMTP_FROM =
-  'HungerSatt hungersatt123@gmail.com';
+export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? '546392092664-sfffevp491mr2uaoq6t2u169idin7h82.apps.googleusercontent.com';
+export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ?? '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';
+export const GOOGLE_REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN ?? '1//036kJoNOf11gZCgYIARAAGAMSNwF-L9Ir8bt8RSCS45C3NjtSMkWLCNKfZVndX4Mbgc3WLKUb5Noig-LE4rYQ9hTm2naWTkQHyvg';

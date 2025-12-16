@@ -72,7 +72,6 @@ export class DishEditor {
     this.saving = true;
     this.saveError = null;
 
-    // ggf. id '0' als "neu" interpretieren
     const dishToSave: MenuItem = {
       ...this.dish,
       id: this.dish.id || '0'
@@ -85,7 +84,6 @@ export class DishEditor {
         this.saving = false;
         this.dish = savedDish;
 
-        // Wenn du wirklich ein Menü mit Drink/Dessert zusammenbaust:
         const hasMenuExtras =
           (this.menu.drink && this.menu.drink.trim() !== '') ||
           (this.menu.dessert && this.menu.dessert.trim() !== '');

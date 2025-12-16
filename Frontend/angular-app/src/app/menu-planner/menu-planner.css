@@ -14,8 +14,6 @@
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
 }
 
-/* Seiten-Header */
-
 .planner-page-header {
   display: flex;
   justify-content: space-between;
@@ -53,8 +51,6 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
-
-/* Menü-Titel */
 
 .menu-title-section {
   background: #ffffff;
@@ -99,8 +95,6 @@
   font-weight: 400;
 }
 
-/* 🔴 Fehlerzustand für Titel */
-
 .menu-title-input-error {
   border-color: #ef4444 !important;
   background: #fef2f2;
@@ -112,8 +106,6 @@
   font-size: 0.85rem;
   color: #ef4444;
 }
-
-/* Hauptbereich */
 
 .planner-container {
   display: flex;
@@ -132,8 +124,6 @@
   gap: 1rem;
   min-height: 0;
 }
-
-/* Spalten Header */
 
 .column-header {
   display: flex;
@@ -156,8 +146,6 @@
   font-size: 0.9rem;
   color: #64748b;
 }
-
-/* Scrollbare Boxen */
 
 .selected-dishes-container,
 .unselected-dishes-container {
@@ -186,8 +174,6 @@
   transform: translateY(-1px);
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
 }
-
-/* Scrollbars */
 
 .selected-dishes-container::-webkit-scrollbar,
 .unselected-dishes-container::-webkit-scrollbar {
@@ -250,7 +236,6 @@
   border-color: #0ea5e9;
 }
 
-/* optional: Platzhalter beim Drag */
 .cdk-drag-placeholder {
   opacity: 0;
 }
@@ -304,8 +289,6 @@
   border-color: #0ea5e9;
   transform: translateY(-1px);
 }
-
-/* Buttons unten */
 
 .buttons-container {
   display: flex;
@@ -366,8 +349,6 @@
   box-shadow: 0 2px 8px rgba(14, 165, 233, 0.2);
 }
 
-/* Empty State */
-
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -390,8 +371,6 @@
   font-size: 0.95rem;
   font-weight: 500;
 }
-
-/* Responsive */
 
 @media (max-width: 1200px) {
   .menu-planner-container {

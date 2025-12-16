@@ -1,8 +1,8 @@
 export const environment = {
   production: false,
   useMockData: false,                  // lokal: true, Prod: false
-  apiBaseUrl: 'https://your-backend-api.com',
+ apiBaseUrl: 'http://localhost:3000/api',
   endpoints: {
-    ordersMy: '/orders/my'            // an Backend anpassen
+    ordersMy: '/orders/my'           
   }
 };

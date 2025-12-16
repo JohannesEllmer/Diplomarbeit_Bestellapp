@@ -19,7 +19,6 @@ export class MenusEntriesService {
   }
 
   async findAll() {
-    // optional: Hauptgericht (menu_item) joinen
     const res = await this.db.query(
       `SELECT m.id, m.title, m.dish_menu_item_id, m.drink, m.dessert,
               mi.name as dish_name, mi.price as dish_price

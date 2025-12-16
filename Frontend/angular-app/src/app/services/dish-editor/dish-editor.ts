@@ -2,7 +2,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, map, catchError } from 'rxjs';
-import { environment } from '../../env';
+import { environment } from '../env';
 import { MenuItem } from '../../../models/menu-item.model';
 
 export interface DishDto {
@@ -20,9 +20,6 @@ export class DishService {
 
   constructor(private http: HttpClient) {}
 
-  // ------------------------------
-  // Mapper: DishDto -> MenuItem
-  // ------------------------------
   private toMenuItem(dto: DishDto): MenuItem {
     return {
       id: dto.id,
@@ -30,7 +27,6 @@ export class DishService {
       description: dto.description ?? '',
       price: Number(dto.price ?? 0),
 
-      // Defaults, weil DishDto diese Felder nicht hat:
       category: 'Hauptgericht',
       available: true,
       vegetarian: false,
@@ -38,9 +34,6 @@ export class DishService {
     };
   }
 
-  // ------------------------------
-  // Mapper: MenuItem -> DishDto
-  // ------------------------------
   private toDishDto(item: MenuItem): Partial<DishDto> {
     return {
       id: item.id,
@@ -51,10 +44,6 @@ export class DishService {
     };
   }
 
-  // ------------------------------
-  // API: Alle Gerichte holen
-  // -> liefert MenuItem[] (Frontend-Model)
-  // ------------------------------
   getDishes(): Observable<MenuItem[]> {
     if (environment.useMockData) return of([]);
 
@@ -67,10 +56,6 @@ export class DishService {
     );
   }
 
-  // ------------------------------
-  // API: Gericht by id
-  // -> liefert MenuItem | null
-  // ------------------------------
   getDishById(id: string): Observable<MenuItem | null> {
     if (!id) return of(null);
     if (environment.useMockData) return of(null);
@@ -84,10 +69,6 @@ export class DishService {
     );
   }
 
-  // ------------------------------
-  // API: Speichern (neu/ändern)
-  // -> nimmt MenuItem und gibt MenuItem zurück
-  // ------------------------------
   saveDish(dish: MenuItem): Observable<MenuItem> {
     if (environment.useMockData) {
       const id = dish.id && dish.id !== '0' && dish.id !== 'new' ? dish.id : crypto.randomUUID();
@@ -96,7 +77,6 @@ export class DishService {
 
     const payload = this.toDishDto(dish);
 
-    // du nutzt im Editor id '0' als neu -> hier korrekt behandeln
     const isNew = !dish.id || dish.id === '0' || dish.id === 'new';
 
     if (isNew) {
@@ -104,13 +84,12 @@ export class DishService {
         map((dto) => this.toMenuItem(dto)),
         catchError((err) => {
           console.error('saveDish POST failed:', err);
-          // fallback: gib trotzdem das Dish zurück, damit UI nicht stirbt
+          // fallback
           return of({ ...dish, id: dish.id || '0' });
         })
       );
     }
 
-    // Update: bei dir eher PATCH
     return this.http.patch<DishDto>(`${this.dishesEndpoint}/${dish.id}`, payload).pipe(
       map((dto) => this.toMenuItem(dto)),
       catchError((err) => {
@@ -120,9 +99,6 @@ export class DishService {
     );
   }
 
-  // ------------------------------
-  // API: Löschen
-  // ------------------------------
   deleteDish(id: string): Observable<void> {
     if (environment.useMockData) return of(void 0);
 

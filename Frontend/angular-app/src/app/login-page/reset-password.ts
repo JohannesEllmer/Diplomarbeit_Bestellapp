@@ -98,7 +98,6 @@ export class ResetPasswordPage {
       { validators: [passwordsMatch] }
     );
 
-    // ✅ robust (auch bei Navigation innerhalb der App)
     this.route.queryParamMap.subscribe(params => {
       this.token = params.get('token');
       this.success = false;

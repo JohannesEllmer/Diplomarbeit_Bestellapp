@@ -19,7 +19,6 @@ export class VerifyEmailPage implements OnDestroy {
   title = 'E-Mail bestätigen';
   message = 'Bestätigung läuft…';
   details = '';
-  // optional: Autoredirect nach Erfolg
   autoRedirectSeconds = 3;
 
   private destroy$ = new Subject<void>();
@@ -30,7 +29,6 @@ export class VerifyEmailPage implements OnDestroy {
     private auth: AuthService,
     private router: Router
   ) {
-    // ✅ reagiert auf Token-Änderungen (auch wenn dieselbe Komponente offen bleibt)
     this.route.queryParamMap
       .pipe(
         takeUntil(this.destroy$),
@@ -42,10 +40,8 @@ export class VerifyEmailPage implements OnDestroy {
             return of(null);
           }
 
-          // ✅ UI sofort "loading"
           this.setLoading();
 
-          // ✅ verify mit Timeout + Retry (1x)
           return this.auth.verifyEmail(token).pipe(
             timeout(8000),
             retry(1),
@@ -55,7 +51,6 @@ export class VerifyEmailPage implements OnDestroy {
               return of(null);
             }),
             finalize(() => {
-              // nichts
             })
           );
         })
@@ -64,7 +59,6 @@ export class VerifyEmailPage implements OnDestroy {
   }
 
   private start(_token: string) {
-    // stoppe alten redirect timer, falls User neu lädt
     if (this.redirectTimer) {
       clearTimeout(this.redirectTimer);
       this.redirectTimer = undefined;
@@ -81,7 +75,7 @@ export class VerifyEmailPage implements OnDestroy {
 
   private setSuccess() {
     this.status = 'success';
-    this.title = '✅ E-Mail bestätigt';
+    this.title = 'E-Mail bestätigt';
     this.message = 'Dein Account ist jetzt aktiviert. Du kannst dich ab sofort einloggen.';
     this.details = `Weiterleitung zum Login in ${this.autoRedirectSeconds} Sekunden…`;
 
@@ -107,10 +101,9 @@ export class VerifyEmailPage implements OnDestroy {
   }
 
   private mapError(err: any): { title: string; message: string; details?: string } {
-    // Angular HttpErrorResponse
+    // HttpErrorResponse
     const status = err?.status;
 
-    // Backend sendet z.B. { error: 'INVALID_OR_EXPIRED_TOKEN' }
     const code = err?.error?.error;
 
     if (status === 0) {
@@ -159,8 +152,6 @@ export class VerifyEmailPage implements OnDestroy {
   }
 
   retryNow() {
-    // einfach neu laden → triggert queryParamMap nochmal nicht immer,
-    // daher direkt navigieren auf dieselbe URL (refresh trick)
     const token = (this.route.snapshot.queryParamMap.get('token') ?? '').trim();
     this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
       this.router.navigate(['/verify-email'], { queryParams: { token } });

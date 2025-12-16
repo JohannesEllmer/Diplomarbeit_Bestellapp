@@ -25,49 +25,33 @@ export class UserItemsComponent {
     this.user.showDetails = !this.user.showDetails;
   }
 
-  /**
-   * Editiermodus starten:
-   * - Ausgangsstand merken (editingBaseBalance)
-   * - Eingabefeld mit aktuellem Kontostand vorbefüllen
-   */
   startEditBalance(event: Event): void {
     event.stopPropagation();
     this.user.editingBalance = true;
-    this.user.editingBaseBalance = this.user.balance;
-    this.user.newBalance = this.user.balance;
+    this.user.newBalance = 0; 
   }
 
-  /**
-   * Speichern:
-   * - newBalance wird als "gewünschter neuer Kontostand" verstanden
-   * - diff = newBalance - editingBaseBalance
-   * - an den Service wird nur die Differenz übergeben
-   */
   saveBalance(event: Event): void {
     event.stopPropagation();
 
-    if (this.user.newBalance === undefined || this.user.editingBaseBalance === undefined) {
+    const delta = Number(this.user.newBalance ?? 0);
+    if (!Number.isFinite(delta) || delta === 0) {
       this.user.editingBalance = false;
+      this.user.newBalance = undefined;
       return;
     }
 
-    const base = this.user.editingBaseBalance;
-    const target = this.user.newBalance;
-    const diff = target - base;
-
-    // Wenn sich nichts geändert hat, brauchen wir nichts zu speichern
-    if (diff === 0) {
-      this.user.editingBalance = false;
-      this.user.editingBaseBalance = undefined;
-      return;
-    }
-
-    this.userService.updateBalance(this.user, diff).subscribe(updated => {
-      // Backend hat den neuen Stand berechnet und zurückgegeben
+    this.userService.updateBalanceDelta(this.user, delta).subscribe(updated => {
       this.user.balance = updated.balance;
       this.user.editingBalance = false;
-      this.user.editingBaseBalance = undefined;
+      this.user.newBalance = undefined;
     });
+  }
+
+  cancelEditBalance(event: Event): void {
+    event.stopPropagation();
+    this.user.editingBalance = false;
+    this.user.newBalance = undefined;
   }
 
   emitDelete(event: Event): void {
@@ -84,7 +68,8 @@ export class UserItemsComponent {
     event.stopPropagation();
     this.router.navigate(['/users', this.user.id]);
   }
-    onResetPasswordClick() {
+
+  onResetPasswordClick(): void {
     this.resetPassword.emit(this.user);
   }
 }

@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { User, UserRole } from '../../models/user.model';
-import { environment } from '../env';
+import { environment } from '../services/env';
 
 interface LoginResponse {
   token: string;
@@ -12,7 +12,6 @@ interface LoginResponse {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  // ✅ nicht mehr localhost hardcoded
   private apiUrl = environment.apiBaseUrl;
 
   private tokenKey = 'auth_token';
@@ -78,17 +77,26 @@ export class AuthService {
     return this.http.post<{ ok: true }>(`${this.apiUrl}/auth/verify-email`, { token });
   }
 
-  forgotPassword(email: string): Observable<{ ok: true }> {
-    return this.http.post<{ ok: true }>(`${this.apiUrl}/auth/forgot-password`, { email });
-  }
+ forgotPassword(email: string): Observable<{ ok: true }> {
+  return this.http.post<{ ok: true }>(
+    `${this.apiUrl}/auth/forgot-password`,
+    { email: String(email).trim() },
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+}
+
 
   resetPassword(token: string, newPassword: string): Observable<{ ok: true }> {
     return this.http.post<{ ok: true }>(`${this.apiUrl}/auth/reset-password`, { token, newPassword });
   }
 
-  changePassword(oldPassword: string, newPassword: string): Observable<{ ok: true }> {
-    return this.http.post<{ ok: true }>(`${this.apiUrl}/auth/change-password`, { oldPassword, newPassword });
-  }
+ changePassword(oldPassword: string, newPassword: string): Observable<{ ok: true }> {
+  return this.http.post<{ ok: true }>(`${this.apiUrl}/auth/change-password`, {
+    currentPassword: oldPassword, 
+    newPassword
+  });
+}
+
 
   setCurrentUser(user: User): void {
     const token = this.getToken();

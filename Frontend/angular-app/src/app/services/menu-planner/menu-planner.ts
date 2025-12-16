@@ -5,7 +5,7 @@ import { catchError } from 'rxjs/operators';
 import { Menu } from '../../../models/menu.model';
 import { MenuItem, OrderItem } from '../../../models/menu-item.model';
 import { MealPlan } from '../../../models/meal-plan.model';
-import { environment } from '../../env';
+import { environment } from '../env';
 
 @Injectable({ providedIn: 'root' })
 export class MenuService {
@@ -19,8 +19,6 @@ export class MenuService {
 
   constructor(private http: HttpClient) {}
 
-  /* ---------------- Menu Items ---------------- */
-
   getMenuItems(): Observable<MenuItem[]> {
     if (environment.useMockData) return of([]);
     return this.http.get<MenuItem[]>(this.menuItemsEndpoint).pipe(
@@ -28,8 +26,7 @@ export class MenuService {
     );
   }
 
-  /* ---------------- Menüs ---------------- */
-
+//Menu
   getMenus(): Observable<Menu[]> {
     if (environment.useMockData) return of([]);
     return this.http.get<Menu[]>(this.menusEndpoint).pipe(
@@ -49,7 +46,7 @@ export class MenuService {
     return this.http.put<MealPlan>(`${this.menusEndpoint}/${menu.id}`, menu);
   }
 
-  /* ---------------- Cart ---------------- */
+ 
 
   saveOrderItems(orderItems: OrderItem[]): void {
     localStorage.setItem(this.storageKey, JSON.stringify(orderItems));

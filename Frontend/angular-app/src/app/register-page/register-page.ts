@@ -53,7 +53,6 @@ export class RegisterPageComponent implements OnDestroy {
       { validators: [this.schoolEmailValidator()] }
     );
 
-    // ✅ Reaktiv & schnell: nur 1 Subscription für Email+SchoolType
     const email$ = this.email!.valueChanges.pipe(
       startWith(this.email!.value),
       map(v => (String(v ?? '').trim())),
@@ -74,7 +73,6 @@ export class RegisterPageComponent implements OnDestroy {
     );
   }
 
-  // ===== Getter =====
   get email() { return this.registerForm.get('email'); }
   get classCtrl() { return this.registerForm.get('class'); }
   get schoolType() { return this.registerForm.get('schoolType'); }
@@ -82,7 +80,7 @@ export class RegisterPageComponent implements OnDestroy {
   get firstName() { return this.registerForm.get('firstName'); }
   get lastName() { return this.registerForm.get('lastName'); }
 
-  // ===== Validators =====
+  // Eingabe Validators mit React
   private schoolEmailValidator(): ValidatorFn {
     return (group: AbstractControl): ValidationErrors | null => {
       const email = (group.get('email')?.value as string) || '';
@@ -98,7 +96,6 @@ export class RegisterPageComponent implements OnDestroy {
     };
   }
 
-  // ===== Name aus Email generieren (nun mit Parametern) =====
   private updateNameFromEmail(email: string, school: 'HTL' | 'HAK' | ''): void {
     if (!email || !school) {
       this.safePatchNames('', '');
@@ -136,7 +133,6 @@ export class RegisterPageComponent implements OnDestroy {
   }
 
   private safePatchNames(first: string, last: string) {
-    // ✅ patch nur wenn anders → weniger Change Detection
     const curFirst = this.firstName?.value ?? '';
     const curLast = this.lastName?.value ?? '';
     if (curFirst === first && curLast === last) return;
@@ -148,7 +144,6 @@ export class RegisterPageComponent implements OnDestroy {
     return value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
   }
 
-  // ===== Registrierung =====
 onSubmit(): void {
   this.errorMessage = '';
   this.infoMessage = '';
@@ -162,7 +157,6 @@ onSubmit(): void {
 
   const raw = this.registerForm.getRawValue();
 
-  // ✅ SOFORT Feedback (damit es nicht "zu spät" wirkt)
   this.isSubmitting = true;
   this.infoType = 'info';
   this.infoMessage = 'Registrierung wird gestartet…es wird Ihnen ein Bestätigungslink per Email zugesendet. Dies kann einen Moment dauern.';
@@ -171,12 +165,11 @@ onSubmit(): void {
     switchMap(exists => {
       if (exists) {
         this.isSubmitting = false;
-        this.infoMessage = ''; // optional: Info ausblenden
+        this.infoMessage = ''; 
         this.errorMessage = 'Diese E-Mail-Adresse ist bereits registriert.';
         return of(null);
       }
 
-      // ✅ sobald wir wirklich registrieren, direkt die "Mail kommt..." Message zeigen
       this.infoType = 'info';
       this.infoMessage =
         'Fast fertig! Bitte bestätige deine E-Mail. Erst danach wird dein Account erstellt. Dies kann einen Moment dauern.';
@@ -197,7 +190,6 @@ onSubmit(): void {
 
       if (!res) return;
 
-      // ✅ gleiche Message beibehalten, nur Status "success"
       this.infoType = 'success';
       this.infoMessage =
         'Fast fertig! Bitte bestätige deine E-Mail. Erst danach wird dein Account erstellt';
@@ -206,7 +198,7 @@ onSubmit(): void {
       this.isSubmitting = false;
       console.error(err);
 
-      // ✅ Info raus, Fehler rein
+      
       this.infoMessage = '';
       this.errorMessage = 'Registrierung fehlgeschlagen. Bitte versuche es erneut.';
     }

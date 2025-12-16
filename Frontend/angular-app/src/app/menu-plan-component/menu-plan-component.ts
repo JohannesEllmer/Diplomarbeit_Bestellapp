@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subject, timer, merge } from 'rxjs';
+import { filter, takeUntil, finalize } from 'rxjs/operators';
 
 import { MenuItem } from '../../models/menu-item.model';
 import { Menu } from '../../models/menu.model';
@@ -9,8 +11,8 @@ import { Menu } from '../../models/menu.model';
 import { MenuItemComponent } from '../menu-item-component/menu-item-component';
 import { MenuService } from '../services/menu/menu-service';
 import { CartService } from '../services/cart/cart-service';
-import { AuthService } from '../auth/auth.service';              // ✅ user aus auth
-import { MenuHeaderService } from '../app-menu/menu-header.service'; // ✅ balance/header
+import { AuthService } from '../auth/auth.service';
+import { MenuHeaderService } from '../app-menu/menu-header.service';
 
 @Component({
   selector: 'app-menu-plan',
@@ -19,14 +21,13 @@ import { MenuHeaderService } from '../app-menu/menu-header.service'; // ✅ bala
   templateUrl: './menu-plan-component.html',
   styleUrls: ['./menu-plan-component.css'],
 })
-export class MenuPlanComponent implements OnInit {
+export class MenuPlanComponent implements OnInit, OnDestroy {
   showImpressumPopup = false;
 
   activeCategory = 'Alle';
   activeFilter = 'Alle';
   searchTerm = '';
 
-  // Kategorien sollten zu deiner DB passen:
   categories = ['Alle', 'Hauptgericht', 'Dessert', 'Getränk'];
   filters = ['Alle', 'Vegetarisch'];
 
@@ -35,6 +36,8 @@ export class MenuPlanComponent implements OnInit {
 
   loadingItems = false;
   loadingMenus = false;
+
+  private destroy$ = new Subject<void>();
 
   constructor(
     private router: Router,
@@ -45,48 +48,81 @@ export class MenuPlanComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    //Debugging
     console.log('[MenuPlan] init');
 
-    // nur laden, wenn eingeloggt (falls deine endpoints geschützt sind)
-    // wenn sie öffentlich sein sollen, kannst du das if entfernen
+    this.cartService.getCartItems();
+
+    const timer$ = timer(0, 10 * 60 * 1000);
+
+    const navToHome$ = this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      filter(e => e.urlAfterRedirects === '/' || e.urlAfterRedirects.startsWith('/?'))
+    );
+    merge(timer$, navToHome$)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.fetchMenusAndItems();
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private fetchMenusAndItems(): void {
+    
     if (!this.auth.isLoggedIn()) {
       console.warn('[MenuPlan] not logged in -> skipping menu fetch');
       return;
     }
 
+    console.log('[MenuPlan] fetching menu-items + menus');
+
     this.loadingItems = true;
-    this.menuService.getMenuItems().subscribe(items => {
-      this.menuItems = items ?? [];
-      this.loadingItems = false;
-    });
+    this.menuService.getMenuItems()
+      .pipe(finalize(() => (this.loadingItems = false)))
+      .subscribe({
+        next: (items) => {
+          this.menuItems = items ?? [];
+          console.log('[MenuPlan] items loaded:', this.menuItems.length);
+        },
+        error: (err) => console.error('[MenuPlan] items error:', err),
+      });
 
     this.loadingMenus = true;
-    this.menuService.getMenus().subscribe(ms => {
-      this.menus = ms ?? [];
-      this.loadingMenus = false;
-    });
-
-    // Warenkorb laden
-    this.cartService.getCartItems();
+    this.menuService.getMenus()
+      .pipe(finalize(() => (this.loadingMenus = false)))
+      .subscribe({
+        next: (ms) => {
+          this.menus = ms ?? [];
+          console.log('[MenuPlan] menus loaded:', this.menus.length);
+        },
+        error: (err) => console.error('[MenuPlan] menus error:', err),
+      });
   }
 
-  // Balance kommt aus Header (oder 0)
+  // Balance (aus Token/Header)
   get balance(): number {
-    const h = (this.headerService as any).header$ ? null : null; // nur damit TS nicht meckert, falls du header$ anders hast
     const tokenUser = this.auth.getCurrentUser();
     const n = Number(tokenUser?.balance ?? 0);
     return Number.isFinite(n) ? n : 0;
+  }
+
+  formatBalance(): string {
+    const n = Number(this.balance ?? 0);
+    return Number.isFinite(n) ? n.toFixed(2) : '0.00';
   }
 
   get filteredItems(): MenuItem[] {
     return (this.menuItems ?? []).filter(i => this.matches(i));
   }
 
-  // Menüs: entweder dish schon geladen oder du brauchst mapping (wenn nur dishMenuItemId kommt)
   get filteredMenus(): Menu[] {
     return (this.menus ?? []).filter(m => {
-      const dish = m.dish;
-      return dish ? this.matches(dish) : true; // wenn dish fehlt: nicht rausfiltern
+      const dish = (m as any).dish as MenuItem | undefined;
+      return dish ? this.matches(dish) : true;
     });
   }
 
@@ -107,34 +143,22 @@ export class MenuPlanComponent implements OnInit {
     return searchMatch && categoryMatch && filterMatch;
   }
 
+  private searchTimer?: any;
+  onSearchChange(value: string): void {
+    const v = (value ?? '').toString();
+    clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => (this.searchTerm = v), 200);
+  }
+
   clearSearch(): void {
     this.searchTerm = '';
   }
 
-  private searchTimer?: any;
-
-onSearchChange(value: string): void {
-  const v = (value ?? '').toString();
-  clearTimeout(this.searchTimer);
-  this.searchTimer = setTimeout(() => {
-    this.searchTerm = v;
-  }, 200);
-}
-// ✅ Guthaben sauber formatieren (keine Crashes)
-formatBalance(): string {
-  const n = Number(this.balance ?? 0);
-  return Number.isFinite(n) ? n.toFixed(2) : '0.00';
-}
-
-// ✅ totalCost bleibt Getter (du hast ihn schon)
-get totalCost(): number {
-  return this.cartService.getTotal(this.cartService.getCartItems());
-}
-
-
+  get totalCost(): number {
+    return this.cartService.getTotal(this.cartService.getCartItems());
+  }
 
   addToOrder(menuItem: MenuItem, note = '', deliveryTime = '12:00'): void {
-    // ✅ user aus Auth (nicht hardcoded!)
     const user = this.auth.getCurrentUser();
     if (!user) return;
 
@@ -145,14 +169,7 @@ get totalCost(): number {
 
     if (existing) existing.quantity += 1;
     else {
-      items.push({
-        menuItem,
-        user,
-        note,
-        quantity: 1,
-        delivered: false,
-        deliveryTime,
-      });
+      items.push({ menuItem, user, note, quantity: 1, delivered: false, deliveryTime });
     }
 
     this.cartService.saveCartItems(items);

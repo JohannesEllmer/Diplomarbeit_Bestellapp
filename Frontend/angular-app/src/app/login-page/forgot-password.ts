@@ -13,8 +13,6 @@ import { AuthService } from '../auth/auth.service';
 export class ForgotPasswordPage {
   loading = false;
   done = false;
-
-  // ✅ FIX: wird im Template verwendet
   error = '';
 
   form: FormGroup;
@@ -58,9 +56,6 @@ export class ForgotPasswordPage {
         console.error(err);
         this.loading = false;
         this.done = true;
-
-        // Optional (wenn du Technikfehler zeigen willst):
-        // this.error = 'Technischer Fehler beim Senden. Bitte später erneut versuchen.';
       }
     });
   }

@@ -13,8 +13,6 @@
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
 }
 
-/* Header (optional) */
-
 .menu-manager-header {
   background: #0ea5e9;
   color: #ffffff;
@@ -35,8 +33,6 @@
   letter-spacing: 0.02em;
 }
 
-/* Scrollbarer Bereich mit den Menüs */
-
 .menus-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -54,7 +50,6 @@
   overflow-y: auto;
 }
 
-/* Scrollbar für den ganzen Menübereich */
 .menus-container::-webkit-scrollbar {
   width: 8px;
 }
@@ -69,8 +64,6 @@
 .menus-container::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
-
-/* einzelne Menü-Karte */
 
 .menu-container {
   display: flex;
@@ -109,7 +102,6 @@
   min-height: 3rem;
 }
 
-/* Titel + Status-Tag */
 
 .menu-title-and-status {
   display: flex;
@@ -134,8 +126,6 @@
   max-height: 2.6em;
 }
 
-/* Aktiv-Tag */
-
 .menu-status-pill {
   flex-shrink: 0;
   display: inline-flex;
@@ -156,8 +146,6 @@
   border-radius: 999px;
   background: #22c55e;
 }
-
-/* Aktionen rechts */
 
 .menu-actions {
   display: flex;
@@ -201,8 +189,6 @@
   background: #ef4444;
   border-color: #ef4444;
 }
-
-/* Gerichte innerhalb einer Karte */
 
 .menu-dishes {
   margin-top: 0.75rem;
@@ -270,8 +256,6 @@
   color: #64748b;
 }
 
-/* Button unten */
-
 .add-menu-btn-wrapper {
   margin: 1.25rem 1.5rem 0 1.5rem;
   display: flex;
@@ -306,9 +290,6 @@
   background: #0ea5e9;
   color: #ffffff;
 }
-
-/* Responsive */
-
 @media (max-width: 1200px) {
   .menu-manager-container {
     max-width: 100%;

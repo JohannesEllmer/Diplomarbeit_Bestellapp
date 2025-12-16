@@ -3,12 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { forkJoin, Observable, of, map, catchError } from 'rxjs';
 import { environment } from '../env';
 
-/* ---------------- DTOs ---------------- */
-
 export interface StatOrder {
   id: string;
   user?: { name?: string | null };
   totalPrice: number;
+  delivered?: boolean;
 }
 
 export interface DayData {
@@ -48,8 +47,6 @@ export class StatisticsService {
 
   constructor(private http: HttpClient) {}
 
-  /* ---------------- API ---------------- */
-
   getDays(start: string, end: string): Observable<DayData[]> {
     return this.http.get<OrderDto[]>(`${this.apiBase}/admin/orders`).pipe(
       map(orders => this.groupByDay(orders ?? [], start, end)),
@@ -87,9 +84,7 @@ export class StatisticsService {
     );
   }
 
-  /* ---------------- Helpers ---------------- */
-
-  private groupByDay(
+   private groupByDay(
     orders: OrderDto[],
     start: string,
     end: string
@@ -111,6 +106,7 @@ export class StatisticsService {
         id: o.id,
         user: o.user,
         totalPrice: Number(o.totalPrice ?? 0),
+        delivered: Boolean(o.status === 'closed'),
       });
     }
 
