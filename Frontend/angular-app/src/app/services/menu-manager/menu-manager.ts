@@ -13,7 +13,6 @@ export class MenuManagerService {
 
   constructor(private http: HttpClient) {}
 
-  /** ✅ Menüs laden (Liste) */
   getMenus(): Observable<MealPlan[]> {
     if (environment.useMockData) return of([]);
 
@@ -22,9 +21,7 @@ export class MenuManagerService {
         console.error('MenuManager getMenus failed:', err);
         return of([]);
       }),
-      // ✅ normalize dishes, available default true
-      // (kein rxjs map import nötig, wir machen es hier bewusst einfach)
-      // @ts-ignore
+    
       ((source$) => new Observable<MealPlan[]>(subscriber => {
         source$.subscribe({
           next: (rows: any[]) => {
@@ -39,7 +36,7 @@ export class MenuManagerService {
                 price: Number(d.price ?? 0),
                 category: d.category ?? 'Hauptgericht',
                 vegetarian: !!d.vegetarian,
-                available: d.available !== false, // ✅ default true
+                available: d.available !== false, 
                 allergens: Array.isArray(d.allergens) ? d.allergens : (Array.isArray(d.allergenes) ? d.allergenes : []),
               })),
             })) as MealPlan[];
@@ -63,7 +60,6 @@ export class MenuManagerService {
     );
   }
 
-  /** ✅ Aktives Menü laden */
   getSelectedMealPlan(): Observable<MealPlan | null> {
     if (environment.useMockData) return of(null);
 
@@ -93,7 +89,7 @@ export class MenuManagerService {
               price: Number(d.price ?? 0),
               category: d.category ?? 'Hauptgericht',
               vegetarian: !!d.vegetarian,
-              available: d.available !== false, // ✅ default true
+              available: d.available !== false, 
               allergens: Array.isArray(d.allergens) ? d.allergens : (Array.isArray(d.allergenes) ? d.allergenes : []),
             }));
 
@@ -111,11 +107,6 @@ export class MenuManagerService {
     ) as any;
   }
 
-  /**
-   * ✅ Menü aktiv setzen:
-   * Primär: PATCH /meal-plans/select   body { id }
-   * Fallback: PATCH /meal-plans/:id/select body {}
-   */
   setSelected(menuId: string): Observable<{ ok: boolean; id?: string }> {
     if (environment.useMockData) return of({ ok: true, id: menuId });
     const id = String(menuId ?? '').trim();
@@ -143,7 +134,6 @@ export class MenuManagerService {
     );
   }
 
-  /** ✅ Menü Details holen */
   getMealPlanById(id: string): Observable<MealPlan | null> {
     if (!id) return of(null);
     if (environment.useMockData) return of(null);

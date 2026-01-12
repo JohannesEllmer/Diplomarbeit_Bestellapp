@@ -30,11 +30,9 @@ export class UserPageComponent implements OnInit {
   // Flush flow
   flushQr: { id: string; code: string; qrCodeUrl: string } | null = null;
 
-  // ✅ Klasse edit flow
   classEditMode = false;
   classValue = '';
 
-  // ✅ Change password flow
   pwModalOpen = false;
   pwOld = '';
   pwNew = '';

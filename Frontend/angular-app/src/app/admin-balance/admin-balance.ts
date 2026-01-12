@@ -72,9 +72,6 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
     this.stopScanner().catch(() => {});
   }
 
-  // -----------------------------
-  // UI Actions
-  // -----------------------------
   async start(): Promise<void> {
     if (this.scanning || this.scanningInProgress) return;
 
