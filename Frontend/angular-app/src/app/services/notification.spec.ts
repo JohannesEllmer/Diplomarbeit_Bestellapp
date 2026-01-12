@@ -1,13 +1,12 @@
 import { TestBed } from '@angular/core/testing';
+import { NotificationService } from './notification';
 
-import { AdminBalanceService } from './admin-balance';
-
-describe('AdminBalanceService', () => {
-  let service: AdminBalanceService;
+describe('NotificationService', () => {
+  let service: NotificationService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(AdminBalanceService);
+    service = TestBed.inject(NotificationService);
   });
 
   it('should be created', () => {

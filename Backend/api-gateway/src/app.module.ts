@@ -5,6 +5,8 @@ import { UsersModule } from './users/users.module';
 import { OrdersModule } from './orders/orders.module';
 import { MenusModule } from './menus/menus.module';
 import { DbTokenService } from './auth-express/src/tokenHelper';
+import { NotificationsModule } from './notifications/notifcation.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -12,6 +14,8 @@ import { DbTokenService } from './auth-express/src/tokenHelper';
     UsersModule,
     OrdersModule,
     MenusModule,
+    ScheduleModule.forRoot(),
+    NotificationsModule,
   ],
   providers: [DbTokenService],
 })

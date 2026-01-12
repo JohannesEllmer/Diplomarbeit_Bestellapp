@@ -6,10 +6,14 @@ import { UpdateOrderDto } from './dto/update-order.dto';
 import { CreateOrderItemDto } from './dto/create-order-item.dto';
 import { UserRefDto } from './dto/user-ref.dto';
 import { OrderResponseDto, OrderItemResponseDto } from './dto/order-response.dto';
+import { NotificationsService } from '../notifications/notification.service';
 
 @Injectable()
 export class OrdersService {
-  constructor(@Inject(PG_POOL) private readonly db: Pool) {}
+  constructor(
+    @Inject(PG_POOL) private readonly db: Pool,
+    private readonly notifications: NotificationsService, 
+  ) {}
 
   async getMyOrders(userId: string): Promise<OrderResponseDto[]> {
     const ids = await this.db.query(
@@ -22,6 +26,24 @@ export class OrdersService {
     return out;
   }
 
+  // ✅ Helper: Abholzeit aus OrderItems (MIN delivery_time) bestimmen
+  private async getPickupAtForOrder(orderId: string): Promise<Date> {
+    const res = await this.db.query(
+      `
+      SELECT MIN(delivery_time) AS pickup_at
+      FROM app.order_items
+      WHERE order_id = $1
+        AND delivery_time IS NOT NULL
+      `,
+      [orderId],
+    );
+
+    const pickup = res.rows?.[0]?.pickup_at ? new Date(res.rows[0].pickup_at) : null;
+
+    // Fallback: "jetzt + 5min" damit Reminder nicht sofort feuern, falls keine Zeit gesetzt ist
+    return pickup ?? new Date(Date.now() + 5 * 60 * 1000);
+  }
+
   // ✅ Bestellung erstellt: kein Guthaben abbuchen, nur "reserviert" prüfen
   async createForUser(jwtUserId: string, dto: CreateOrderDto): Promise<OrderResponseDto> {
     if (dto.user?.id && String(dto.user.id) !== String(jwtUserId)) {
@@ -29,6 +51,7 @@ export class OrdersService {
     }
 
     const client = await this.db.connect();
+    let orderId = '';
     try {
       await client.query('BEGIN');
 
@@ -44,7 +67,7 @@ export class OrdersService {
          RETURNING id`,
         [jwtUserId],
       );
-      const orderId = String(orderRes.rows[0].id);
+      orderId = String(orderRes.rows[0].id);
 
       const total = await this.insertItemsAndComputeTotal(client, orderId, jwtUserId, dto.items);
 
@@ -53,8 +76,7 @@ export class OrdersService {
         [orderId, total],
       );
 
-      // ✅ Reserviert = Summe aller offenen Orders (inkl. dieser)
-      // Verfügbar = user.balance - reserved(ohne diese) => daher id<>orderId
+      // ✅ Reserviert prüfen
       const balRes = await client.query(
         `SELECT balance FROM app.users WHERE id = $1 FOR UPDATE`,
         [jwtUserId],
@@ -75,6 +97,16 @@ export class OrdersService {
       }
 
       await client.query('COMMIT');
+
+      // ✅ Hooks NACH COMMIT (damit DB-Zustand final ist)
+      const pickupAt = await this.getPickupAtForOrder(orderId);
+
+      // Inhaber: neue Bestellung + 1h + now
+      await this.notifications.ownerOrderIncoming(orderId, pickupAt);
+
+      // Kunde: Bestellung erfolgreich + Abholzeit reminder
+      await this.notifications.customerOrderSuccess(jwtUserId, orderId, pickupAt);
+
       return await this.buildOrderResponse(orderId);
     } catch (e) {
       await client.query('ROLLBACK');
@@ -136,7 +168,6 @@ export class OrdersService {
     await this.db.query(`DELETE FROM app.orders WHERE id = $1`, [id]);
   }
 
-  // ✅ QR-Capture: jetzt wird abgebucht + geschlossen + delivered=true
   async completeByQrCode(code: string): Promise<{ ok: boolean; orderId?: string }> {
     const c = (code || '').trim();
     const m = /^Order-(.+)$/.exec(c);
@@ -193,6 +224,10 @@ export class OrdersService {
       );
 
       await client.query('COMMIT');
+
+      // ✅ Hook: Bestellung abgeschlossen (Kunde+Owner)
+      await this.notifications.orderCompleted(String(order.user_id), orderId);
+
       return { ok: true, orderId };
     } catch (e) {
       await client.query('ROLLBACK');
@@ -247,7 +282,6 @@ export class OrdersService {
     if (orderRes.rowCount === 0) throw new NotFoundException('ORDER_NOT_FOUND');
     const o = orderRes.rows[0];
 
-    // ✅ FIX: Schema richtig
     const countRes = await this.db.query(
       `SELECT COUNT(*)::int AS count FROM app.orders WHERE user_id = $1`,
       [String(o.user_id)],

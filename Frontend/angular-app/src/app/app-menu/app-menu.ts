@@ -7,7 +7,6 @@ import { AuthService } from '../auth/auth.service';
 import { MenuHeaderService } from './menu-header.service';
 import { MenuHeaderDto } from './menu-header.dto';
 import { MenuHeader } from './menu-header.model';
-
 interface NavLink {
   label: string;
   route: string;
@@ -37,26 +36,21 @@ export class AppMenuComponent implements OnInit, OnDestroy {
   currentRoute = '';
   private routerSubscription!: Subscription;
 
-  // Dropdown
   userMenuOpen = false;
 
-  // ✅ Admin View Override (nur UI)
   adminView: AdminView =
     (localStorage.getItem('admin_view') as AdminView) || 'USER';
 
-  // ✅ Header vom Backend (Balance etc.)
   header: MenuHeaderDto | null = null;
   private headerSub?: Subscription;
   private headerRefreshSub?: Subscription;
 
-  // Rollenkonfiguration
   readonly ROLES: { [key: string]: UserRoleConfig } = {
     ADMIN: { name: 'ADMIN', label: 'Administrator', color: '#ef4444' },
     INHABER: { name: 'INHABER', label: 'Verwaltung', color: '#3b82f6' },
     KUNDE: { name: 'KUNDE', label: 'Kunde', color: '#10b981' }
   };
 
-  // Zentrale Menükonfiguration
   readonly NAV_CONFIG: NavLink[] = [
     // Kundenbereich
     {
@@ -84,7 +78,14 @@ export class AppMenuComponent implements OnInit, OnDestroy {
       section: 'customer'
     },
 
-    // Verwaltungsbereich
+    {
+      label: 'Benachrichtigungen',
+      route: '/benachrichtigungen',
+      roles: ['KUNDE', 'INHABER', 'ADMIN'],
+      section: 'customer',
+      shortLabel: 'Hinweise'
+    },
+
     {
       label: 'Bestellübersicht',
       route: '/orders',
@@ -106,11 +107,20 @@ export class AppMenuComponent implements OnInit, OnDestroy {
       shortLabel: 'Benutzer'
     },
     {
-      label: 'Admin Profil',
+      label: 'QR Code Scanner',
       route: '/admin/balance-scan',
-      roles: [ 'INHABER', 'ADMIN'],
+      roles: ['INHABER', 'ADMIN'],
       section: 'management'
     },
+
+    {
+      label: 'Hinweise heute',
+      route: '/benachrichtigungen-heute',
+      roles: ['INHABER', 'ADMIN'],
+      section: 'management',
+      shortLabel: 'Heute'
+    },
+
     {
       label: 'Menü-Manager',
       route: '/menu-manager',
@@ -138,46 +148,44 @@ export class AppMenuComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private auth: AuthService,
-    private headerService: MenuHeaderService
+    private headerService: MenuHeaderService,
+    // private notifications: NotificationService, // optional
   ) {}
 
   ngOnInit(): void {
-    // ✅ Router Events
     this.routerSubscription = this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: any) => {
-        this.currentRoute = event.urlAfterRedirects || event.url;
+        const url = (event.urlAfterRedirects || event.url || '') as string;
+
+        this.currentRoute = url.split('?')[0].split('#')[0];
+
         this.closeMobile();
         this.closeUserMenu();
 
-        // ✅ Nur refresh, wenn eingeloggt (sonst 401-Spam)
         if (this.auth.isLoggedIn()) {
           this.headerService.refresh();
+
         } else {
           this.header = null;
         }
       });
 
     this.updateMobileState();
-
-    // ✅ Klick außerhalb schließt Desktop-Dropdown
     document.addEventListener('click', this.onDocClickBound, true);
 
-    // ✅ Header abonnieren
     this.headerSub = this.headerService
       .watchHeader()
       .subscribe((h: MenuHeader | null) => {
         this.header = h as MenuHeaderDto;
       });
 
-    // ✅ Initial: nur wenn eingeloggt
     if (this.auth.isLoggedIn()) {
       this.headerService.refresh();
     } else {
       this.header = null;
     }
 
-    // ✅ Optional: alle 30s aktualisieren – aber nur wenn eingeloggt
     this.headerRefreshSub = interval(30000).subscribe(() => {
       if (this.auth.isLoggedIn()) {
         this.headerService.refresh();
@@ -201,7 +209,6 @@ export class AppMenuComponent implements OnInit, OnDestroy {
     return this.currentUser?.role ?? null;
   }
 
-  // ✅ Effektive Rolle (Menü)
   get effectiveRole(): string | null {
     const role = this.currentRole;
     if (role !== 'ADMIN') return role;
@@ -236,7 +243,6 @@ export class AppMenuComponent implements OnInit, OnDestroy {
     return first + last;
   }
 
-  // ✅ Balance: immer number
   get userBalance(): number {
     const h = this.header?.balance;
     if (typeof h === 'number' && Number.isFinite(h)) return h;
@@ -246,7 +252,6 @@ export class AppMenuComponent implements OnInit, OnDestroy {
     return Number.isFinite(n) ? n : 0;
   }
 
-  // ✅ Crash-sicher (toFixed nur auf number)
   formatBalance(): string {
     const n = Number(this.userBalance);
     return Number.isFinite(n) ? n.toFixed(2) : '0.00';
@@ -258,7 +263,6 @@ export class AppMenuComponent implements OnInit, OnDestroy {
 
     this.auth.logout();
 
-    // Wenn dein Service eine clear()-Methode hat, nimm die:
     if (typeof (this.headerService as any).clear === 'function') {
       (this.headerService as any).clear();
     } else {
@@ -307,6 +311,19 @@ export class AppMenuComponent implements OnInit, OnDestroy {
     return link.shortLabel || link.label;
   }
 
+  private isActiveRoute(route: string): boolean {
+    if (route === '/') return this.currentRoute === '/';
+    return this.currentRoute === route || this.currentRoute.startsWith(route + '/');
+  }
+
+  getCurrentPageTitle(): string {
+    const candidates = this.NAV_CONFIG
+      .filter(l => this.isActiveRoute(l.route))
+      .sort((a, b) => b.route.length - a.route.length);
+
+    return candidates.length ? candidates[0].label : 'HungerSatt Bestellsystem';
+  }
+
   // ---------- Mobile Handling ----------
   @HostListener('window:resize')
   onResize(): void {
@@ -320,13 +337,6 @@ export class AppMenuComponent implements OnInit, OnDestroy {
     } else {
       this.closeUserMenu();
     }
-  }
-
-  getCurrentPageTitle(): string {
-    const currentLink = this.NAV_CONFIG.find(
-      link => link.route === this.currentRoute
-    );
-    return currentLink ? currentLink.label : 'HungerSatt Bestellsystem';
   }
 
   toggleMobile(): void {

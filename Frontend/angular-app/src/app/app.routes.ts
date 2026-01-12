@@ -19,6 +19,10 @@ import { ChangePasswordPage } from './login-page/change-password';
 import { UserPageComponent } from './user-profile/user-profile';
 import { BalanceScanComponent } from './admin-balance/admin-balance';
 
+// ✅ NEU: Notifications Pages (die ich dir geschrieben habe)
+import { NotificationsPageComponent } from './notification/notification';
+import { OwnerNotificationsTodayComponent } from './notification/owner-notifcations.today';
+
 export const routes: Routes = [
   // Public
   { path: 'login', component: LoginPageComponent },
@@ -31,13 +35,22 @@ export const routes: Routes = [
   { path: 'user-profile', component: UserPageComponent, canActivate: [authGuard()] },
   { path: 'me', redirectTo: 'user-profile', pathMatch: 'full' },
   { path: 'change-password', component: ChangePasswordPage, canActivate: [authGuard()] },
-  // Admin
+  { path: 'benachrichtigungen', component: NotificationsPageComponent, canActivate: [authGuard()] },
+
+  {
+    path: 'benachrichtigungen-heute',
+    component: OwnerNotificationsTodayComponent,
+    canActivate: [authGuard(['ADMIN', 'INHABER'])],
+  },
+
   { path: 'admin/balance-scan', component: BalanceScanComponent, canActivate: [authGuard(['ADMIN', 'INHABER'])] },
+
+  // Hauptseiten
   { path: '', component: MenuPlanComponent, canActivate: [authGuard()] },
   { path: 'warenkorb', component: CartPageComponent, canActivate: [authGuard()] },
 
   { path: 'user', component: UserManagementComponent, canActivate: [authGuard(['ADMIN', 'INHABER'])] },
-  { path: 'my-orders', component: OrderOverviewComponent, canActivate: [authGuard(['KUNDE', 'ADMIN'])] },
+  { path: 'my-orders', component: OrderOverviewComponent, canActivate: [authGuard(['KUNDE', 'ADMIN', 'INHABER'])] },
   { path: 'orders', component: OrderListComponent, canActivate: [authGuard(['INHABER', 'ADMIN'])] },
 
   { path: 'statistics', component: StatisticsPageComponent, canActivate: [authGuard(['ADMIN', 'INHABER'])] },
@@ -46,5 +59,5 @@ export const routes: Routes = [
   { path: 'gericht-verwaltung', component: DishEditor, canActivate: [authGuard(['ADMIN', 'INHABER'])] },
 
   // Fallback
-  { path: '**', redirectTo: '' }
+  { path: '**', redirectTo: '' },
 ];

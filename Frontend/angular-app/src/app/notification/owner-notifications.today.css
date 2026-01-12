@@ -1,0 +1,83 @@
+.today-container {
+  max-width: 1100px;
+  width: 100%;
+  margin: 7rem auto 2rem auto;
+  padding: 1.75rem;
+  border-radius: 20px;
+  background: radial-gradient(circle at top, #e0f2fe 0, #f8fafc 45%, #f8fafc 100%);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
+  box-sizing: border-box;
+}
+
+.header {
+  margin-bottom: 1.25rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.subtitle {
+  margin: 0.25rem 0 0 0;
+  color: #64748b;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: baseline;
+}
+
+.name {
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.time {
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.msg {
+  margin-top: 0.35rem;
+  color: #475569;
+}
+
+.empty {
+  grid-column: 1 / -1;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.empty .material-icons {
+  font-size: 2.2rem;
+  opacity: 0.6;
+  margin-bottom: 0.4rem;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

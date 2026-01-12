@@ -1,0 +1,17 @@
+<div class="toast-stack" aria-live="polite" aria-atomic="true">
+  <ng-container *ngIf="(toasts$ | async) as toasts">
+    <div class="toast" *ngFor="let n of toasts; trackBy: notifications.trackById" (click)="open(n)">
+      <button class="toast-close" type="button" (click)="close(n, $event)" aria-label="Schließen">
+        <span class="material-icons">close</span>
+      </button>
+
+      <div class="toast-content">
+        <div class="toast-title">{{ n.title }}</div>
+      </div>
+
+      <div class="toast-progress">
+        <div class="toast-progress-bar" [style.animationDuration.ms]="n.ttlMs"></div>
+      </div>
+    </div>
+  </ng-container>
+</div>

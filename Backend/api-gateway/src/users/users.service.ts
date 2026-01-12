@@ -4,6 +4,9 @@ import { PG_POOL } from '../db';
 import { CreateUserDto } from './dto/create-user.dto';
 import { isClassExpired } from './class-expirey';
 
+// ✅ NEU: Notifications
+import { NotificationsService } from '../notifications/notification.service';
+
 type DbUserPolicyRow = {
   id: string;
   blocked: boolean;
@@ -13,11 +16,12 @@ type DbUserPolicyRow = {
 
 @Injectable()
 export class UsersService {
-  constructor(@Inject(PG_POOL) private readonly db: Pool) {}
+  constructor(
+    @Inject(PG_POOL) private readonly db: Pool,
+    private readonly notifications: NotificationsService, 
+  ) {}
 
-  // --------------------------------------------
-  // ✅ 400 Tage Policy erzwingen
-  // --------------------------------------------
+
   async enforceClassPolicy(userId: string): Promise<{ id: string; blocked: boolean; class: string | null } | null> {
     const id = String(userId ?? '').trim();
     if (!id) return null;
@@ -32,16 +36,12 @@ export class UsersService {
     if (res.rowCount === 0) return null;
 
     const u = res.rows[0];
-
-    // wenn schon blocked, lassen wir es so (blocked bleibt blocked)
-    // aber wir können trotzdem class löschen, falls expired
     const expired = isClassExpired(u.class_updated_at);
 
     if (!expired) {
       return { id: String(u.id), blocked: !!u.blocked, class: u.class ?? null };
     }
 
-    // abgelaufen: class entfernen + blocken
     const upd = await this.db.query<DbUserPolicyRow>(
       `UPDATE app.users
        SET "class" = NULL,
@@ -93,7 +93,6 @@ export class UsersService {
   // ✅ QR-Request: Add
   // ---------------------------
   async createBalanceAddRequest(userId: string, delta: number) {
-    // policy vor jeder action erzwingen
     await this.enforceClassPolicy(userId);
 
     const d = Number(delta);
@@ -158,6 +157,7 @@ export class UsersService {
 
   // ---------------------------
   // ✅ Admin scannt QR → Guthaben ändern + loggen
+  // + ✅ Notifications (BOTH) nach Commit
   // ---------------------------
   async confirmBalanceRequestByQr(code: string, actorId: string) {
     const c = (code || '').trim();
@@ -167,6 +167,11 @@ export class UsersService {
     const reqId = m[1];
 
     const client = await this.db.connect();
+    let userId = '';
+    let deltaToApply = 0;
+    let newBalance = 0;
+    let kind: 'add' | 'flush' | '' = '';
+
     try {
       await client.query('BEGIN');
 
@@ -180,15 +185,15 @@ export class UsersService {
       if (rRes.rowCount === 0) throw new NotFoundException('REQUEST_NOT_FOUND');
 
       const reqRow = rRes.rows[0];
+      kind = String(reqRow.kind ?? '') as any;
+
       if (reqRow.is_used) {
         await client.query('COMMIT');
         return { ok: true, alreadyUsed: true };
       }
 
-      const userId = String(reqRow.user_id);
+      userId = String(reqRow.user_id);
 
-      // policy auch hier erzwingen (optional)
-      // (Admin kann trotzdem bestätigen, aber blocked soll verhindern)
       const uRes = await client.query(
         `SELECT id, balance, blocked
          FROM app.users
@@ -201,8 +206,6 @@ export class UsersService {
 
       const oldBalance = Number(uRes.rows[0]?.balance ?? 0);
 
-      let deltaToApply = 0;
-      let newBalance = oldBalance;
       let reason = '';
 
       if (reqRow.kind === 'add') {
@@ -212,10 +215,7 @@ export class UsersService {
         newBalance = oldBalance + deltaToApply;
         reason = 'BALANCE_ADD_CONFIRMED';
 
-        await client.query(
-          `UPDATE app.users SET balance = $2 WHERE id = $1`,
-          [userId, newBalance],
-        );
+        await client.query(`UPDATE app.users SET balance = $2 WHERE id = $1`, [userId, newBalance]);
       } else if (reqRow.kind === 'flush') {
         newBalance = 0;
         deltaToApply = oldBalance > 0 ? -oldBalance : 0;
@@ -240,6 +240,16 @@ export class UsersService {
       );
 
       await client.query('COMMIT');
+
+      // ✅ Notification (BOTH) nach Commit
+      const sign = deltaToApply > 0 ? '+' : '';
+      const text =
+        kind === 'flush'
+          ? 'Guthaben wurde geleert.'
+          : `Guthaben wurde aufgeladen (${sign}${Number(deltaToApply).toFixed(2)} €).`;
+
+      await this.notifications.creditChanged('BOTH', userId, text);
+
       return { ok: true, userId, delta: deltaToApply, balanceAfter: newBalance };
     } catch (e) {
       await client.query('ROLLBACK');
@@ -290,7 +300,8 @@ export class UsersService {
   }
 
   // ---------------------------
-  // ✅ updateBalanceDelta (dein Code)
+  // ✅ updateBalanceDelta
+  // + ✅ Notification (BOTH) nach Commit
   // ---------------------------
   async updateBalanceDelta(id: string, delta: number) {
     const d = Number(delta);
@@ -316,6 +327,12 @@ export class UsersService {
       );
 
       await client.query('COMMIT');
+
+      // ✅ Notification (BOTH)
+      const sign = d > 0 ? '+' : '';
+      const text = d === 0 ? 'Guthaben wurde angepasst.' : `Guthaben wurde angepasst (${sign}${d.toFixed(2)} €).`;
+      await this.notifications.creditChanged('BOTH', id, text);
+
       return { ok: true, balance: newBal };
     } catch (e) {
       await client.query('ROLLBACK');
@@ -331,7 +348,6 @@ export class UsersService {
   async getMyHeader(jwtUser: any) {
     const userId = String(jwtUser?.id ?? jwtUser?.sub);
 
-    // ✅ Policy erzwingen bevor Header zurückgegeben wird
     await this.enforceClassPolicy(userId);
 
     const res = await this.db.query(
@@ -507,7 +523,6 @@ export class UsersService {
 
   // ---------------------------
   // ✅ ADMIN: User updaten
-  //  - wenn class geändert wird -> class_updated_at=NOW() und blocked=false
   // ---------------------------
   async update(id: string, dto: Partial<CreateUserDto>) {
     const fields: string[] = [];
@@ -523,10 +538,8 @@ export class UsersService {
     setIf('name', dto.name);
     setIf('email', dto.email);
 
-    // class ist keyword -> quoted
     if ((dto as any).class !== undefined) {
       setIf(`"class"`, (dto as any).class);
-      // ✅ sobald admin class setzt: timestamp + unblock
       fields.push(`class_updated_at = NOW()`);
       fields.push(`blocked = false`);
     }
@@ -573,7 +586,6 @@ export class UsersService {
 
   // ---------------------------
   // (optional) Create
-  //  - wenn class gesetzt -> class_updated_at=NOW()
   // ---------------------------
   async create(dto: CreateUserDto) {
     const cls = String((dto as any).class ?? '').trim();

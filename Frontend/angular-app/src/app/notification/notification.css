@@ -1,0 +1,115 @@
+.notifications-container {
+  max-width: 1100px;
+  width: 100%;
+  margin: 7rem auto 2rem auto;
+  padding: 1.75rem;
+  border-radius: 20px;
+  background: radial-gradient(circle at top, #e0f2fe 0, #f8fafc 45%, #f8fafc 100%);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-end;
+  margin-bottom: 1.25rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.subtitle {
+  margin: 0.25rem 0 0 0;
+  color: #64748b;
+}
+
+.clear-btn {
+  border-radius: 999px;
+  padding: 0.7rem 1.1rem;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  color: #475569;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.clear-btn:hover {
+  border-color: #0ea5e9;
+  color: #0ea5e9;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-1px);
+  border-color: #0ea5e9;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+}
+
+.card.unread {
+  border-color: rgba(14, 165, 233, 0.45);
+  background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+}
+
+.card-title {
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 0.2rem;
+}
+
+.card-msg {
+  color: #475569;
+  font-size: 0.95rem;
+}
+
+.card-meta {
+  margin-top: 0.6rem;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.pill {
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(14, 165, 233, 0.12);
+  color: #0284c7;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+}
+
+.empty {
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.empty .material-icons {
+  font-size: 2.2rem;
+  opacity: 0.6;
+  margin-bottom: 0.4rem;
+}

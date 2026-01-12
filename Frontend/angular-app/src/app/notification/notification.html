@@ -1,0 +1,32 @@
+<div class="notifications-container">
+  <div class="header">
+    <div>
+      <h2 class="title">Benachrichtigungen</h2>
+      <p class="subtitle">Alle Hinweise & Erinnerungen an einem Ort.</p>
+    </div>
+
+    <button class="clear-btn" type="button" (click)="clearAll()">
+      Alle löschen
+    </button>
+  </div>
+
+  <div class="list">
+    @for (n of (notifications$ | async) ?? []; track n.id) {
+      <div class="card" [class.unread]="n.read === false" (click)="markRead(n.id)">
+        <div class="card-title">{{ n.title }}</div>
+        <div class="card-msg">{{ n.message }}</div>
+        <div class="card-meta">
+          {{ n.createdAt | date:'short' }}
+          @if (n.read === false) { <span class="pill">NEU</span> }
+        </div>
+      </div>
+    }
+
+    @if (((notifications$ | async) ?? []).length === 0) {
+      <div class="empty">
+        <span class="material-icons">notifications_none</span>
+        <p>Keine Benachrichtigungen vorhanden.</p>
+      </div>
+    }
+  </div>
+</div>

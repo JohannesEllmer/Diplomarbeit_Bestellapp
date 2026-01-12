@@ -7,5 +7,6 @@ import { RolesGuard } from '../roles.guard';
 @Module({
   controllers: [UsersController, AdminUsersController],
   providers: [UsersService, RolesGuard],
+  exports: [UsersService],
 })
 export class UsersModule {}

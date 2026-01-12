@@ -5,11 +5,14 @@ import { OrdersService } from './orders.service';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { PG_POOL } from '../db';
 
+import { NotificationsService } from '../notifications/notification.service';
+
 @Injectable()
 export class AdminOrdersService {
   constructor(
     private readonly orders: OrdersService,
     @Inject(PG_POOL) private readonly db: Pool,
+    private readonly notifications: NotificationsService, 
   ) {}
 
   findAll() {
@@ -39,6 +42,7 @@ export class AdminOrdersService {
     const orderId = this.parseOrderIdFromCode(code);
 
     const client = await this.db.connect();
+    let userId = '';
     try {
       await client.query('BEGIN');
 
@@ -55,6 +59,8 @@ export class AdminOrdersService {
         throw new NotFoundException('ORDER_NOT_FOUND');
       }
 
+      userId = String(ord.rows[0].user_id);
+
       await client.query(
         `UPDATE app.order_items
          SET delivered = TRUE,
@@ -64,6 +70,9 @@ export class AdminOrdersService {
       );
 
       await client.query('COMMIT');
+
+      await this.notifications.orderCompleted(userId, orderId);
+
       return { ok: true, order: ord.rows[0] };
     } catch (e) {
       await client.query('ROLLBACK');
