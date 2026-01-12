@@ -22,8 +22,8 @@ export class OrdersService {
     return out;
   }
 
+  // ✅ Bestellung erstellt: kein Guthaben abbuchen, nur "reserviert" prüfen
   async createForUser(jwtUserId: string, dto: CreateOrderDto): Promise<OrderResponseDto> {
-    // Sicherheit: Client darf nicht für andere User bestellen
     if (dto.user?.id && String(dto.user.id) !== String(jwtUserId)) {
       throw new ForbiddenException('CANNOT_CREATE_ORDER_FOR_OTHER_USER');
     }
@@ -31,6 +31,7 @@ export class OrdersService {
     const client = await this.db.connect();
     try {
       await client.query('BEGIN');
+
       const uRes = await client.query(
         `SELECT id FROM app.users WHERE id = $1 LIMIT 1`,
         [jwtUserId],
@@ -51,6 +52,27 @@ export class OrdersService {
         `UPDATE app.orders SET total_price = $2 WHERE id = $1`,
         [orderId, total],
       );
+
+      // ✅ Reserviert = Summe aller offenen Orders (inkl. dieser)
+      // Verfügbar = user.balance - reserved(ohne diese) => daher id<>orderId
+      const balRes = await client.query(
+        `SELECT balance FROM app.users WHERE id = $1 FOR UPDATE`,
+        [jwtUserId],
+      );
+      const balance = Number(balRes.rows[0]?.balance ?? 0);
+
+      const reservedRes = await client.query(
+        `SELECT COALESCE(SUM(total_price), 0) AS reserved
+         FROM app.orders
+         WHERE user_id = $1 AND status = 'open' AND id <> $2`,
+        [jwtUserId, orderId],
+      );
+      const reserved = Number(reservedRes.rows[0]?.reserved ?? 0);
+
+      const available = balance - reserved;
+      if (available < total) {
+        throw new ForbiddenException('INSUFFICIENT_FUNDS');
+      }
 
       await client.query('COMMIT');
       return await this.buildOrderResponse(orderId);
@@ -114,6 +136,72 @@ export class OrdersService {
     await this.db.query(`DELETE FROM app.orders WHERE id = $1`, [id]);
   }
 
+  // ✅ QR-Capture: jetzt wird abgebucht + geschlossen + delivered=true
+  async completeByQrCode(code: string): Promise<{ ok: boolean; orderId?: string }> {
+    const c = (code || '').trim();
+    const m = /^Order-(.+)$/.exec(c);
+    if (!m) return { ok: false };
+
+    const orderId = String(m[1]);
+
+    const client = await this.db.connect();
+    try {
+      await client.query('BEGIN');
+
+      const orderRes = await client.query(
+        `SELECT id, user_id, total_price, status
+         FROM app.orders
+         WHERE id = $1
+         FOR UPDATE`,
+        [orderId],
+      );
+
+      if (orderRes.rowCount === 0) throw new NotFoundException('ORDER_NOT_FOUND');
+
+      const order = orderRes.rows[0];
+      if (String(order.status) === 'closed') {
+        await client.query('COMMIT');
+        return { ok: true, orderId };
+      }
+
+      const userRes = await client.query(
+        `SELECT balance FROM app.users WHERE id = $1 FOR UPDATE`,
+        [String(order.user_id)],
+      );
+      if (userRes.rowCount === 0) throw new NotFoundException('USER_NOT_FOUND');
+
+      const balance = Number(userRes.rows[0]?.balance ?? 0);
+      const total = Number(order.total_price ?? 0);
+
+      if (balance < total) {
+        throw new ForbiddenException('INSUFFICIENT_FUNDS_AT_CAPTURE');
+      }
+
+      await client.query(
+        `UPDATE app.users SET balance = balance - $2 WHERE id = $1`,
+        [String(order.user_id), total],
+      );
+
+      await client.query(
+        `UPDATE app.orders SET status = 'closed' WHERE id = $1`,
+        [orderId],
+      );
+
+      await client.query(
+        `UPDATE app.order_items SET delivered = true WHERE order_id = $1`,
+        [orderId],
+      );
+
+      await client.query('COMMIT');
+      return { ok: true, orderId };
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
   private async insertItemsAndComputeTotal(
     client: any,
     orderId: string,
@@ -132,10 +220,12 @@ export class OrdersService {
       const price = Number(mRes.rows[0].price ?? 0);
       total += price * Number(it.quantity);
 
+      const deliveryTime = it.deliveryTime ? new Date(it.deliveryTime) : null;
+
       await client.query(
-        `INSERT INTO app.order_items (order_id, menu_item_id, user_id, note, quantity)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [orderId, it.menuItemId, userId, it.note ?? null, it.quantity],
+        `INSERT INTO app.order_items (order_id, menu_item_id, user_id, note, quantity, delivery_time)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [orderId, it.menuItemId, userId, it.note ?? null, it.quantity, deliveryTime],
       );
     }
 
@@ -153,11 +243,13 @@ export class OrdersService {
        LIMIT 1`,
       [orderId],
     );
+
     if (orderRes.rowCount === 0) throw new NotFoundException('ORDER_NOT_FOUND');
     const o = orderRes.rows[0];
 
+    // ✅ FIX: Schema richtig
     const countRes = await this.db.query(
-      `SELECT COUNT(*)::int AS count FROM orders WHERE user_id = $1`,
+      `SELECT COUNT(*)::int AS count FROM app.orders WHERE user_id = $1`,
       [String(o.user_id)],
     );
     const orderCount = countRes.rows?.[0]?.count ?? 0;

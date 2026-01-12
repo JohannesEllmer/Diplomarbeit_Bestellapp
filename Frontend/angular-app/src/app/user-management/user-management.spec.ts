@@ -10,9 +10,7 @@ describe('UserManagementComponent', () => {
   let mockUserService: jasmine.SpyObj<UserService>;
 
   const mockUsers: User[] = [
-    { id: "1", name: 'Max', email: 'max@example.com', class: '10A', orderCount: 5, balance: 20, blocked: false },
-    { id: "2", name: 'Lisa', email: 'lisa@example.com', class: '10B', orderCount: 3, balance: 15, blocked: false },
-    { id: "3", name: 'Tom', email: 'tom@example.com', class: '10C', orderCount: 2, balance: 10, blocked: false }
+   
   ];
 
   beforeEach(async () => {

@@ -30,7 +30,7 @@ export class UserManagementComponent implements OnInit {
 
   loadUsers(): void {
     this.userService.getUsers().subscribe(users => {
-      this.users = users;
+      this.users = users ?? [];
       this.filterUsers();
     });
   }
@@ -40,11 +40,11 @@ export class UserManagementComponent implements OnInit {
       this.filteredUsers = [...this.users];
     } else {
       const searchLower = this.searchTerm.toLowerCase();
-      this.filteredUsers = this.users.filter(user => 
-        user.name.toLowerCase().includes(searchLower)
+      this.filteredUsers = this.users.filter(user =>
+        (user.name ?? '').toLowerCase().includes(searchLower)
       );
     }
-    this.currentPage = 1; 
+    this.currentPage = 1;
     this.updatePagination();
   }
 
@@ -76,18 +76,19 @@ export class UserManagementComponent implements OnInit {
   }
 
   changeUsersPerPage(count: number): void {
-    this.usersPerPage = count;
+    this.usersPerPage = Number(count);
     this.currentPage = 1;
     this.updatePagination();
   }
 
   get totalPages(): number {
-    return Math.ceil(this.filteredUsers.length / this.usersPerPage);
+    return Math.max(1, Math.ceil(this.filteredUsers.length / this.usersPerPage));
   }
 
   deleteUser(user: User): void {
-    if (user.balance !== 0) {
-      alert(`Benutzer "${user.name}" kann nicht gelöscht werden, solange das Guthaben (${user.balance}) ungleich 0 ist.`);
+    const bal = Number(user.balance ?? 0);
+    if (bal !== 0) {
+      alert(`Benutzer "${user.name}" kann nicht gelöscht werden, solange das Guthaben (${bal}) ungleich 0 ist.`);
       return;
     }
 
@@ -116,7 +117,6 @@ export class UserManagementComponent implements OnInit {
 
     this.userService.resetPassword(user.id).subscribe({
       next: (newPassword) => {
-        // In echt würdest du das per Mail schicken – hier nur Simulation:
         alert(`Neues Passwort für "${user.name}": ${newPassword}`);
       },
       error: (err) => {
@@ -130,7 +130,7 @@ export class UserManagementComponent implements OnInit {
     this.userService.toggleBlockUser(user).subscribe(updated => {
       const index = this.users.findIndex(u => u.id === updated.id);
       if (index !== -1) this.users[index] = updated;
-      this.filterUsers(); 
+      this.filterUsers();
     });
   }
 }

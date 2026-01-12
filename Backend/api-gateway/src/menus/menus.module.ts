@@ -11,6 +11,7 @@ import { DishesService } from './dishes.service';
 
 import { MealPlansController } from './mealplan.controller';
 import { MealPlansService } from './mealplan.services';
+import { ParseUuidAllPipe } from '../common/parse-uuid-all.pipe';
 
 @Module({
   controllers: [
@@ -24,6 +25,7 @@ import { MealPlansService } from './mealplan.services';
     MenusEntriesService,
     DishesService,
     MealPlansService,
+    ParseUuidAllPipe,
   ],
 })
 export class MenusModule {}

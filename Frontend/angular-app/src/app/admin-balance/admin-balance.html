@@ -1,0 +1,75 @@
+<div class="page">
+  <div class="card">
+
+    <div class="header">
+      <div class="title">
+        <div class="badge">ADMIN</div>
+        <div>
+          <h1>Guthaben · QR Scan</h1>
+          <p>BalanceReq Codes bestätigen</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn primary" (click)="start()" [disabled]="scanning">
+          <span class="dot" [class.on]="scanning"></span>
+          Start
+        </button>
+        <button class="btn ghost" (click)="stop()" [disabled]="!scanning">Stop</button>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="row">
+        <label class="lbl">Kamera</label>
+        <select class="select" [ngModel]="selectedCameraId" (ngModelChange)="changeCamera($event)">
+          <option [ngValue]="null">— auswählen —</option>
+          <option *ngFor="let c of cameras" [ngValue]="c.id">{{ c.label }}</option>
+        </select>
+      </div>
+
+      <div class="toggles">
+        <label class="toggle">
+          <input type="checkbox" [(ngModel)]="autoStopOnSuccess" />
+          <span>Auto-Stop bei Erfolg</span>
+        </label>
+
+        <label class="toggle">
+          <input type="checkbox" [(ngModel)]="soundOnSuccess" />
+          <span>Sound</span>
+        </label>
+
+        <label class="toggle">
+          <input type="checkbox" [(ngModel)]="vibrateOnSuccess" />
+          <span>Vibration</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="hint" *ngIf="message">{{ message }}</div>
+
+      <div class="grid">
+        <!-- Scanner -->
+        <div class="scan-col">
+          <div class="scan-shell" [class.off]="!scanning">
+            <div id="qr-reader"></div>
+
+            <!-- optische Hilfe -->
+            <div class="scan-overlay">
+              <div class="frame"></div>
+              <div class="scanline"></div>
+            </div>
+
+            <div class="overlay" *ngIf="!scanning">
+              <div class="overlay-inner">
+                <div class="overlay-title">Scanner gestoppt</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+       
+
+  </div>
+</div>

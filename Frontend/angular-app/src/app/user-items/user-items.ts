@@ -1,14 +1,12 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { User } from '../../models/user.model';
-import { UserService } from '../services/user/user-service';
 
 @Component({
   selector: 'app-user-items',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule],
   templateUrl: './user-items.html',
   styleUrls: ['./user-items.css']
 })
@@ -18,40 +16,14 @@ export class UserItemsComponent {
   @Output() block = new EventEmitter<User>();
   @Output() resetPassword = new EventEmitter<User>();
 
-  constructor(private router: Router, private userService: UserService) {}
+  // ✅ template-sicherer Zustand (statt user.showDetails / casting)
+  showDetails = false;
+
+  constructor(private router: Router) {}
 
   toggleDetails(event: Event): void {
     event.stopPropagation();
-    this.user.showDetails = !this.user.showDetails;
-  }
-
-  startEditBalance(event: Event): void {
-    event.stopPropagation();
-    this.user.editingBalance = true;
-    this.user.newBalance = 0; 
-  }
-
-  saveBalance(event: Event): void {
-    event.stopPropagation();
-
-    const delta = Number(this.user.newBalance ?? 0);
-    if (!Number.isFinite(delta) || delta === 0) {
-      this.user.editingBalance = false;
-      this.user.newBalance = undefined;
-      return;
-    }
-
-    this.userService.updateBalanceDelta(this.user, delta).subscribe(updated => {
-      this.user.balance = updated.balance;
-      this.user.editingBalance = false;
-      this.user.newBalance = undefined;
-    });
-  }
-
-  cancelEditBalance(event: Event): void {
-    event.stopPropagation();
-    this.user.editingBalance = false;
-    this.user.newBalance = undefined;
+    this.showDetails = !this.showDetails;
   }
 
   emitDelete(event: Event): void {
@@ -69,7 +41,8 @@ export class UserItemsComponent {
     this.router.navigate(['/users', this.user.id]);
   }
 
-  onResetPasswordClick(): void {
+  onResetPasswordClick(event: Event): void {
+    event.stopPropagation();
     this.resetPassword.emit(this.user);
   }
 }

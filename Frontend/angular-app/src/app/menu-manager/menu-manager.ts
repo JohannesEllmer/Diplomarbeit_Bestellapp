@@ -17,15 +17,18 @@ export class MenuManager implements OnInit {
   Menus: MealPlan[] = [];
   selectedMenu: MealPlan | null = null;
 
+  activeMenuId: string | null = null;
+
   loading = false;
   loadError: string | null = null;
+  activating = false;
 
   constructor(
     private router: Router,
-    private menuService: MenuManagerService 
+    private menuService: MenuManagerService
   ) {}
 
-  ngOnInit(): void {
+    ngOnInit(): void {
     this.loadMenus();
   }
 
@@ -37,10 +40,11 @@ export class MenuManager implements OnInit {
       next: (menus: MealPlan[]) => {
         this.Menus = (menus ?? []).map(m => ({
           ...m,
-          dishes: m.dishes ?? []
-        }));
+          dishes: (m as any).dishes ?? []
+        })) as any;
 
         this.loading = false;
+        this.loadActiveMenuId();
       },
       error: (err) => {
         console.error('Unerwarteter Fehler beim Laden der Menüs:', err);
@@ -50,12 +54,18 @@ export class MenuManager implements OnInit {
     });
   }
 
-  private async loadLogo(): Promise<HTMLImageElement | null> {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = () => resolve(null);
-      img.src = 'assets/logo.png';
+  private loadActiveMenuId(): void {
+    this.menuService.getSelectedMealPlan().subscribe({
+      next: (plan) => {
+        this.activeMenuId = plan?.id ?? null;
+        this.Menus = this.Menus.map(m => ({
+          ...(m as any),
+          isSelected: !!this.activeMenuId && m.id === this.activeMenuId
+        })) as any;
+      },
+      error: () => {
+        this.activeMenuId = null;
+      }
     });
   }
 
@@ -64,16 +74,50 @@ export class MenuManager implements OnInit {
   }
 
   selectMenu(menu: MealPlan): void {
-    this.selectedMenu = (menu !== this.selectedMenu) ? menu : null;
+    if (!menu?.id) return;
+    if (this.activating) return;
+
+    this.selectedMenu = menu;
+    this.loadError = null;
+
+    if (this.activeMenuId === menu.id) {
+      this.Menus = this.Menus.map(m => ({ ...(m as any), isSelected: m.id === menu.id })) as any;
+      return;
+    }
+
+    this.activating = true;
+
+    this.menuService.setSelected(menu.id).subscribe({
+      next: (res) => {
+        this.activating = false;
+
+        if (!res?.ok) {
+          this.loadError = 'Menü konnte nicht aktiviert werden (API).';
+          this.loadActiveMenuId();
+          return;
+        }
+
+        this.activeMenuId = menu.id;
+        this.Menus = this.Menus.map(m => ({
+          ...(m as any),
+          isSelected: m.id === menu.id
+        })) as any;
+      },
+      error: (err) => {
+        console.error('Aktiv setzen fehlgeschlagen:', err);
+        this.activating = false;
+        this.loadError = 'Menü konnte nicht aktiviert werden.';
+        this.loadActiveMenuId();
+      }
+    });
   }
 
   removeMenu(menu: MealPlan): void {
     const previousMenus = [...this.Menus];
     this.Menus = this.Menus.filter((m) => m !== menu);
 
-    if (this.selectedMenu === menu) {
-      this.selectedMenu = null;
-    }
+    if (this.selectedMenu?.id === menu.id) this.selectedMenu = null;
+    if (this.activeMenuId === menu.id) this.activeMenuId = null;
 
     this.menuService.deleteMenu(menu.id).subscribe({
       error: (err) => {
@@ -83,165 +127,286 @@ export class MenuManager implements OnInit {
     });
   }
 
+
+  // -------------------------
+  // ✅ PDF: MUCH NICER VERSION (dein Code bleibt wie du ihn gepostet hast)
+  // -------------------------
   async printMenu(menu: MealPlan): Promise<void> {
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const marginLeft = 20;
-    const marginRight = 20;
-    const contentWidth = pageWidth - marginLeft - marginRight;
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
 
-    const headerBlue = { r: 14, g: 165, b: 233 };
-    const falafelGreen = { r: 16, g: 185, b: 129 };
-    const pricePill = { r: 219, g: 234, b: 254 };
-    const textDark = { r: 15, g: 23, b: 42 };
-    const textMuted = { r: 100, g: 116, b: 139 };
+    const M = 14;
+    const headerH = 34;
+    const footerH = 12;
+    const contentW = pageW - M * 2;
 
-    doc.setFillColor(headerBlue.r, headerBlue.g, headerBlue.b);
-    doc.rect(0, 0, pageWidth, 40, 'F');
+    const C = {
+      primary: { r: 14, g: 165, b: 233 },
+      primaryDark: { r: 3, g: 105, b: 161 },
+      soft: { r: 224, g: 250, b: 255 },
+      ink: { r: 15, g: 23, b: 42 },
+      muted: { r: 100, g: 116, b: 139 },
+      line: { r: 226, g: 232, b: 240 },
+      card: { r: 250, g: 252, b: 255 },
+      card2: { r: 243, g: 248, b: 255 },
+      pill: { r: 219, g: 234, b: 254 },
+      veg: { r: 16, g: 185, b: 129 },
+      warn: { r: 245, g: 158, b: 11 },
+    };
 
-    const logo = await this.loadLogo();
-    if (logo) {
-      const logoHeight = 18;
-      const logoWidth = (logo.width / logo.height) * logoHeight;
-      doc.addImage(logo, marginLeft, 8, logoWidth, logoHeight);
-    }
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(22);
-    doc.setTextColor(255, 255, 255);
-    doc.text('Speisekarte', pageWidth / 2, 16, { align: 'center' });
-
-    const title = menu.title?.trim() || '';
-    if (title) {
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'normal');
-      doc.text(title, pageWidth / 2, 25, { align: 'center' });
-    }
-
+    const menuTitle = (menu.title ?? 'Speisekarte').trim() || 'Speisekarte';
     const today = new Date().toLocaleDateString('de-AT');
-    doc.setFontSize(11);
-    doc.text(`Gültig am ${today}`, pageWidth - marginRight, 14, { align: 'right' });
 
-    let y = 52;
+    const setColor = (rgb: {r:number;g:number;b:number}) => doc.setTextColor(rgb.r, rgb.g, rgb.b);
+    const fill = (rgb: {r:number;g:number;b:number}) => doc.setFillColor(rgb.r, rgb.g, rgb.b);
+    const stroke = (rgb: {r:number;g:number;b:number}) => doc.setDrawColor(rgb.r, rgb.g, rgb.b);
 
-    doc.setTextColor(textMuted.r, textMuted.g, textMuted.b);
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'italic');
-    const intro = 'Alle Speisen frisch zubereitet – Änderungen vorbehalten.';
-    const introLines = doc.splitTextToSize(intro, contentWidth);
-    doc.text(introLines, pageWidth / 2, y, { align: 'center' });
+    const roundRect = (x:number, y:number, w:number, h:number, r=3, style:'S'|'F'|'FD'='S') => {
+      // @ts-ignore
+      doc.roundedRect(x, y, w, h, r, r, style);
+    };
 
-    y += introLines.length * 5 + 8;
+    const safeStr = (v:any) => (v === null || v === undefined) ? '' : String(v);
+    const safeNum = (v:any) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    };
 
-    doc.setLineHeightFactor(1.3);
+    const getAllergens = (dish:any): string[] => {
+      const a1 = (dish as any).allergenes;
+      const a2 = (dish as any).allergens;
+      const arr = Array.isArray(a1) ? a1 : Array.isArray(a2) ? a2 : [];
+      return arr.map((x:any) => String(x)).filter(Boolean);
+    };
 
-    // ✅ defensiv: falls dishes fehlt
-    const dishes = menu.dishes ?? [];
-
-    for (const dish of dishes) {
-      if (y > 260) {
-        doc.addPage();
-        doc.setFillColor(headerBlue.r, headerBlue.g, headerBlue.b);
-        doc.rect(0, 0, pageWidth, 20, 'F');
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(14);
-        doc.setTextColor(255, 255, 255);
-        doc.text(menu.title || 'Speisekarte', marginLeft, 13);
-        y = 32;
+    const groupByCategory = (dishes:any[]): Array<{ category: string; items: any[] }> => {
+      const map = new Map<string, any[]>();
+      for (const d of dishes) {
+        const cat = (safeStr(d?.category).trim() || 'Sonstiges');
+        if (!map.has(cat)) map.set(cat, []);
+        map.get(cat)!.push(d);
       }
+      const preferred = ['Hauptgericht', 'Hauptspeise', 'Dessert', 'Nachspeise', 'Getränk', 'Getraenk', 'Snack'];
+      const keys = Array.from(map.keys());
+      keys.sort((a,b) => {
+        const ia = preferred.findIndex(p => p.toLowerCase() === a.toLowerCase());
+        const ib = preferred.findIndex(p => p.toLowerCase() === b.toLowerCase());
+        if (ia !== -1 && ib !== -1) return ia - ib;
+        if (ia !== -1) return -1;
+        if (ib !== -1) return 1;
+        return a.localeCompare(b);
+      });
+      return keys.map(k => ({ category: k, items: map.get(k)! }));
+    };
 
-      const name = dish.name ?? '';
-      const lower = name.toLowerCase();
-      const priceNumber = (dish.price ?? 0).toFixed(2).replace('.', ',');
-      const priceX = pageWidth - marginRight;
-      const euroX = priceX - 23;
+    const drawHeader = async (pageIndex:number) => {
+      fill(C.primary);
+      doc.rect(0, 0, pageW, headerH, 'F');
 
-      const priceBgWidth = 40;
-      const priceBgHeight = 13;
-      const priceBgX = pageWidth - marginRight - priceBgWidth;
-      const priceBgY = y - 9;
+      fill(C.primaryDark);
+      doc.rect(0, headerH - 4, pageW, 4, 'F');
 
-      doc.setFillColor(pricePill.r, pricePill.g, pricePill.b);
-      doc.setDrawColor(headerBlue.r, headerBlue.g, headerBlue.b);
-      doc.setLineWidth(0.4);
-      doc.roundedRect(priceBgX, priceBgY, priceBgWidth, priceBgHeight, 3, 3, 'FD');
+    
 
-      doc.setFontSize(24);
       doc.setFont('helvetica', 'bold');
-      let xText = marginLeft;
+      doc.setFontSize(18);
+      doc.setTextColor(255, 255, 255);
+      doc.text('Speisekarte', pageW / 2, 14, { align: 'center' });
 
-      const falafelIndex = lower.indexOf('falafel');
-      if (falafelIndex >= 0) {
-        const before = name.slice(0, falafelIndex);
-        const highlight = name.slice(falafelIndex, falafelIndex + 'falafel'.length);
-        const after = name.slice(falafelIndex + 'falafel'.length);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.text(menuTitle, pageW / 2, 22, { align: 'center' });
 
-        if (before.trim().length > 0) {
-          doc.setTextColor(textDark.r, textDark.g, textDark.b);
-          doc.text(before, xText, y);
-          xText += doc.getTextWidth(before);
-        }
+      doc.setFontSize(10);
+      doc.text(`Stand: ${today}`, pageW - M, 13, { align: 'right' });
 
-        doc.setTextColor(falafelGreen.r, falafelGreen.g, falafelGreen.b);
-        doc.text(highlight, xText, y);
-        xText += doc.getTextWidth(highlight);
+      doc.setFontSize(9);
+      doc.setTextColor(230, 247, 255);
+      doc.text(`Seite ${pageIndex}`, pageW - M, 27, { align: 'right' });
+    };
 
-        if (after.trim().length > 0) {
-          doc.setTextColor(textDark.r, textDark.g, textDark.b);
-          doc.text(after, xText, y);
-        }
-      } else {
-        doc.setTextColor(textDark.r, textDark.g, textDark.b);
-        doc.text(name, marginLeft, y);
-      }
-
-      doc.setFontSize(16);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(headerBlue.r, headerBlue.g, headerBlue.b);
-      doc.text('€', euroX, y - 1);
-      doc.text(priceNumber, priceX, y - 1, { align: 'right' });
-
-      if (dish.description) {
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(textMuted.r, textMuted.g, textMuted.b);
-
-        const wrappedDesc = doc.splitTextToSize(dish.description, contentWidth * 0.9);
-        y += 7;
-        doc.text(wrappedDesc, pageWidth / 2, y, { align: 'center' });
-        y += wrappedDesc.length * 5.5;
-      }
-
-      const allergenes = (dish as any).allergenes as string[] | undefined;
-      if (allergenes?.length) {
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor(148, 163, 184);
-        y += 4;
-        doc.text(`Allergene: ${allergenes.join(', ')}`, pageWidth / 2, y, { align: 'center' });
-      }
-
-      y += 8;
-      doc.setDrawColor(226, 232, 240);
+    const drawFooter = (pageIndex:number) => {
+      stroke(C.line);
       doc.setLineWidth(0.3);
-      doc.line(marginLeft, y, pageWidth - marginRight, y);
+      doc.line(M, pageH - footerH, pageW - M, pageH - footerH);
 
-      y += 14;
-      doc.setTextColor(textDark.r, textDark.g, textDark.b);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      setColor(C.muted);
+      doc.text('Alle Preise in Euro inkl. gesetzlicher MwSt. | Allergene gemäß Aushang', M, pageH - 6);
+
+      doc.setFontSize(8.5);
+      doc.text(`Seite ${pageIndex}`, pageW - M, pageH - 6, { align: 'right' });
+    };
+
+    const drawSectionTitle = (y:number, title:string) => {
+      fill(C.soft);
+      stroke(C.line);
+      roundRect(M, y, contentW, 10, 4, 'FD');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(C.primaryDark.r, C.primaryDark.g, C.primaryDark.b);
+      doc.text(title.toUpperCase(), M + 6, y + 6.7);
+      return y + 14;
+    };
+
+    const drawDishCard = (dish:any, y:number) => {
+      const cardX = M;
+      const cardW = contentW;
+
+      const name = safeStr(dish?.name).trim() || 'Gericht';
+      const desc = safeStr(dish?.description).trim();
+      const price = safeNum(dish?.price);
+      const isVeg = !!dish?.vegetarian;
+
+      const allergens = getAllergens(dish);
+      const allergensText = allergens.length ? `Allergene: ${allergens.join(', ')}` : '';
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      const nameLines = doc.splitTextToSize(name, cardW - 52);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10.5);
+      const descLines = desc ? doc.splitTextToSize(desc, cardW - 12) : [];
+
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(9.5);
+      const allLines = allergensText ? doc.splitTextToSize(allergensText, cardW - 12) : [];
+
+      const base = 10;
+      const nameH = nameLines.length * 5.2;
+      const descH = descLines.length ? (descLines.length * 4.6 + 2) : 0;
+      const allH = allLines.length ? (allLines.length * 4.2 + 1) : 0;
+      const badgeH = isVeg ? 6 : 0;
+      const cardH = base + nameH + descH + allH + badgeH + 6;
+
+      fill({ r: 15, g: 23, b: 42 });
+      (doc as any).setGState?.(new (doc as any).GState({ opacity: 0.06 }));
+      roundRect(cardX + 1.2, y + 1.2, cardW, cardH, 5, 'F');
+      (doc as any).setGState?.(new (doc as any).GState({ opacity: 1 }));
+
+      fill(C.card);
+      stroke(C.line);
+      doc.setLineWidth(0.35);
+      roundRect(cardX, y, cardW, cardH, 5, 'FD');
+
+      fill(C.primary);
+      doc.rect(cardX, y, 2.2, cardH, 'F');
+
+      const pillW = 34;
+      const pillH = 10;
+      const pillX = cardX + cardW - pillW - 8;
+      const pillY = y + 7;
+
+      fill(C.pill);
+      stroke(C.primary);
+      doc.setLineWidth(0.35);
+      roundRect(pillX, pillY, pillW, pillH, 4, 'FD');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(C.primaryDark.r, C.primaryDark.g, C.primaryDark.b);
+      const priceStr = price.toFixed(2).replace('.', ',') + ' €';
+      doc.text(priceStr, pillX + pillW / 2, pillY + 6.7, { align: 'center' });
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(C.ink.r, C.ink.g, C.ink.b);
+      doc.text(nameLines, cardX + 8, y + 12);
+
+      let yy = y + 12 + nameLines.length * 5.2;
+
+      if (isVeg) {
+        const bW = 22;
+        const bH = 6.5;
+        const bX = cardX + 8;
+        const bY = yy + 2;
+
+        fill({ r: 236, g: 253, b: 245 });
+        stroke(C.veg);
+        doc.setLineWidth(0.35);
+        roundRect(bX, bY, bW, bH, 3, 'FD');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(C.veg.r, C.veg.g, C.veg.b);
+        doc.text('VEG', bX + bW / 2, bY + 4.6, { align: 'center' });
+
+        yy += 9;
+      } else {
+        yy += 2;
+      }
+
+      if (descLines.length) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10.5);
+        doc.setTextColor(C.muted.r, C.muted.g, C.muted.b);
+        doc.text(descLines, cardX + 8, yy + 4.2);
+        yy += descLines.length * 4.6 + 2;
+      }
+
+      if (allLines.length) {
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(9.5);
+        doc.setTextColor(148, 163, 184);
+        doc.text(allLines, cardX + 8, yy + 4);
+        yy += allLines.length * 4.2 + 1;
+      }
+
+      return { nextY: y + cardH + 8 };
+    };
+
+    const dishes = (menu as any).dishes ?? [];
+    const grouped = groupByCategory(Array.isArray(dishes) ? dishes : []);
+
+    let pageIndex = 1;
+    await drawHeader(pageIndex);
+
+    let y = headerH + 10;
+
+    fill(C.card2);
+    stroke(C.line);
+    roundRect(M, y, contentW, 14, 5, 'FD');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10.5);
+    doc.setTextColor(C.muted.r, C.muted.g, C.muted.b);
+    doc.text('Alle Speisen frisch zubereitet – Änderungen vorbehalten.', M + 6, y + 8.8);
+    y += 20;
+
+    for (const sec of grouped) {
+      if (y + 18 > pageH - footerH - 6) {
+        drawFooter(pageIndex);
+        doc.addPage();
+        pageIndex++;
+        await drawHeader(pageIndex);
+        y = headerH + 10;
+      }
+
+      y = drawSectionTitle(y, sec.category);
+
+      for (const dish of sec.items) {
+        if (y + 50 > pageH - footerH - 6) {
+          drawFooter(pageIndex);
+          doc.addPage();
+          pageIndex++;
+          await drawHeader(pageIndex);
+          y = headerH + 10;
+        }
+
+        const res = drawDishCard(dish, y);
+        y = res.nextY;
+      }
+
+      y += 2;
     }
 
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(textMuted.r, textMuted.g, textMuted.b);
-    doc.text(
-      'Alle Preise in Euro inkl. gesetzlicher MwSt. | Allergene gemäß Aushang',
-      pageWidth / 2,
-      285,
-      { align: 'center' }
-    );
+    drawFooter(pageIndex);
 
-    const fileName = (menu.title || 'speisekarte')
+    const fileName = (menuTitle || 'speisekarte')
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '_');
 

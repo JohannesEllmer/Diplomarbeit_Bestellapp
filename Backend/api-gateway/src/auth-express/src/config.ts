@@ -2,10 +2,10 @@ export const JWT_SECRET = process.env.JWT_SECRET ?? 'supersecretjwtkey';
 export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN ?? '2h';
 
 export const APP_BASE_URL =
-  process.env.APP_BASE_URL ?? 'http://172.20.20.139:4200';
+  process.env.APP_BASE_URL ?? 'http://10.10.0.174:4200';
 
 export const CORS_ORIGINS =
-  (process.env.CORS_ORIGINS ?? 'http://172.20.20.139:4200,http://localhost:4200')
+  (process.env.CORS_ORIGINS ?? 'http://10.10.0.174:4200,http://localhost:4200')
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);

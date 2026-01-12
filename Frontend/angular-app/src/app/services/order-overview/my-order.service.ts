@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, map, delay, catchError, switchMap } from 'rxjs';
+import { Observable, of, map, delay, catchError } from 'rxjs';
 import { environment } from '../env';
 import { Order } from '../../../models/menu-item.model';
 import { AuthService } from '../../auth/auth.service';
@@ -13,15 +13,12 @@ export class MyOrderService {
   constructor(private http: HttpClient, private auth: AuthService) {}
 
   getMyOrders(): Observable<Order[]> {
-    if (environment.useMockData) {
-      return this.getMyOrdersMock();
-    }
+    if (environment.useMockData) return this.getMyOrdersMock();
 
     return this.http.get<Order[]>(`${this.ordersEndpoint}/my`).pipe(
       map((orders) => this.addQrForOpenOrders(orders ?? [])),
-      switchMap((orders) => (orders.length ? of(orders) : this.getMyOrdersMock())),
       catchError((error) => {
-        console.error('getMyOrders failed, fallback mock:', error);
+        console.error('getMyOrders failed:', error);
         return this.getMyOrdersMock();
       })
     );

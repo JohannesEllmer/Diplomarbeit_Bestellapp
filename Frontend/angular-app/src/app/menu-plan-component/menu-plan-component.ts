@@ -6,7 +6,7 @@ import { Subject, timer, merge } from 'rxjs';
 import { filter, takeUntil, finalize } from 'rxjs/operators';
 
 import { MenuItem } from '../../models/menu-item.model';
-import { Menu } from '../../models/menu.model';
+import { MealPlan } from '../../models/meal-plan.model';
 
 import { MenuItemComponent } from '../menu-item-component/menu-item-component';
 import { MenuService } from '../services/menu/menu-service';
@@ -32,12 +32,16 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
   filters = ['Alle', 'Vegetarisch'];
 
   menuItems: MenuItem[] = [];
-  menus: Menu[] = [];
+  selectedMenuTitle = '';
+  hasActiveMenu = false;
 
   loadingItems = false;
-  loadingMenus = false;
+  statusMsg = '';
 
   private destroy$ = new Subject<void>();
+
+  private lastFailAt = 0;
+  private readonly failCooldownMs = 60_000;
 
   constructor(
     private router: Router,
@@ -48,9 +52,7 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    //Debugging
     console.log('[MenuPlan] init');
-
     this.cartService.getCartItems();
 
     const timer$ = timer(0, 10 * 60 * 1000);
@@ -59,11 +61,10 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
       filter((e): e is NavigationEnd => e instanceof NavigationEnd),
       filter(e => e.urlAfterRedirects === '/' || e.urlAfterRedirects.startsWith('/?'))
     );
+
     merge(timer$, navToHome$)
       .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        this.fetchMenusAndItems();
-      });
+      .subscribe(() => this.fetchSelectedMenu());
   }
 
   ngOnDestroy(): void {
@@ -71,39 +72,64 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private fetchMenusAndItems(): void {
-    
+  private fetchSelectedMenu(): void {
     if (!this.auth.isLoggedIn()) {
       console.warn('[MenuPlan] not logged in -> skipping menu fetch');
       return;
     }
 
-    console.log('[MenuPlan] fetching menu-items + menus');
+    const now = Date.now();
+    if (this.lastFailAt && now - this.lastFailAt < this.failCooldownMs) {
+      return;
+    }
 
     this.loadingItems = true;
-    this.menuService.getMenuItems()
+    this.statusMsg = '';
+
+    this.menuService.getSelectedMealPlan()
       .pipe(finalize(() => (this.loadingItems = false)))
       .subscribe({
-        next: (items) => {
-          this.menuItems = items ?? [];
-          console.log('[MenuPlan] items loaded:', this.menuItems.length);
-        },
-        error: (err) => console.error('[MenuPlan] items error:', err),
-      });
+        next: (plan: MealPlan | null) => {
+          if (!plan) {
+            this.selectedMenuTitle = '';
+            this.menuItems = [];
+            this.hasActiveMenu = false;
+            this.statusMsg = 'Kein aktives Menü verfügbar.';
+            return;
+          }
 
-    this.loadingMenus = true;
-    this.menuService.getMenus()
-      .pipe(finalize(() => (this.loadingMenus = false)))
-      .subscribe({
-        next: (ms) => {
-          this.menus = ms ?? [];
-          console.log('[MenuPlan] menus loaded:', this.menus.length);
+          this.selectedMenuTitle = (plan as any).title ?? '';
+
+          const dishes = (plan as any).dishes ?? [];
+          const items = Array.isArray(dishes) ? dishes : [];
+
+          // ✅ HIER liegt der Fix:
+          // available default TRUE, falls Feld fehlt
+          this.menuItems = items.map((d: any) => ({
+            id: String(d.id),
+            name: d.name ?? '',
+            description: d.description ?? '',
+            price: Number(d.price ?? 0),
+            category: (d.category ?? 'Hauptgericht'),
+            vegetarian: !!d.vegetarian,
+            available: d.available !== false,
+            allergens: Array.isArray(d.allergens) ? d.allergens : (Array.isArray(d.allergenes) ? d.allergenes : []),
+          })) as MenuItem[];
+
+          this.hasActiveMenu = true;
+          console.log('[MenuPlan] selected menu items:', this.menuItems.length);
         },
-        error: (err) => console.error('[MenuPlan] menus error:', err),
+        error: (err) => {
+          console.error('[MenuPlan] selected menu error:', err);
+          this.lastFailAt = Date.now();
+          this.selectedMenuTitle = '';
+          this.menuItems = [];
+          this.hasActiveMenu = false;
+          this.statusMsg = 'Fehler beim Laden des aktiven Menüs.';
+        },
       });
   }
 
-  // Balance (aus Token/Header)
   get balance(): number {
     const tokenUser = this.auth.getCurrentUser();
     const n = Number(tokenUser?.balance ?? 0);
@@ -117,13 +143,6 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
 
   get filteredItems(): MenuItem[] {
     return (this.menuItems ?? []).filter(i => this.matches(i));
-  }
-
-  get filteredMenus(): Menu[] {
-    return (this.menus ?? []).filter(m => {
-      const dish = (m as any).dish as MenuItem | undefined;
-      return dish ? this.matches(dish) : true;
-    });
   }
 
   private matches(item: MenuItem): boolean {
@@ -162,15 +181,16 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
     const user = this.auth.getCurrentUser();
     if (!user) return;
 
+    // optional: blocken, wenn nicht verfügbar
+    if (menuItem.available === false) return;
+
     const items = this.cartService.getCartItems();
     const existing = items.find(
       (i: any) => i.menuItem.id === menuItem.id && i.note === note && i.deliveryTime === deliveryTime
     );
 
     if (existing) existing.quantity += 1;
-    else {
-      items.push({ menuItem, user, note, quantity: 1, delivered: false, deliveryTime });
-    }
+    else items.push({ menuItem, user, note, quantity: 1, delivered: false, deliveryTime });
 
     this.cartService.saveCartItems(items);
   }

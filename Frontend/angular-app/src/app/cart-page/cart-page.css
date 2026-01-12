@@ -495,29 +495,37 @@ html, body {
   color: #1e40af; 
 }
 
-.time-select {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  font-size: 0.95rem;
-  padding: 1rem;
+
+/* ✅ Time select: vorher war input gestylt -> jetzt select */
+.time-select{
+  display:flex;
+  flex-direction:column;
+  gap: .5rem;
+  font-size: .95rem;
+  padding: .9rem;
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--line);
   border-radius: 12px;
 }
 
-.time-select input {
-  padding: 0.6rem;
-  font-size: 1rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  transition: border-color .2s ease, background-color .2s ease;
-  box-sizing: border-box;
+.time-select label{
+  font-weight: 700;
+  color: var(--text);
 }
 
-.time-select input:focus {
-  border-color: #0284c7;
-  background-color: #f0f9ff;
+.time-select select{
+  padding: .65rem .75rem;
+  font-size: 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  outline:none;
+  background:#fff;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.time-select select:focus{
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.18);
 }
 
 .error-msg { 

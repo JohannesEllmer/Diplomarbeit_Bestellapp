@@ -77,6 +77,12 @@ export class AppMenuComponent implements OnInit, OnDestroy {
       roles: ['KUNDE', 'INHABER', 'ADMIN'],
       section: 'customer'
     },
+    {
+      label: 'Mein Profil',
+      route: '/me',
+      roles: ['KUNDE', 'INHABER', 'ADMIN'],
+      section: 'customer'
+    },
 
     // Verwaltungsbereich
     {
@@ -95,9 +101,15 @@ export class AppMenuComponent implements OnInit, OnDestroy {
     {
       label: 'Benutzerverwaltung',
       route: '/user',
-      roles: ['ADMIN', 'INHABER'], // ✅ FIX: vorher 'ADMIN, INHABER' als ein String
+      roles: ['ADMIN', 'INHABER'],
       section: 'management',
       shortLabel: 'Benutzer'
+    },
+    {
+      label: 'Admin Profil',
+      route: '/admin/balance-scan',
+      roles: [ 'INHABER', 'ADMIN'],
+      section: 'management'
     },
     {
       label: 'Menü-Manager',

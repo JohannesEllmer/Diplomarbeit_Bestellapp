@@ -1,113 +1,94 @@
 import { Injectable } from '@angular/core';
-import { OrderItem } from '../../../models/menu-item.model';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, map, catchError } from 'rxjs';
 import { environment } from '../env';
+import { Observable } from 'rxjs';
+import { OrderItem } from '../../../models/menu-item.model';
+
+type CreateOrderPayload = {
+  items: Array<{
+    menuItemId: string;
+    quantity: number;
+    note?: string;
+    deliveryTime?: string;
+  }>;
+};
 
 @Injectable({ providedIn: 'root' })
 export class CartService {
-  private readonly storageKey = 'cartItems';
-
   private readonly apiBase = environment.apiBaseUrl ?? 'http://localhost:3000/api';
   private readonly ordersEndpoint = `${this.apiBase}/orders`;
 
+  private storageKey = 'cart';
+
   constructor(private http: HttpClient) {}
 
+  // --- persistence ---
   getCartItems(): OrderItem[] {
-    const stored = localStorage.getItem(this.storageKey);
-    return stored ? JSON.parse(stored) : [];
+    try {
+      const raw = localStorage.getItem(this.storageKey);
+      return raw ? (JSON.parse(raw) as OrderItem[]) : [];
+    } catch {
+      return [];
+    }
   }
 
-  saveCartItems(items: OrderItem[]): void {
+  private saveCart(items: OrderItem[]): void {
     localStorage.setItem(this.storageKey, JSON.stringify(items));
+  }
+
+  // ✅ Kompatibilität: wird von MenuPlan + Specs erwartet
+  saveCartItems(items: OrderItem[]): void {
+    this.saveCart(items ?? []);
   }
 
   clearCart(): void {
     localStorage.removeItem(this.storageKey);
   }
 
+  // --- item ops ---
   increaseQuantity(items: OrderItem[], index: number): OrderItem[] {
-    items[index].quantity += 1;
-    this.saveCartItems(items);
-    return items;
+    const next = [...(items ?? [])];
+    next[index] = { ...next[index], quantity: (next[index].quantity ?? 0) + 1 };
+    this.saveCart(next);
+    return next;
   }
 
   decreaseQuantity(items: OrderItem[], index: number): OrderItem[] {
-    if (items[index].quantity > 1) {
-      items[index].quantity -= 1;
-      this.saveCartItems(items);
-    }
-    return items;
+    const next = [...(items ?? [])];
+    const q = (next[index].quantity ?? 0) - 1;
+    next[index] = { ...next[index], quantity: Math.max(1, q) };
+    this.saveCart(next);
+    return next;
   }
 
   updateNote(items: OrderItem[], index: number, note: string): OrderItem[] {
-    items[index].note = note;
-    this.saveCartItems(items);
-    return items;
+    const next = [...(items ?? [])];
+    next[index] = { ...next[index], note };
+    this.saveCart(next);
+    return next;
   }
 
   removeItem(items: OrderItem[], index: number): OrderItem[] {
-    items.splice(index, 1);
-    this.saveCartItems(items);
-    return items;
+    const next = (items ?? []).filter((_, i) => i !== index);
+    this.saveCart(next);
+    return next;
+  }
+
+  // ✅ Kompatibilität: wird von MenuPlan + Specs erwartet
+  getItemCount(items: OrderItem[]): number {
+    return (items ?? []).reduce((sum, it) => sum + Number(it.quantity ?? 0), 0);
   }
 
   getTotal(items: OrderItem[]): number {
-    return items.reduce((sum, item) => sum + item.menuItem.price * item.quantity, 0);
+    return (items ?? []).reduce((sum, it) => sum + (it.menuItem.price * it.quantity), 0);
   }
 
-  getItemCount(items: OrderItem[]): number {
-    return items.reduce((sum, item) => sum + item.quantity, 0);
-  }
-
-  //Validiert Uhrzeitformat mit Regex
   isValidTimeFormat(time: string): boolean {
-    return /^\d{2}:\d{2}$/.test(time) && !isNaN(Date.parse(`1970-01-01T${time}:00`));
+    return /^([01]\d|2[0-3]):[0-5]\d$/.test((time || '').trim());
   }
 
-  buildOrderFromCart(items?: OrderItem[]) {
-    const cart = items ?? this.getCartItems();
-
-    return {
-      items: cart.map(i => ({
-        menuItemId: i.menuItem.id,
-        quantity: i.quantity,
-        note: i.note ?? ''
-      })),
-      totalPrice: this.getTotal(cart),
-      createdAt: new Date().toISOString(),
-      status: 'open' as const
-    };
-  }
-
-  submitOrder(order?: any): Observable<any> {
-    if (environment.useMockData) {
-      console.log('Testmodus aktiv – Bestellung simuliert:', order);
-      return of({ success: true, message: 'Bestellung simuliert (Mock-Daten)', fallback: true });
-    }
-
-    const payload = order ?? this.buildOrderFromCart();
-
-    return this.http.post<any>(this.ordersEndpoint, payload).pipe(
-      map(response => {
-        if (response == null) {
-          return {
-            success: true,
-            message: 'Bestellung wurde gesendet, aber Server lieferte keine Daten – Fallback-Antwort.',
-            fallback: true
-          };
-        }
-        return response;
-      }),
-      catchError(error => {
-        console.error('Fehler beim Senden der Bestellung, Fallback wird verwendet', error);
-        return of({
-          success: false,
-          message: 'Bestellung konnte nicht an das Backend gesendet werden.',
-          fallback: true,
-          error
-        });
-      })
-    );
+  // Backend submit
+  submitOrder(payload: CreateOrderPayload): Observable<any> {
+    return this.http.post(this.ordersEndpoint, payload);
   }
 }

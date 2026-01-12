@@ -1,0 +1,278 @@
+<div class="auth-wrapper">
+  <div class="auth-card">
+
+    <div class="auth-header">
+      <div class="auth-title-block">
+        <h1>Mein Konto</h1>
+        <p>Deine Daten, Guthaben & Aktivität</p>
+      </div>
+
+      <div class="auth-badge" *ngIf="profile">
+        <div class="badge-main">USER</div>
+        <div class="badge-sub">ID: {{ profile.user?.id }}</div>
+      </div>
+    </div>
+
+    <div class="auth-body" *ngIf="profile">
+
+      <!-- Status Card -->
+      <div class="status-card"
+           *ngIf="statusType"
+           [class.is-success]="statusType==='success'"
+           [class.is-warning]="statusType==='warning'"
+           [class.is-error]="statusType==='error'">
+        <div class="status-icon">i</div>
+        <div>
+          <div class="status-title">{{ statusTitle }}</div>
+          <div class="status-msg">{{ statusMsg }}</div>
+        </div>
+        <button class="status-close" (click)="closeStatus()">✕</button>
+      </div>
+
+      <div class="form-grid">
+        <!-- Left column: User data -->
+        <div class="form-col">
+          <div class="form-section">
+            <div class="section-title">Profil</div>
+            <div class="section-subtitle">Deine gespeicherten Daten</div>
+
+            <div class="form-group">
+              <label>Name</label>
+              <input [value]="profile.user?.name" readonly />
+            </div>
+
+            <div class="form-group">
+              <label>E-Mail</label>
+              <input [value]="profile.user?.email" readonly />
+            </div>
+
+            <!-- ✅ Klasse editable -->
+            <div class="form-group">
+              <label>Klasse</label>
+
+              <ng-container *ngIf="!classEditMode; else classEditTpl">
+                <input [value]="profile.user?.class" readonly />
+                <div class="form-actions" style="margin-top:0.5rem;">
+                  <button class="primary-btn" type="button" (click)="startClassEdit()" [disabled]="loading">
+                    Klasse ändern
+                  </button>
+                </div>
+              </ng-container>
+
+              <ng-template #classEditTpl>
+                <input [(ngModel)]="classValue" placeholder="z.B. 3AHIT" />
+                <div class="form-actions" style="margin-top:0.5rem;">
+                  <button class="primary-btn" type="button" (click)="saveClass()" [disabled]="loading">
+                    Speichern
+                  </button>
+                  <button class="primary-btn" type="button" (click)="cancelClassEdit()" [disabled]="loading"
+                          style="background:#6b7280;">
+                    Abbrechen
+                  </button>
+                </div>
+                <div class="hint small">
+                  Bitte mindestens 1× pro Jahr aktualisieren. Sonst wird der Account eingeschränkt.
+                </div>
+              </ng-template>
+            </div>
+
+            <div class="info-box">
+              <div><strong>Bestellungen gesamt:</strong> {{ profile.orderCount }}</div>
+              <div><strong>Account-Status:</strong> {{ profile.user?.blocked ? 'Gesperrt' : 'Aktiv' }}</div>
+            </div>
+
+            <div class="form-actions" style="margin-top: 0.75rem;">
+              <button class="primary-btn" type="button" (click)="openPasswordModal()" [disabled]="loading">
+                Passwort ändern
+              </button>
+            </div>
+
+            <div class="hint small" *ngIf="profile.user?.blocked" style="margin-top: 0.75rem;">
+              Dein Account ist eingeschränkt. Du kannst dich einloggen, aber nur das Profil öffnen,
+              bis du deine Klasse aktualisierst.
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">Guthaben</div>
+            <div class="section-subtitle">Reserviert durch offene Bestellungen + verfügbar</div>
+
+            <div class="info-box">
+              <div><strong>Guthaben:</strong> {{ money(profile.balance) }}</div>
+              <div><strong>Reserviert (offen):</strong> {{ money(profile.reserved) }}</div>
+              <div><strong>Verfügbar:</strong> {{ money(profile.available) }}</div>
+            </div>
+
+            <div class="hint">Änderungen am Guthaben werden erst nach QR-Scan durch den Inhaber wirksam.</div>
+
+            <div class="form-actions">
+              <button class="primary-btn" type="button" (click)="startEdit()" [disabled]="loading || profile.user?.blocked">
+                <span class="btn-row">
+                  Guthaben hinzufügen
+                  <span class="spinner" *ngIf="loading"></span>
+                </span>
+              </button>
+
+              <button class="primary-btn" type="button" (click)="requestFlush()" [disabled]="loading || profile.user?.blocked">
+                <span class="btn-row">
+                  Guthaben ausleeren (QR)
+                  <span class="spinner" *ngIf="loading"></span>
+                </span>
+              </button>
+
+              <button class="primary-btn" type="button"
+                      (click)="deleteAccount()"
+                      [disabled]="loading || !canDeleteAccount()"
+                      style="background:#ef4444;">
+                Konto löschen (nur bei 0 €)
+              </button>
+
+              <div class="hint small" *ngIf="!canDeleteAccount()">
+                Konto löschen ist nur möglich, wenn Guthaben = 0 € und keine offenen Bestellungen vorhanden sind.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right column: edit + QR + logs -->
+        <div class="form-col">
+          <div class="form-section" *ngIf="editMode">
+            <div class="section-title">Guthaben erhöhen</div>
+            <div class="section-subtitle">Betrag eingeben → Save → QR wird angezeigt</div>
+
+            <div class="form-group">
+              <label>Betrag (z.B. 5,00)</label>
+              <input [(ngModel)]="addAmount" placeholder="z.B. 5,00" />
+              <div class="hint small">Der Betrag wird erst nach Scan durch den Inhaber gutgeschrieben.</div>
+            </div>
+
+            <div class="form-actions">
+              <button class="primary-btn" type="button" (click)="saveAddRequest()" [disabled]="loading">
+                <span class="btn-row">
+                  Save & QR anzeigen
+                  <span class="spinner" *ngIf="loading"></span>
+                </span>
+              </button>
+
+              <button class="primary-btn" type="button" (click)="cancelEdit()" [disabled]="loading"
+                      style="background:#6b7280;">
+                Abbrechen
+              </button>
+            </div>
+          </div>
+
+          <div class="form-section" *ngIf="pendingQr">
+            <div class="section-title">QR-Code: Guthaben hinzufügen</div>
+            <div class="section-subtitle">Der Inhaber scannt diesen Code</div>
+
+            <div class="info-box">
+              <div><strong>Code:</strong> <code>{{ pendingQr.code }}</code></div>
+              <div class="hint small">Nach Scan wird der Betrag deinem Konto hinzugefügt.</div>
+            </div>
+
+            <div style="display:flex; justify-content:center; padding: 0.75rem 0;">
+              <img [src]="pendingQr.qrCodeUrl" alt="QR Code" style="border:2px solid #000; border-radius:0.75rem;" />
+            </div>
+
+            <button class="primary-btn" type="button" (click)="refreshAll()">
+              Aktualisieren (nach Scan)
+            </button>
+          </div>
+
+          <div class="form-section" *ngIf="flushQr">
+            <div class="section-title">QR-Code: Guthaben ausleeren</div>
+            <div class="section-subtitle">Der Inhaber scannt diesen Code</div>
+
+            <div class="info-box">
+              <div><strong>Code:</strong> <code>{{ flushQr.code }}</code></div>
+              <div class="hint small">Nach Scan wird dein Guthaben auf 0 gesetzt.</div>
+            </div>
+
+            <div style="display:flex; justify-content:center; padding: 0.75rem 0;">
+              <img [src]="flushQr.qrCodeUrl" alt="QR Code" style="border:2px solid #000; border-radius:0.75rem;" />
+            </div>
+
+            <button class="primary-btn" type="button" (click)="refreshAll()">
+              Aktualisieren (nach Scan)
+            </button>
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">Bestellungen</div>
+            <div class="section-subtitle">Letzte 50</div>
+
+            <div class="info-box" *ngIf="activity.orders?.length === 0">
+              Keine Bestellungen vorhanden.
+            </div>
+
+            <div class="info-box" *ngFor="let o of activity.orders">
+              <div><strong>#{{ o.id }}</strong> • {{ o.status }} • {{ money(o.totalPrice) }}</div>
+              <div class="hint small">{{ o.createdAt }}</div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="section-title">Guthaben-Log</div>
+            <div class="section-subtitle">Letzte 100 Änderungen</div>
+
+            <div class="info-box" *ngIf="activity.balanceLogs?.length === 0">
+              Keine Guthabenänderungen vorhanden.
+            </div>
+
+            <div class="info-box" *ngFor="let l of activity.balanceLogs">
+              <div>
+                <strong>{{ l.reason }}</strong>
+                • Delta: {{ money(l.delta) }}
+                • Stand: {{ money(l.balanceAfter) }}
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ✅ Passwort Modal -->
+      <div class="modal-backdrop" *ngIf="pwModalOpen">
+        <div class="modal-card">
+          <div class="modal-title">Passwort ändern</div>
+
+          <div class="form-group">
+            <label>Aktuelles Passwort</label>
+            <input type="password" [(ngModel)]="pwOld" />
+          </div>
+
+          <div class="form-group">
+            <label>Neues Passwort</label>
+            <input type="password" [(ngModel)]="pwNew" />
+          </div>
+
+          <div class="form-group">
+            <label>Neues Passwort wiederholen</label>
+            <input type="password" [(ngModel)]="pwNew2" />
+          </div>
+
+          <div class="form-actions">
+            <button class="primary-btn" type="button" (click)="savePassword()" [disabled]="pwSaving">
+              <span class="btn-row">
+                Speichern
+                <span class="spinner" *ngIf="pwSaving"></span>
+              </span>
+            </button>
+
+            <button class="primary-btn" type="button" (click)="closePasswordModal()" [disabled]="pwSaving"
+                    style="background:#6b7280;">
+              Abbrechen
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="auth-footer">
+      <span *ngIf="loading">Lade…</span>
+      <span *ngIf="!loading">Tip: Nach dem QR-Scan auf „Aktualisieren“ klicken.</span>
+    </div>
+
+  </div>
+</div>

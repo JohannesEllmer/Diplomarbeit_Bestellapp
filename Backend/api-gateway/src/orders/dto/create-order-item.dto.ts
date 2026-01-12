@@ -1,11 +1,9 @@
-import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { IsUUID, IsInt, Min, IsString, IsOptional, IsISO8601 } from 'class-validator';
 
 export class CreateOrderItemDto {
   @IsUUID()
   menuItemId!: string;
 
-  @Type(() => Number)
   @IsInt()
   @Min(1)
   quantity!: number;
@@ -13,4 +11,8 @@ export class CreateOrderItemDto {
   @IsOptional()
   @IsString()
   note?: string;
+
+  // ✅ damit "deliveryTime" nicht mehr "should not exist" ist:
+  @IsISO8601()
+  deliveryTime!: string;
 }

@@ -2,8 +2,8 @@
 
   <div class="search-controls">
     <div class="search-field">
-      <input 
-        type="text" 
+      <input
+        type="text"
         [(ngModel)]="searchTerm"
         (input)="onSearchChange()"
         placeholder="Nach Namen suchen..."
@@ -13,7 +13,7 @@
         ✕
       </button>
     </div>
-    
+
     <div class="search-info" *ngIf="searchTerm">
       <span>{{ filteredUsers.length }} von {{ users.length }} Benutzern gefunden</span>
     </div>
@@ -29,9 +29,9 @@
 
     <div class="paginator">
       <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1">‹</button>
-      <button 
-        *ngFor="let page of pages" 
-        (click)="changePage(page)" 
+      <button
+        *ngFor="let page of pages"
+        (click)="changePage(page)"
         [class.active]="page === currentPage">
         {{ page }}
       </button>
@@ -47,9 +47,7 @@
       (block)="blockUser($event)"
       (resetPassword)="resetPassword($event)">
     </app-user-items>
-  
-    
-    
+
     <div *ngIf="filteredUsers.length === 0" class="no-results">
       <p *ngIf="searchTerm">Keine Benutzer mit "{{ searchTerm }}" gefunden.</p>
       <p *ngIf="!searchTerm">Keine Benutzer vorhanden.</p>

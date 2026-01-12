@@ -1,4 +1,14 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateMealPlanDto } from './create-mealplan.dto';
+import { IsArray, IsOptional, IsString, IsUUID } from 'class-validator';
 
-export class UpdateMealPlanDto extends PartialType(CreateMealPlanDto) {}
+export class UpdateMealPlanDto {
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('all', { each: true })
+  dishIds?: string[];
+
+
+}

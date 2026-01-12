@@ -26,6 +26,7 @@ export class AdminOrderService {
 
   setOrderStatus(orderId: string, status: 'open' | 'closed'): Observable<Order> {
     if (environment.useMockData) return of({} as any);
+
     return this.http.patch<Order>(`${this.adminOrdersEndpoint}/${orderId}`, { status }).pipe(
       catchError(err => {
         console.error('setOrderStatus failed:', err);
@@ -45,6 +46,7 @@ export class AdminOrderService {
     );
   }
 
+  // ✅ capture beim QR Scan
   completeByQrCode(code: string): Observable<{ ok: boolean; order?: any }> {
     if (environment.useMockData) return of({ ok: true });
 

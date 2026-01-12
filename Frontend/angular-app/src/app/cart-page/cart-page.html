@@ -1,6 +1,4 @@
 <div class="menu-container">
-  
-
   <div class="main-content">
     <div class="menu-items">
       @for (item of cartItems; track item.menuItem.id; let i = $index) {
@@ -16,34 +14,52 @@
     <div class="order-summary">
       <div class="summary-title">Bestellübersicht</div>
 
-      <div class="summary-items">
+      <div class="summary-items" *ngIf="cartItems.length > 0; else emptyTpl">
         @for (item of cartItems; track item.menuItem.id) {
           <div class="summary-line">
             <span class="item-name">{{ item.menuItem.name }}</span>
-            <span class="item-quantity">x{{ item.quantity }}</span>
-            <span class="item-price"> {{ item.menuItem.price | currency: 'EUR' }}</span>
+            <span class="item-quantity">x{{ item.quantity }} </span>
+            <span class="item-price">{{ item.menuItem.price | currency:'EUR' }}</span>
           </div>
         }
       </div>
 
+      <ng-template #emptyTpl>
+        <div class="empty-summary">Keine Artikel im Warenkorb.</div>
+      </ng-template>
+
       <div class="summary-total">
-        Gesamt: {{ getTotal() | currency: 'EUR' }}
+        Gesamt: {{ getTotal() | currency:'EUR' }}
       </div>
 
       <div class="summary-balance">
-        <span>Guthaben:</span>
-        <strong>{{ balance | currency: 'EUR' }}</strong>
+        <div class="bal-row">
+          <span>Guthaben:</span>
+          <strong>{{ balance | currency:'EUR' }}</strong>
+        </div>
+
+        <div class="bal-sub">
+          <div class="bal-sub-row">
+            <span>Reserviert:</span>
+            <span>{{ reserved | currency:'EUR' }}</span>
+          </div>
+          <div class="bal-sub-row">
+            <span>Verfügbar:</span>
+            <b>{{ available | currency:'EUR' }}</b>
+          </div>
+        </div>
       </div>
 
       <div class="time-select">
         <label for="time-select">Gewünschte Lieferzeit:</label>
-        <select
-          id="time-select"
-          [(ngModel)]="selectedTime"
-          required>
-          <option value="" disabled selected>Bitte wählen</option>
-          <option *ngFor="let time of deliveryTimeOptions" [value]="time">{{ time }}</option>
+
+        <select id="time-select" [(ngModel)]="selectedTime">
+          <option value="" disabled>Bitte wählen</option>
+          @for (time of deliveryTimeOptions; track time) {
+            <option [value]="time">{{ time }}</option>
+          }
         </select>
+
         <div class="error-msg" *ngIf="timeError">{{ timeError }}</div>
       </div>
     </div>
@@ -51,13 +67,17 @@
 
   <footer class="menu-footer">
     <div class="footer-center">
-      <button class="checkout-btn" (click)="onOrder()">Jetzt bestellen</button>
+      <button class="checkout-btn" (click)="onOrder()" [disabled]="submitting || cartItems.length === 0">
+        {{ submitting ? 'Sende…' : 'Jetzt bestellen' }}
+      </button>
+
       <div class="impressum-desktop">
         <span>Firma Muster GmbH</span>
         <span>Musterstraße 1, 12345 Musterstadt</span>
         <span>Tel: 01234 / 567890</span>
         <span>E-Mail: info@musterfirma.de</span>
       </div>
+
       <div class="impressum-mobile">
         <button class="impressum-btn" (click)="showImpressumPopup = true">Impressum</button>
       </div>
@@ -77,10 +97,7 @@
     </div>
   </footer>
 
-  <button
-    class="back-fab"
-    (click)="navigateBack()"
-    aria-label="Zurück zum Menüplan">
+  <button class="back-fab" (click)="navigateBack()" aria-label="Zurück zum Menüplan">
     <span class="back-fab-icon">←</span>
   </button>
 </div>

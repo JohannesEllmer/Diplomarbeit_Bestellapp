@@ -18,6 +18,7 @@
   </div>
 
   <div class="planner-container">
+    <!-- LEFT: selected -->
     <div class="selected-dishes-wrapper">
       <div class="column-header">
         <div>
@@ -51,16 +52,41 @@
                 (cdkDragStarted)="onDragStarted()"
                 (cdkDragEnded)="onDragEnded()"
                 (click)="onDishClick(dish, true)"
+                [class.dish-disabled]="dish.available === false"
               >
                 <div class="dish-info">
-                  <p class="dish-title">{{ dish.name }}</p>
-                  <p class="dish-meta">Im Menü</p>
+                  <p class="dish-title">
+                    {{ dish.name }}
+                    @if (dish.available === false) {
+                      <span class="dish-badge">deaktiviert</span>
+                    }
+                  </p>
+                  <p class="dish-meta">
+                    @if (dish.available === false) { Nicht verfügbar } @else { Im Menü }
+                  </p>
                 </div>
+
                 <div class="dish-actions">
+                  <label
+                    class="dish-toggle"
+                    (click)="$event.stopPropagation()"
+                    title="Gericht im Menü deaktivieren/aktivieren"
+                  >
+                    <input
+                      type="checkbox"
+                      [checked]="dish.available !== false"
+                      (change)="toggleAvailable(dish, $event)"
+                    />
+                    <span class="dish-toggle-label">
+                      @if (dish.available === false) { AUS } @else { AN }
+                    </span>
+                  </label>
+
                   <button
                     type="button"
                     class="dish-action-btn"
                     (click)="onDishClick(dish, true); $event.stopPropagation()"
+                    title="Aus dem Menü entfernen"
                   >
                     <span class="material-icons">arrow_forward</span>
                   </button>
@@ -78,6 +104,7 @@
       </div>
     </div>
 
+    <!-- RIGHT: unselected -->
     <div class="unselected-dishes-wrapper">
       <div class="column-header">
         <div>
@@ -116,11 +143,23 @@
                   <p class="dish-title">{{ dish.name }}</p>
                   <p class="dish-meta">Nicht im Menü</p>
                 </div>
+
                 <div class="dish-actions">
+                  <button
+                    type="button"
+                    class="dish-action-btn dish-action-btn-danger"
+                    (click)="openDeleteDialog(dish, $event)"
+                    [disabled]="deletingId === dish.id"
+                    title="Gericht löschen"
+                  >
+                    <span class="material-icons">delete</span>
+                  </button>
+
                   <button
                     type="button"
                     class="dish-action-btn"
                     (click)="onDishClick(dish, false); $event.stopPropagation()"
+                    title="Zum Menü hinzufügen"
                   >
                     <span class="material-icons">arrow_back</span>
                   </button>
@@ -138,4 +177,38 @@
       </div>
     </div>
   </div>
+
+  @if (showDeleteDialog) {
+    <div class="modal-backdrop" (click)="cancelDelete()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <span class="material-icons modal-icon">warning</span>
+          <h3 class="modal-title">Gericht löschen?</h3>
+        </div>
+
+        <p class="modal-text">
+          <strong>{{ dishToDelete?.name }}</strong> wird dauerhaft gelöscht.
+        </p>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="modal-btn modal-btn-ghost"
+            (click)="cancelDelete()"
+          >
+            Abbrechen
+          </button>
+
+          <button
+            type="button"
+            class="modal-btn modal-btn-danger"
+            (click)="confirmDelete()"
+            [disabled]="deletingId === dishToDelete?.id"
+          >
+            Löschen
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

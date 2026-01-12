@@ -2,26 +2,22 @@
 
   <div class="search-controls">
     <div class="search-field">
-    <input
-      class="search-input"
-      type="text"
-      [(ngModel)]="searchTerm"
-      (ngModelChange)="onSearchChange($event)"
-      placeholder="Gericht oder Menü suchen…"
-    />
-
+      <input
+        class="search-input"
+        type="text"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchChange($event)"
+        placeholder="Gericht suchen…"
+      />
       <button *ngIf="searchTerm" (click)="clearSearch()" class="clear-search" title="Suche löschen">✕</button>
     </div>
 
     <div class="search-info" *ngIf="searchTerm">
-      <span>
-        {{ filteredMenus.length + filteredItems.length }}
-        von {{ menus.length + menuItems.length }} Einträgen gefunden
-      </span>
+      <span>{{ filteredItems.length }} von {{ menuItems.length }} Einträgen gefunden</span>
     </div>
   </div>
 
-   <div class="filter-container">
+  <div class="filter-container">
     <div class="filter-group">
       <span>Kategorie:</span>
       @for (category of categories; track category) {
@@ -37,35 +33,28 @@
 
     <div class="filter-group">
       <span>Filter:</span>
-      @for (filter of filters; track filter) {
+      @for (f of filters; track f) {
         <button
           class="filter-btn"
-          [class.active]="activeFilter === filter"
-          (click)="activeFilter = filter"
+          [class.active]="activeFilter === f"
+          (click)="activeFilter = f"
         >
-          {{ filter }}
+          {{ f }}
         </button>
       }
     </div>
   </div>
 
   <div class="menu-scroll-area">
-    <section class="menu-section" *ngIf="filteredMenus.length > 0">
-      <h2 class="section-title">Vorgefertigte Menüs</h2>
-
-      <div class="menu-items">
-        @for (m of filteredMenus; track m.id) {
-          <app-menu-item
-            [item]="m.dish"
-            [menu]="m"
-            (addItem)="addToOrder(m.dish, $event)"
-          ></app-menu-item>
-        }
-      </div>
-    </section>
-
     <section class="menu-section">
-      <h2 class="section-title">Einzelgerichte</h2>
+      <h2 class="section-title">
+        {{ selectedMenuTitle || 'Aktives Menü' }}
+      </h2>
+
+      <div *ngIf="loadingItems" class="hint">
+        Lädt Menü…
+      </div>
+
       <main class="menu-items">
         @for (item of filteredItems; track item.id) {
           <app-menu-item
@@ -74,9 +63,14 @@
           ></app-menu-item>
         }
 
-        <div *ngIf="filteredItems.length === 0 && filteredMenus.length === 0" class="no-results">
+        <div *ngIf="!loadingItems && filteredItems.length === 0" class="no-results">
           <p *ngIf="searchTerm">Keine Treffer für "{{ searchTerm }}".</p>
-          <p *ngIf="!searchTerm && menuItems.length === 0 && menus.length === 0">Keine Gerichte vorhanden.</p>
+          <p *ngIf="!searchTerm && !hasActiveMenu">Kein Menü aktiv.</p>
+          <p *ngIf="!searchTerm && hasActiveMenu">Keine Gerichte im aktiven Menü.</p>
+        </div>
+
+        <div *ngIf="statusMsg && !loadingItems" class="hint">
+          {{ statusMsg }}
         </div>
       </main>
     </section>
@@ -88,8 +82,7 @@
         <i class="icon-wallet"></i>
         <div class="footer-text">
           <span>Guthaben</span>
-         <strong>{{ formatBalance() }} €</strong>
-
+          <strong>{{ formatBalance() }} €</strong>
         </div>
       </div>
 
@@ -103,8 +96,7 @@
 
       <button
         class="checkout-btn"
-        (click)="navigateToCart()
-        "
+        (click)="navigateToCart()"
         [disabled]="cartItemCount === 0"
         [class.pulse]="cartItemCount > 0"
       >
@@ -124,7 +116,7 @@
     <div class="impressum-mobile">
       <button class="impressum-btn" (click)="showImpressumPopup = true">Impressum</button>
     </div>
-    
+
     <div class="impressum-popup-overlay" *ngIf="showImpressumPopup" (click)="showImpressumPopup = false">
       <div class="impressum-popup" (click)="$event.stopPropagation()">
         <h2>Impressum</h2>

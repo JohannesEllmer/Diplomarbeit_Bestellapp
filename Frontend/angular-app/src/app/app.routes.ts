@@ -16,23 +16,35 @@ import { VerifyEmailPage } from './register-page/verify-email';
 import { ForgotPasswordPage } from './login-page/forgot-password';
 import { ResetPasswordPage } from './login-page/reset-password';
 import { ChangePasswordPage } from './login-page/change-password';
+import { UserPageComponent } from './user-profile/user-profile';
+import { BalanceScanComponent } from './admin-balance/admin-balance';
 
 export const routes: Routes = [
+  // Public
   { path: 'login', component: LoginPageComponent },
   { path: 'register', component: RegisterPageComponent },
   { path: 'verify-email', component: VerifyEmailPage },
   { path: 'forgot-password', component: ForgotPasswordPage },
   { path: 'reset-password', component: ResetPasswordPage },
+
+  // User
+  { path: 'user-profile', component: UserPageComponent, canActivate: [authGuard()] },
+  { path: 'me', redirectTo: 'user-profile', pathMatch: 'full' },
   { path: 'change-password', component: ChangePasswordPage, canActivate: [authGuard()] },
-
-
+  // Admin
+  { path: 'admin/balance-scan', component: BalanceScanComponent, canActivate: [authGuard(['ADMIN', 'INHABER'])] },
   { path: '', component: MenuPlanComponent, canActivate: [authGuard()] },
   { path: 'warenkorb', component: CartPageComponent, canActivate: [authGuard()] },
+
   { path: 'user', component: UserManagementComponent, canActivate: [authGuard(['ADMIN', 'INHABER'])] },
   { path: 'my-orders', component: OrderOverviewComponent, canActivate: [authGuard(['KUNDE', 'ADMIN'])] },
   { path: 'orders', component: OrderListComponent, canActivate: [authGuard(['INHABER', 'ADMIN'])] },
+
   { path: 'statistics', component: StatisticsPageComponent, canActivate: [authGuard(['ADMIN', 'INHABER'])] },
   { path: 'menu-manager', component: MenuManager, canActivate: [authGuard(['ADMIN', 'INHABER'])] },
   { path: 'menuplaner', component: MenuPlanner, canActivate: [authGuard(['INHABER', 'ADMIN'])] },
-  { path: 'gericht-verwaltung', component: DishEditor, canActivate: [authGuard(['ADMIN', 'INHABER'])] }
+  { path: 'gericht-verwaltung', component: DishEditor, canActivate: [authGuard(['ADMIN', 'INHABER'])] },
+
+  // Fallback
+  { path: '**', redirectTo: '' }
 ];

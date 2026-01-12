@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { MealPlan } from '../../../models/meal-plan.model';
 import { environment } from '../env';
 
 @Injectable({ providedIn: 'root' })
@@ -11,17 +10,38 @@ export class MealPlanService {
 
   constructor(private http: HttpClient) {}
 
-  create(plan: MealPlan): Observable<MealPlan> {
-    if (environment.useMockData) {
-      return of({ ...plan, id: crypto.randomUUID() });
-    }
- 
-    const payload = { ...plan, id: undefined as any };
-    return this.http.post<MealPlan>(this.endpoint, payload);
+  create(payload: { title: string; dishIds?: string[] }): Observable<any> {
+    if (environment.useMockData) return of({ id: crypto.randomUUID(), ...payload, dishes: [] });
+    return this.http.post<any>(this.endpoint, payload);
   }
 
-  update(id: string, plan: MealPlan): Observable<MealPlan> {
-    if (environment.useMockData) return of(plan);
-    return this.http.patch<MealPlan>(`${this.endpoint}/${id}`, plan);
+  update(id: string, payload: { title?: string }): Observable<any> {
+    if (environment.useMockData) return of({ id, ...payload });
+    return this.http.patch<any>(`${this.endpoint}/${encodeURIComponent(id)}`, payload);
+  }
+
+  // ✅ Drag&Drop Edit: add/remove sofort
+  addDish(mealPlanId: string, dishId: string): Observable<any> {
+    if (environment.useMockData) return of({ ok: true });
+    return this.http.post<any>(
+      `${this.endpoint}/${encodeURIComponent(mealPlanId)}/dishes/${encodeURIComponent(dishId)}`,
+      {},
+    );
+  }
+
+  removeDish(mealPlanId: string, dishId: string): Observable<any> {
+    if (environment.useMockData) return of({ ok: true });
+    return this.http.delete<any>(
+      `${this.endpoint}/${encodeURIComponent(mealPlanId)}/dishes/${encodeURIComponent(dishId)}`,
+    );
+  }
+
+  // ✅ Checkbox sofort
+  setDishDisabled(mealPlanId: string, dishId: string, disabled: boolean): Observable<any> {
+    if (environment.useMockData) return of({ ok: true });
+    return this.http.patch<any>(
+      `${this.endpoint}/${encodeURIComponent(mealPlanId)}/dishes/${encodeURIComponent(dishId)}/disabled`,
+      { disabled },
+    );
   }
 }

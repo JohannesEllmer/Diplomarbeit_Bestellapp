@@ -1,8 +1,9 @@
 import { Component, ChangeDetectorRef } from '@angular/core';
-import { MenuItemComponent } from '../menu-item-component/menu-item-component';
-import { MenuItem } from '../../models/menu-item.model';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+
+import { MenuItemComponent } from '../menu-item-component/menu-item-component';
+import { MenuItem } from '../../models/menu-item.model';
 import { Menu } from '../../models/menu.model';
 import { DishService } from '../services/dish-editor/dish-editor';
 
@@ -44,6 +45,27 @@ export class DishEditor {
     private dishService: DishService
   ) {}
 
+  private validateDish(): string[] {
+    const errors: string[] = [];
+
+    const name = (this.dish.name ?? '').trim();
+    const description = (this.dish.description ?? '').trim();
+    const category = (this.dish.category ?? '').trim();
+    const price = Number(this.dish.price);
+
+    if (!name) errors.push('Name fehlt.');
+    if (!description) errors.push('Beschreibung fehlt.');
+    if (!category) errors.push('Kategorie fehlt.');
+
+    if (!Number.isFinite(price) || price <= 0) errors.push('Preis muss größer als 0 sein.');
+
+    return errors;
+  }
+
+  get canSave(): boolean {
+    return this.validateDish().length === 0 && !this.saving;
+  }
+
   onImageSelected(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
@@ -69,12 +91,23 @@ export class DishEditor {
   }
 
   onSave() {
-    this.saving = true;
     this.saveError = null;
+    const validationErrors = this.validateDish();
+    if (validationErrors.length > 0) {
+      // du kannst hier auch mehrere Zeilen anzeigen
+      this.saveError = 'Bitte alle Felder korrekt ausfüllen: ' + validationErrors.join(' ');
+      return; 
+    }
+
+    this.saving = true;
 
     const dishToSave: MenuItem = {
       ...this.dish,
-      id: this.dish.id || '0'
+      id: this.dish.id || '0',
+      name: (this.dish.name ?? '').trim(),
+      description: (this.dish.description ?? '').trim(),
+      category: (this.dish.category ?? '').trim(),
+      price: Number(this.dish.price ?? 0)
     };
 
     console.log('Speichere Gericht:', dishToSave);
@@ -95,7 +128,6 @@ export class DishEditor {
           };
           this.router.navigate(['/menuplaner'], { state: { menu: completeMenu } });
         } else {
-          // nur einzelnes Gericht zurück zum MenuPlanner
           this.router.navigate(['/menuplaner'], { state: { dish: savedDish } });
         }
       },

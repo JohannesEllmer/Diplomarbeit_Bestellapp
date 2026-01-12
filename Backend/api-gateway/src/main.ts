@@ -12,6 +12,8 @@ import { verifyMailer } from './auth-express/src/mailer';
 import { CORS_ORIGINS } from './auth-express/src/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { from } from 'rxjs';
+import { ClassPolicyGuard } from './profile-update.guard';
+import { UsersService } from './users/users.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,15 +23,15 @@ async function bootstrap() {
   app.use(express.json({ limit: '2mb' }));
   app.use(express.urlencoded({ extended: true }));
 
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalGuards(new ClassPolicyGuard(app.get(UsersService)));
+
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }));
 
   app.enableCors({
-    origin: (origin, cb) => {
-      if (!origin) return cb(null, true);
-      if (CORS_ORIGINS.length === 0) return cb(null, true);
-      return cb(null, CORS_ORIGINS.includes(origin));
-    },
+    origin: true,
     credentials: true,
+    methods: ['GET','POST','PATCH','PUT','DELETE','OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
 dotenv.config();

@@ -10,7 +10,7 @@ export class DishesService {
 
   async create(dto: CreateDishDto) {
     const res = await this.db.query(
-      `INSERT INTO dishes (name, description, price, allergenes)
+      `INSERT INTO app.dishes (name, description, price, allergenes)
        VALUES ($1,$2,$3,$4)
        RETURNING id, name, description, price, allergenes`,
       [dto.name, dto.description ?? null, dto.price ?? null, dto.allergenes ?? []],
@@ -21,7 +21,7 @@ export class DishesService {
   async findAll() {
     const res = await this.db.query(
       `SELECT id, name, description, price, allergenes
-       FROM dishes
+       FROM app.dishes
        ORDER BY name ASC`,
     );
     return res.rows.map(this.map);
@@ -30,7 +30,7 @@ export class DishesService {
   async findOne(id: string) {
     const res = await this.db.query(
       `SELECT id, name, description, price, allergenes
-       FROM dishes
+       FROM app.dishes
        WHERE id = $1 LIMIT 1`,
       [id],
     );
@@ -40,7 +40,7 @@ export class DishesService {
 
   async update(id: string, dto: UpdateDishDto) {
     const res = await this.db.query(
-      `UPDATE dishes
+      `UPDATE app.dishes
        SET name = COALESCE($2, name),
            description = COALESCE($3, description),
            price = COALESCE($4, price),
@@ -54,7 +54,7 @@ export class DishesService {
   }
 
   async remove(id: string) {
-    await this.db.query(`DELETE FROM dishes WHERE id = $1`, [id]);
+    await this.db.query(`DELETE FROM app.dishes WHERE id = $1`, [id]);
     return { deleted: true };
   }
 

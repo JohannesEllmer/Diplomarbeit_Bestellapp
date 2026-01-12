@@ -1,48 +1,43 @@
 <div class="user-card" [class.blocked]="user.blocked" (click)="navigateToUser($event)">
   <div class="user-summary">
-   
-
     <div class="user-info">
       <h2>{{ user.name }}</h2>
       <p class="meta">
-        <span>{{ user.email }}</span> · 
-        <span>Klasse: {{ user.class }}</span> · 
+        <span>{{ user.email }}</span> ·
+        <span>Klasse: {{ user.class }}</span> ·
         <span>Bestellungen: {{ user.orderCount }}</span>
       </p>
     </div>
 
     <div class="user-controls-row">
+      <!-- ✅ Guthaben nur anzeigen -->
       <div class="balance">
-        <span class="balance-amount">{{ user.balance | currency: 'EUR' }}</span>
-  <button class="icon-btn edit" 
-    *ngIf="!user.editingBalance"
-    (click)="startEditBalance($event)" 
-    title="Guthaben bearbeiten">✎</button>
-  <input *ngIf="user.editingBalance"
-         type="number"
-         [(ngModel)]="user.newBalance"
-         (keyup.enter)="saveBalance($event)"
-         (blur)="saveBalance($event)"
-         placeholder="Betrag"
-         class="balance-input"
-         (click)="$event.stopPropagation()" />
+        <span class="balance-amount">{{ user.balance | currency:'EUR' }}</span>
       </div>
 
       <div class="actions-inline">
-        <button class="icon-btn delete" 
-                (click)="emitDelete($event)" 
+        <button class="icon-btn delete"
+                (click)="emitDelete($event)"
                 title="Benutzer löschen">🗑</button>
-        <button class="icon-btn block" 
-                (click)="emitBlock($event)" 
+
+        <button class="icon-btn block"
+                (click)="emitBlock($event)"
                 title="Benutzer sperren">⊘</button>
+
+
+        <button class="icon-btn details"
+                (click)="toggleDetails($event)"
+                title="Details anzeigen">
+          {{ showDetails ? '▴' : '▾' }}
+        </button>
       </div>
     </div>
   </div>
 
-  <div *ngIf="user.showDetails" class="user-details" (click)="$event.stopPropagation()">
+  <div *ngIf="showDetails" class="user-details" (click)="$event.stopPropagation()">
     <div class="detail-row">
       <label>Guthaben:</label>
-      <span>{{ user.balance | currency: 'EUR' }}</span>
+      <span>{{ user.balance | currency:'EUR' }}</span>
     </div>
     <div class="detail-row">
       <label>Klasse:</label>

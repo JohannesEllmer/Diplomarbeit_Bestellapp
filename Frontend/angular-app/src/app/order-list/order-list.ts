@@ -35,15 +35,13 @@ export class OrderListComponent implements OnInit, OnDestroy {
   selectedCameraId: string | null = null;
   resolution: Res = { w: 640, h: 480 };
   scanMessage = '';
-  private pendingItem?: OrderItem;
   private scanningInProgress = false;
 
   private destroy$ = new Subject<void>();
 
   constructor(
     private router: Router,
-    private adminOrders: AdminOrderService,
-
+    private adminOrders: AdminOrderService
   ) {}
 
   ngOnInit(): void {
@@ -66,7 +64,6 @@ export class OrderListComponent implements OnInit, OnDestroy {
   loadOrders(): void {
     this.adminOrders.getOrdersFlatItems().subscribe(items => {
       const all = items ?? [];
-
       this.orderItems = all.filter(i => !i.delivered);
       this.completedItems = all.filter(i => i.delivered);
 
@@ -132,8 +129,7 @@ export class OrderListComponent implements OnInit, OnDestroy {
     this.completedCollapsed = !this.completedCollapsed;
   }
 
-  async openScanner(item: OrderItem): Promise<void> {
-    this.pendingItem = item;
+  async openScanner(_item: OrderItem): Promise<void> {
     this.scanning = true;
     this.scanMessage = 'Kamera wird initialisiert …';
 
@@ -143,13 +139,13 @@ export class OrderListComponent implements OnInit, OnDestroy {
       this.scanMessage = 'Halte den QR-Code vor die Kamera.';
     } catch (err: any) {
       this.scanMessage = 'Kamera konnte nicht gestartet werden: ' + (err?.message || err);
+      this.scanning = false;
     }
   }
 
   async closeScanner(): Promise<void> {
     await this.stopScanner();
     this.scanning = false;
-    this.pendingItem = undefined;
     this.scanMessage = '';
   }
 
@@ -157,6 +153,7 @@ export class OrderListComponent implements OnInit, OnDestroy {
     const devices = await Html5Qrcode.getCameras();
     this.cameras = (devices || []).map(d => ({ id: d.id, label: d.label }));
     if (!this.cameras.length) throw new Error('Keine Kamera gefunden.');
+
     if (!this.selectedCameraId) {
       const back = this.cameras.find(c => (c.label || '').toLowerCase().includes('back'));
       this.selectedCameraId = (back || this.cameras[0]).id;
@@ -167,39 +164,43 @@ export class OrderListComponent implements OnInit, OnDestroy {
     if (this.scanningInProgress) return;
     this.scanningInProgress = true;
 
-    const elementId = 'qr-reader';
-    if (this.html5?.isScanning) {
-      await this.stopScanner();
-    }
-    this.html5 = new Html5Qrcode(elementId, {
-      verbose: false,
-      formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
-    });
+    try {
+      const elementId = 'qr-reader';
 
-    await this.html5.start(
-      { deviceId: { exact: this.selectedCameraId! } },
-      {
-        fps: 10,
-        qrbox: (vw: number, vh: number) => {
-          const minEdge = Math.min(vw, vh);
-          const boxSize = Math.floor(minEdge * 0.6);
-          return { width: boxSize, height: boxSize };
+      if (this.html5?.isScanning) {
+        await this.stopScanner();
+      }
+
+      this.html5 = new Html5Qrcode(elementId, {
+        verbose: false,
+        formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
+      });
+
+      await this.html5.start(
+        { deviceId: { exact: this.selectedCameraId! } },
+        {
+          fps: 10,
+          qrbox: (vw: number, vh: number) => {
+            const minEdge = Math.min(vw, vh);
+            const boxSize = Math.floor(minEdge * 0.6);
+            return { width: boxSize, height: boxSize };
+          },
+          aspectRatio: this.resolution.w / this.resolution.h
         },
-        aspectRatio: this.resolution.w / this.resolution.h
-      },
-      decodedText => this.onScanSuccess(decodedText),
-      errorMessage => this.onScanError(errorMessage)
-    );
-
-    this.scanningInProgress = false;
+        decodedText => this.onScanSuccess(decodedText),
+        _errorMessage => this.onScanError()
+      );
+    } finally {
+      this.scanningInProgress = false;
+    }
   }
 
   private async stopScanner(): Promise<void> {
+    this.scanningInProgress = false;
+
     if (this.html5) {
       try {
-        if (this.html5.isScanning) {
-          await this.html5.stop();
-        }
+        if (this.html5.isScanning) await this.html5.stop();
         await this.html5.clear();
       } catch {}
       this.html5 = undefined;
@@ -218,16 +219,15 @@ export class OrderListComponent implements OnInit, OnDestroy {
     await this.startScanner();
   }
 
+  // ✅ akzeptiert UUID ODER numerische IDs
   private extractOrderIdFromQr(code: string): string | null {
     const c = (code || '').trim();
-    const m = /^Order-([0-9a-fA-F-]{36})$/.exec(c);
+    const m = /^Order-(.+)$/.exec(c);
     return m ? m[1] : null;
   }
 
   private onScanSuccess(decodedText: string): void {
-    try {
-      navigator.vibrate?.(50);
-    } catch {}
+    try { navigator.vibrate?.(50); } catch {}
 
     const code = decodedText?.trim();
     if (!code) return;
@@ -249,9 +249,8 @@ export class OrderListComponent implements OnInit, OnDestroy {
         }
 
         this.loadOrders();
-
         await this.closeScanner();
-        alert('Bestellung erfolgreich abgeschlossen!');
+        alert('Bestellung erfolgreich abgeschlossen! (Guthaben abgebucht)');
       },
       error: async (err) => {
         await this.closeScanner();
@@ -260,7 +259,8 @@ export class OrderListComponent implements OnInit, OnDestroy {
     });
   }
 
-  private onScanError(_msg: string): void {
+  private onScanError(): void {
+   
   }
 
   navigateToUser(userId: string): void {
