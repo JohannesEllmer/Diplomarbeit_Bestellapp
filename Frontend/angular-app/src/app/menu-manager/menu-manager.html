@@ -8,7 +8,7 @@
     @for (menu of Menus; track menu.id) {
       <div
         class="menu-container"
-        [class.selected]="selectedMenu === menu"
+        [class.selected]="menu.id === activeMenuId"
         (click)="selectMenu(menu)"
       >
         <div class="menu-header-row">
@@ -17,13 +17,14 @@
               {{ menu.title }}
             </h2>
 
-            @if (selectedMenu === menu) {
+            @if (menu.id === activeMenuId) {
               <span class="menu-status-pill">
                 <span class="status-dot"></span>
                 Aktiviert
               </span>
             }
           </div>
+
           <div class="menu-actions" (click)="$event.stopPropagation()">
             <button
               class="menu-action-btn"
@@ -55,7 +56,7 @@
         </div>
 
         <div class="menu-dishes">
-          @if (menu.dishes.length > 0) {
+         @if (menu.dishes.length > 0) {
             @for (dish of menu.dishes; track dish.id) {
               <div class="menu-dish">
                 <div class="menu-dish-main">
@@ -64,9 +65,12 @@
                     {{ dish.price }} €
                   </span>
                 </div>
-                <div class="dish-description">
-                  {{ dish.description }}
-                </div>
+
+                @if (dish.description) {
+                  <div class="dish-description">
+                    {{ dish.description }}
+                  </div>
+                }
               </div>
             }
           } @else {

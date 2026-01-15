@@ -106,7 +106,7 @@ export class AppMenuComponent implements OnInit, OnDestroy {
       shortLabel: 'Benutzer'
     },
     {
-      label: 'Admin Profil',
+      label: 'Scanner',
       route: '/admin/balance-scan',
       roles: [ 'INHABER', 'ADMIN'],
       section: 'management'

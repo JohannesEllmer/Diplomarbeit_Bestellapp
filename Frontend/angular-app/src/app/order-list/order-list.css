@@ -10,6 +10,13 @@
   font-family: 'Segoe UI', sans-serif;
 }
 
+.top-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+
 .menu-header {
   background: #0284c7;
   color: white;

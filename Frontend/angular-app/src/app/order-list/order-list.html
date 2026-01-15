@@ -1,11 +1,15 @@
 <div class="order-management-container">
-
-
+ <div class="top-actions">
+    <button type="button" class="complete-btn" (click)="goToScanner()">
+      Scanner öffnen
+    </button>
+  </div>
   <div class="filter-container">
     <div class="filter-group">
       <span>Gruppieren nach:</span>
       <button
         *ngFor="let option of groupOptions"
+        type="button"
         class="filter-btn"
         [class.active]="activeGroup === option"
         (click)="activeGroup = option">
@@ -13,30 +17,33 @@
       </button>
     </div>
   </div>
-
   <div class="pagination-controls">
-    <label>
+    <label class="items-per-page">
       Elemente pro Seite:
       <select [(ngModel)]="itemsPerPage" (change)="changeItemsPerPage(itemsPerPage)">
-        <option value="5">5</option>
-        <option value="10">10</option>
-        <option value="20">20</option>
-        <option value="50">50</option>
+        <option [ngValue]="5">5</option>
+        <option [ngValue]="10">10</option>
+        <option [ngValue]="20">20</option>
+        <option [ngValue]="50">50</option>
       </select>
     </label>
 
-    <div class="paginator">
-      <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1">‹</button>
+    <div class="paginator" *ngIf="pages.length">
+      <button type="button" (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1">‹</button>
+
       <button
         *ngFor="let page of pages"
+        type="button"
         (click)="changePage(page)"
         [class.active]="page === currentPage">
         {{ page }}
       </button>
-      <button (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages">›</button>
+
+      <button type="button" (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages">›</button>
     </div>
   </div>
 
+  <!-- Open Count -->
   <div class="open-count" *ngIf="orderItems.length">
     <p>
       {{ orderItems.length }} offene Bestellung{{ orderItems.length > 1 ? 'en' : '' }}
@@ -45,46 +52,50 @@
   </div>
 
   <main class="order-list">
+
     <section class="open-orders">
-      <div *ngFor="let group of groupedOrders | keyvalue">
-        <div class="order-group">
+
+      <!-- Wenn keine offenen -->
+      <div *ngIf="!orderItems.length" class="no-results global-no-open">
+        <p>Aktuell keine offenen Bestellungen.</p>
+      </div>
+
+      <!-- Gruppen -->
+      <ng-container *ngIf="orderItems.length">
+        <div *ngFor="let group of groupedOrders | keyvalue" class="order-group">
           <h3>{{ group.key }}</h3>
+
+          <div *ngIf="group.value.length === 0" class="no-results">
+            <p>Keine offenen Bestellungen in dieser Gruppe.</p>
+          </div>
 
           <div *ngFor="let item of group.value" class="order-card">
             <div class="order-summary">
               <div class="order-info">
                 <h2>{{ item.menuItem.name }} × {{ item.quantity }}</h2>
+
                 <p class="meta">
                   <span>{{ item.menuItem.price * item.quantity | currency:'EUR' }}</span> ·
                   <span>Lieferzeit: {{ item.deliveryTime }}</span> ·
                   <span>
                     Bestellt von:
-                    <a (click)="navigateToUser(item.user.id)">{{ item.user.name }}</a>
+                    <a role="button" tabindex="0" (click)="navigateToUser(item.user.id)">
+                      {{ item.user.name }}
+                    </a>
                   </span>
                 </p>
-                <p *ngIf="item.note" class="note">Anmerkung: {{ item.note }}</p>
-              </div>
 
-              <div class="order-controls">
-                <button class="complete-btn" (click)="openScanner(item)">
-                  Abschließen
-                </button>
+                <p *ngIf="item.note" class="note">
+                  Anmerkung: {{ item.note }}
+                </p>
               </div>
             </div>
           </div>
-
-          <div *ngIf="group.value.length === 0" class="no-results">
-            <p>Keine offenen Bestellungen in dieser Gruppe.</p>
-          </div>
         </div>
-      </div>
-
-      <div *ngIf="!orderItems.length" class="no-results global-no-open">
-        <p>Aktuell keine offenen Bestellungen.</p>
-      </div>
+      </ng-container>
     </section>
 
-    <!-- Abgeschlossene Bestellungen - einklappbar -->
+    <!-- Abgeschlossene Bestellungen -->
     <section class="completed-orders" *ngIf="completedItems.length">
       <div class="completed-header" (click)="toggleCompletedOrders()">
         <h2>
@@ -98,15 +109,21 @@
           <div class="order-summary">
             <div class="order-info">
               <h2>{{ item.menuItem.name }} × {{ item.quantity }}</h2>
+
               <p class="meta">
                 <span>{{ item.menuItem.price * item.quantity | currency:'EUR' }}</span> ·
                 <span>Lieferzeit: {{ item.deliveryTime }}</span> ·
                 <span>
                   Bestellt von:
-                  <a (click)="navigateToUser(item.user.id)">{{ item.user.name }}</a>
+                  <a role="button" tabindex="0" (click)="navigateToUser(item.user.id)">
+                    {{ item.user.name }}
+                  </a>
                 </span>
               </p>
-              <p *ngIf="item.note" class="note">Anmerkung: {{ item.note }}</p>
+
+              <p *ngIf="item.note" class="note">
+                Anmerkung: {{ item.note }}
+              </p>
             </div>
 
             <div class="order-status">
@@ -116,8 +133,10 @@
         </div>
       </div>
     </section>
+
   </main>
 
+  <!-- Footer -->
   <footer class="order-footer">
     <div class="footer-grid">
       <div class="footer-item">
@@ -126,47 +145,13 @@
           <strong>{{ totalSum | currency:'EUR' }}</strong>
         </div>
       </div>
+
       <div class="footer-actions">
-        <button class="finance-btn" (click)="goToFinance()">Alle anzeigen / Finanzseite</button>
+        <button type="button" class="finance-btn" (click)="goToFinance()">
+          Alle anzeigen / Finanzseite
+        </button>
       </div>
     </div>
   </footer>
-</div>
 
-<!-- QR Scanner Modal -->
-<div class="scanner-backdrop" *ngIf="scanning">
-  <div class="scanner-modal">
-    <header class="scanner-header">
-      <h3>QR-Code scannen</h3>
-      <button class="close-btn" (click)="closeScanner()">×</button>
-    </header>
-
-    <div class="scanner-controls">
-      <label>
-        Kamera:
-        <select [(ngModel)]="selectedCameraId" (change)="switchCamera()">
-          <option *ngFor="let cam of cameras" [value]="cam.id">
-            {{ cam.label || 'Kamera ' + cam.id }}
-          </option>
-        </select>
-      </label>
-
-      <label>
-        Auflösung:
-        <select [(ngModel)]="resolution" (change)="restartScanner()">
-          <option [ngValue]="{w:640,h:480}">640×480</option>
-          <option [ngValue]="{w:1280,h:720}">1280×720</option>
-          <option [ngValue]="{w:1920,h:1080}">1920×1080</option>
-        </select>
-      </label>
-    </div>
-
-    <div id="qr-reader" class="qr-reader"></div>
-
-    <p class="scan-hint" *ngIf="scanMessage">{{ scanMessage }}</p>
-
-    <footer class="scanner-footer">
-      <button (click)="closeScanner()">Abbrechen</button>
-    </footer>
-  </div>
 </div>

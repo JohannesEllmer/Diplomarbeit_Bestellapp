@@ -32,7 +32,8 @@ body {
 }
 
 .page {
-  min-height: 100vh;
+  min-height: 90vh;
+  margin-top: 3rem;
   display: grid;
   place-items: center;
   padding: clamp(12px, 2vw, 18px);
@@ -44,7 +45,8 @@ body {
 
 .card {
   width: min(1050px, 100%);
-  max-height: 92vh;
+  max-height: 90vh;
+  margin-top: 5rem;
   background: var(--card);
   border-radius: 20px;
   box-shadow: var(--shadow);

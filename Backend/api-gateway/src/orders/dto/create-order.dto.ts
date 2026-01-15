@@ -16,11 +16,11 @@ export class CreateOrderDto {
   @Type(() => UserRefDto)
   user: UserRefDto;
 
-  @ApiProperty()
+   @ApiProperty()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateOrderItemDto)
-  items: CreateOrderItemDto[];
+  items!: CreateOrderItemDto[];
 
   @ApiProperty()
   @IsNumber()

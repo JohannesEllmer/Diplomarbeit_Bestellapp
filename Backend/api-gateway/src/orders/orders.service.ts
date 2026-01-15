@@ -22,7 +22,7 @@ export class OrdersService {
     return out;
   }
 
-  // ✅ Bestellung erstellt: kein Guthaben abbuchen, nur "reserviert" prüfen
+
   async createForUser(jwtUserId: string, dto: CreateOrderDto): Promise<OrderResponseDto> {
     if (dto.user?.id && String(dto.user.id) !== String(jwtUserId)) {
       throw new ForbiddenException('CANNOT_CREATE_ORDER_FOR_OTHER_USER');

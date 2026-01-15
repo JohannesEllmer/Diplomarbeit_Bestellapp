@@ -1,14 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { interval, Subject, takeUntil, filter as rxFilter } from 'rxjs';
+import { interval, Subject, takeUntil } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { OrderItem } from '../../models/menu-item.model';
 import { AdminOrderService } from '../services/order/admin-order.service';
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
-
-type Camera = { id: string; label?: string };
-type Res = { w: number; h: number };
 
 @Component({
   selector: 'app-order-list',
@@ -29,14 +25,6 @@ export class OrderListComponent implements OnInit, OnDestroy {
   completedItems: OrderItem[] = [];
   completedCollapsed = true;
 
-  scanning = false;
-  private html5?: Html5Qrcode;
-  cameras: Camera[] = [];
-  selectedCameraId: string | null = null;
-  resolution: Res = { w: 640, h: 480 };
-  scanMessage = '';
-  private scanningInProgress = false;
-
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -48,17 +36,13 @@ export class OrderListComponent implements OnInit, OnDestroy {
     this.loadOrders();
 
     interval(5000)
-      .pipe(
-        takeUntil(this.destroy$),
-        rxFilter(() => !this.scanning)
-      )
+      .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.loadOrders());
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    this.stopScanner().catch(() => {});
   }
 
   loadOrders(): void {
@@ -129,138 +113,10 @@ export class OrderListComponent implements OnInit, OnDestroy {
     this.completedCollapsed = !this.completedCollapsed;
   }
 
-  async openScanner(_item: OrderItem): Promise<void> {
-    this.scanning = true;
-    this.scanMessage = 'Kamera wird initialisiert …';
-
-    try {
-      await this.initCameras();
-      await this.startScanner();
-      this.scanMessage = 'Halte den QR-Code vor die Kamera.';
-    } catch (err: any) {
-      this.scanMessage = 'Kamera konnte nicht gestartet werden: ' + (err?.message || err);
-      this.scanning = false;
-    }
-  }
-
-  async closeScanner(): Promise<void> {
-    await this.stopScanner();
-    this.scanning = false;
-    this.scanMessage = '';
-  }
-
-  private async initCameras(): Promise<void> {
-    const devices = await Html5Qrcode.getCameras();
-    this.cameras = (devices || []).map(d => ({ id: d.id, label: d.label }));
-    if (!this.cameras.length) throw new Error('Keine Kamera gefunden.');
-
-    if (!this.selectedCameraId) {
-      const back = this.cameras.find(c => (c.label || '').toLowerCase().includes('back'));
-      this.selectedCameraId = (back || this.cameras[0]).id;
-    }
-  }
-
-  async startScanner(): Promise<void> {
-    if (this.scanningInProgress) return;
-    this.scanningInProgress = true;
-
-    try {
-      const elementId = 'qr-reader';
-
-      if (this.html5?.isScanning) {
-        await this.stopScanner();
-      }
-
-      this.html5 = new Html5Qrcode(elementId, {
-        verbose: false,
-        formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
-      });
-
-      await this.html5.start(
-        { deviceId: { exact: this.selectedCameraId! } },
-        {
-          fps: 10,
-          qrbox: (vw: number, vh: number) => {
-            const minEdge = Math.min(vw, vh);
-            const boxSize = Math.floor(minEdge * 0.6);
-            return { width: boxSize, height: boxSize };
-          },
-          aspectRatio: this.resolution.w / this.resolution.h
-        },
-        decodedText => this.onScanSuccess(decodedText),
-        _errorMessage => this.onScanError()
-      );
-    } finally {
-      this.scanningInProgress = false;
-    }
-  }
-
-  private async stopScanner(): Promise<void> {
-    this.scanningInProgress = false;
-
-    if (this.html5) {
-      try {
-        if (this.html5.isScanning) await this.html5.stop();
-        await this.html5.clear();
-      } catch {}
-      this.html5 = undefined;
-    }
-  }
-
-  async switchCamera(): Promise<void> {
-    if (this.html5) {
-      this.scanMessage = 'Wechsle Kamera …';
-      await this.restartScanner();
-    }
-  }
-
-  async restartScanner(): Promise<void> {
-    await this.stopScanner();
-    await this.startScanner();
-  }
-
-  // ✅ akzeptiert UUID ODER numerische IDs
-  private extractOrderIdFromQr(code: string): string | null {
-    const c = (code || '').trim();
-    const m = /^Order-(.+)$/.exec(c);
-    return m ? m[1] : null;
-  }
-
-  private onScanSuccess(decodedText: string): void {
-    try { navigator.vibrate?.(50); } catch {}
-
-    const code = decodedText?.trim();
-    if (!code) return;
-
-    const orderId = this.extractOrderIdFromQr(code);
-    if (!orderId) {
-      this.scanMessage = 'Ungültiger QR-Code.';
-      return;
-    }
-
-    this.scanMessage = 'Code erkannt. Bestellung wird abgeschlossen …';
-
-    this.adminOrders.completeByQrCode(code).subscribe({
-      next: async (res) => {
-        if (!res?.ok) {
-          await this.closeScanner();
-          alert('Konnte Bestellung nicht abschließen (Backend).');
-          return;
-        }
-
-        this.loadOrders();
-        await this.closeScanner();
-        alert('Bestellung erfolgreich abgeschlossen! (Guthaben abgebucht)');
-      },
-      error: async (err) => {
-        await this.closeScanner();
-        alert('Fehler beim Abschließen: ' + (err?.message || err));
-      }
-    });
-  }
-
-  private onScanError(): void {
-   
+  goToScanner(): void {
+    // ggf. an deine echte Route anpassen:
+    // z.B. '/admin/balance-scan' oder '/admin/balance'
+    this.router.navigate(['/admin/balance-scan']);
   }
 
   navigateToUser(userId: string): void {

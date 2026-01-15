@@ -5,6 +5,7 @@ import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { finalize } from 'rxjs/operators';
 
 import { AdminBalanceService } from '../services/admin-balance';
+import { AdminOrderService } from '../services/order/admin-order.service';
 
 type ScanResult = {
   ok: boolean;
@@ -14,11 +15,20 @@ type ScanResult = {
   alreadyUsed?: boolean;
 };
 
+// ✅ für Order-Scan Ergebnis (minimal, weil Backend-Response bei dir { ok, order? } ist)
+type OrderScanResult = {
+  ok: boolean;
+  order?: any;
+};
+
 type CameraInfo = { id: string; label: string };
+
+type ScanType = 'balance' | 'order' | 'unknown';
 
 type HistoryItem = {
   at: number;
   code: string;
+  type: ScanType;
   ok: boolean;
   alreadyUsed?: boolean;
   userId?: string;
@@ -38,6 +48,9 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
   scanning = false;
   message = '';
   lastResult: ScanResult | null = null;
+
+  // ✅ optional: letztes Order-Ergebnis
+  lastOrderResult: OrderScanResult | null = null;
 
   // UI / Features
   cameras: CameraInfo[] = [];
@@ -61,7 +74,10 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
 
   private readonly STORAGE_CAM = 'admin_balance_scan_camera';
 
-  constructor(private api: AdminBalanceService) {}
+  constructor(
+    private api: AdminBalanceService,
+    private adminOrders: AdminOrderService
+  ) {}
 
   async ngOnInit(): Promise<void> {
     await this.loadCamerasSafe();
@@ -78,12 +94,13 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
     this.scanning = true;
     this.message = 'Kamera wird initialisiert …';
     this.lastResult = null;
+    this.lastOrderResult = null;
 
     try {
       await this.loadCamerasSafe(true);
       this.pickDefaultCameraIfMissing();
       await this.startScanner();
-      this.message = 'Halte den Guthaben-QR-Code vor die Kamera.';
+      this.message = 'Halte einen QR-Code (Guthaben oder Order) vor die Kamera.';
     } catch (e: any) {
       this.message =
         'Kamera konnte nicht gestartet werden: ' + (e?.message || String(e));
@@ -106,7 +123,7 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
       this.message = 'Wechsle Kamera …';
       await this.stopScanner();
       await this.startScanner();
-      this.message = 'Halte den Guthaben-QR-Code vor die Kamera.';
+      this.message = 'Halte einen QR-Code (Guthaben oder Order) vor die Kamera.';
     }
   }
 
@@ -155,7 +172,6 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
         label: (d.label || 'Kamera').trim() || 'Kamera'
       }));
     } catch (e) {
-      // iOS / Safari: ohne HTTPS oder ohne Permission kann das failen
       this.cameras = [];
     }
   }
@@ -169,7 +185,6 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
     if (this.selectedCameraId && this.cameras.some(c => c.id === this.selectedCameraId)) return;
     if (!this.cameras.length) return;
 
-    // "back" bevorzugen, sonst erste
     const back = this.cameras.find(c => (c.label || '').toLowerCase().includes('back'));
     this.selectedCameraId = (back || this.cameras[0]).id;
     localStorage.setItem(this.STORAGE_CAM, this.selectedCameraId);
@@ -199,7 +214,6 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
         { deviceId: { exact: this.selectedCameraId } },
         {
           fps: 12,
-          // QR-Box wird vom Video-Viewport abgeleitet (bei uns ist Container quadratisch)
           qrbox: (vw: number, vh: number) => {
             const minEdge = Math.min(vw, vh);
             const size = Math.floor(minEdge * 0.78);
@@ -226,6 +240,21 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
   }
 
   // -----------------------------
+  // Scan type detection
+  // -----------------------------
+  private detectType(code: string): ScanType {
+    const c = (code || '').trim();
+
+    // ✅ Guthaben: BalanceReq-UUID
+    if (/^BalanceReq-[0-9a-fA-F-]{36}$/.test(c)) return 'balance';
+
+    // ✅ Order: Order-<irgendwas>
+    if (/^Order-.+$/i.test(c)) return 'order';
+
+    return 'unknown';
+  }
+
+  // -----------------------------
   // Scan handling
   // -----------------------------
   private onScanSuccess(decodedText: string, fromManual: boolean): void {
@@ -235,19 +264,21 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
     // schnelle UI Rückmeldung
     if (!fromManual) this.manualCode = code;
 
-    // Validierung
-    if (!/^BalanceReq-[0-9a-fA-F-]{36}$/.test(code)) {
-      this.message = 'Kein gültiger Guthaben-QR-Code.';
+    const type = this.detectType(code);
+
+    if (type === 'unknown') {
+      this.message = 'Unbekannter QR-Code.';
       this.pushHistory({
         at: Date.now(),
         code,
+        type,
         ok: false,
-        msg: 'Ungültiger Code (Format)'
+        msg: 'Unbekanntes Format'
       });
       return;
     }
 
-    // Debounce: gleiche Codes nicht dauernd bestätigen
+    // Debounce: gleiche Codes nicht dauernd bestätigen (gilt für beide Typen)
     const now = Date.now();
     if (this.confirmInFlight) return;
 
@@ -259,11 +290,21 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
     this.lastConfirmedCode = code;
     this.lastConfirmedAt = now;
 
-    this.message = 'QR erkannt. Bestätigung läuft …';
-
     // optional: Scanner "pausieren", damit es nicht mehrfach feuert
     const h: any = this.html5 as any;
     h?.pause?.(true);
+
+    if (type === 'balance') {
+      this.handleBalance(code, h);
+      return;
+    }
+
+    // type === 'order'
+    this.handleOrder(code, h);
+  }
+
+  private handleBalance(code: string, h: any): void {
+    this.message = 'Guthaben-QR erkannt. Bestätigung läuft …';
 
     this.api
       .confirm(code)
@@ -271,6 +312,7 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (res) => {
           this.lastResult = res ?? { ok: false };
+          this.lastOrderResult = null;
 
           if (this.lastResult?.ok) {
             const used = !!this.lastResult.alreadyUsed;
@@ -279,6 +321,7 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
             this.pushHistory({
               at: Date.now(),
               code,
+              type: 'balance',
               ok: true,
               alreadyUsed: used,
               userId: this.lastResult.userId,
@@ -290,7 +333,6 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
             this.onSuccessFeedback();
 
             if (this.autoStopOnSuccess && !used) {
-              // stoppt nach echtem Erfolg (optional auch bei alreadyUsed)
               this.stop().catch(() => {});
               return;
             }
@@ -299,26 +341,94 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
             this.pushHistory({
               at: Date.now(),
               code,
+              type: 'balance',
               ok: false,
               msg: 'Backend: ok=false'
             });
           }
 
-          // resume scanner
           h?.resume?.();
         },
         error: (err) => {
           this.lastResult = { ok: false };
+          this.lastOrderResult = null;
+
           const msg = err?.error?.message || err?.message || String(err);
           this.message = 'Fehler: ' + msg;
 
           this.pushHistory({
             at: Date.now(),
             code,
+            type: 'balance',
             ok: false,
             msg: 'Fehler: ' + msg
           });
 
+          this.confirmInFlight = false;
+          h?.resume?.();
+        }
+      });
+  }
+
+  private handleOrder(code: string, h: any): void {
+    this.message = 'Order-QR erkannt. Bestellung wird abgeschlossen …';
+
+    // ✅ sendet GENAU das gleiche wie vorher an dein Backend: { code }
+    this.adminOrders
+      .completeByQrCode(code)
+      .pipe(finalize(() => (this.confirmInFlight = false)))
+      .subscribe({
+        next: (res) => {
+          this.lastOrderResult = res ?? { ok: false };
+          this.lastResult = null;
+
+          if (this.lastOrderResult?.ok) {
+            this.message = 'OK. Bestellung abgeschlossen.';
+
+            this.pushHistory({
+              at: Date.now(),
+              code,
+              type: 'order',
+              ok: true,
+              msg: 'Order abgeschlossen'
+            });
+
+            this.onSuccessFeedback();
+
+            // analog zu Guthaben: bei Erfolg ggf. stoppen
+            if (this.autoStopOnSuccess) {
+              this.stop().catch(() => {});
+              return;
+            }
+          } else {
+            this.message = 'Abschluss fehlgeschlagen.';
+            this.pushHistory({
+              at: Date.now(),
+              code,
+              type: 'order',
+              ok: false,
+              msg: 'Backend: ok=false'
+            });
+          }
+
+          h?.resume?.();
+        },
+        error: (err) => {
+          this.lastOrderResult = { ok: false };
+          this.lastResult = null;
+
+          const msg = err?.error?.message || err?.message || String(err);
+          this.message = 'Fehler: ' + msg;
+
+          this.pushHistory({
+            at: Date.now(),
+            code,
+            type: 'order',
+            ok: false,
+            msg: 'Fehler: ' + msg
+          });
+
+          this.confirmInFlight = false;
           h?.resume?.();
         }
       });
@@ -331,7 +441,6 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
 
     if (this.soundOnSuccess) {
       try {
-        // kleiner Beep via WebAudio (keine Datei nötig)
         const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
         const o = ctx.createOscillator();
         const g = ctx.createGain();

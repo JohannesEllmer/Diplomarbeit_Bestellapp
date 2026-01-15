@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, ParseUUIDPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+  ParseUUIDPipe,
+} from '@nestjs/common';
+
 import { DishesService } from './dishes.service';
 import { CreateDishDto } from './dto/create-dish.dto';
 import { UpdateDishDto } from './dto/update-dish.dto';
@@ -11,24 +22,28 @@ export class DishesController {
   constructor(private readonly svc: DishesService) {}
 
   @Get()
-  findAll() { return this.svc.findAll(); }
+  findAll() {
+    return this.svc.findAll();
+  }
 
   @Get(':id')
-  findOne(@Param('id', new ParseUUIDPipe({ version: '7' })) id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.svc.findOne(id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INHABER', 'ADMIN')
   @Post()
-  create(@Body() dto: CreateDishDto) { return this.svc.create(dto); }
+  create(@Body() dto: CreateDishDto) {
+    return this.svc.create(dto);
+  }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INHABER', 'ADMIN')
   @Patch(':id')
   update(
-    @Param('id', new ParseUUIDPipe({ version: '7' })) id: string,
-    @Body() dto: UpdateDishDto
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateDishDto,
   ) {
     return this.svc.update(id, dto);
   }
@@ -36,7 +51,7 @@ export class DishesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INHABER', 'ADMIN')
   @Delete(':id')
-  remove(@Param('id', new ParseUUIDPipe({ version: '7' })) id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.svc.remove(id);
   }
 }
