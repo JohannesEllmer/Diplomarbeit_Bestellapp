@@ -1,4 +1,6 @@
-import { Component, AfterViewInit,
+import {
+  Component,
+  AfterViewInit,
   ViewChild,
   ElementRef,
   OnInit
@@ -30,6 +32,22 @@ interface FinanceRow {
 }
 
 type Alert = { severity: 'info' | 'warn' | 'danger'; message: string };
+
+type TrendingRow = {
+  key: string;
+  name: string;
+  qty: number;
+  revenue: number;
+};
+
+type UiOrderItem = {
+  key: string;
+  name: string;
+  qty: number;
+  price: number;
+  sum: number;
+  note?: string;
+};
 
 @Component({
   selector: 'app-statistics-page',
@@ -87,9 +105,11 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
   deliveredFilter: 'all' | 'open' | 'delivered' = 'all';
   sortOrdersBy: 'newest' | 'oldest' | 'priceDesc' | 'priceAsc' = 'newest';
 
-
   selectedOrder: StatOrder | null = null;
   selectedDay: DayData | null = null;
+
+  // ✅ Top Trending: nur Top 3 (aber Styling wie vorhin "cards")
+  topTrending: TrendingRow[] = [];
 
   constructor(private stats: StatisticsService) {}
 
@@ -130,13 +150,12 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
     this.calculateTrends();
     this.recalculateFinance();
     this.updateChart();
+    this.recalculateTrending();
   }
-
 
   private calculateDisplayMode(): void {
     const diff =
-      (new Date(this.endDate).getTime() -
-        new Date(this.startDate).getTime()) /
+      (new Date(this.endDate).getTime() - new Date(this.startDate).getTime()) /
       86400000;
     this.displayMode = diff > 10 ? 'weeks' : 'days';
   }
@@ -151,7 +170,7 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
       (s: number, d: DayData) =>
         s +
         d.ordersList.reduce(
-          (ds: number, o: StatOrder) => ds + o.totalPrice,
+          (ds: number, o: StatOrder) => ds + Number(o.totalPrice ?? 0),
           0
         ),
       0
@@ -169,8 +188,7 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
   }
 
   calculateTrends(): void {
-    this.trendOrders =
-      this.totalOrders >= this.previousOrders ? 'up' : 'down';
+    this.trendOrders = this.totalOrders >= this.previousOrders ? 'up' : 'down';
     this.trendCustomers =
       this.totalCustomers >= this.previousCustomers ? 'up' : 'down';
     this.trendRevenue =
@@ -186,7 +204,7 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
           label: d.date,
           orders: d.ordersList.length,
           gross: d.ordersList.reduce(
-            (s: number, o: StatOrder) => s + o.totalPrice,
+            (s: number, o: StatOrder) => s + Number(o.totalPrice ?? 0),
             0
           )
         });
@@ -220,8 +238,38 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // Chart
+  // ✅ Trending: Top 3, Sortierung nach Menge (dann Umsatz)
+  private recalculateTrending(): void {
+    const map = new Map<string, TrendingRow>();
 
+    for (const d of this.days ?? []) {
+      for (const o of d.ordersList ?? []) {
+        const items = this.extractItems(o);
+
+        for (const it of items) {
+          const key = it.key;
+          const name = it.name;
+
+          const prev = map.get(key);
+          if (!prev) {
+            map.set(key, { key, name, qty: it.qty, revenue: it.sum });
+          } else {
+            prev.qty += it.qty;
+            prev.revenue += it.sum;
+          }
+        }
+      }
+    }
+
+    const arr = Array.from(map.values());
+    arr.sort((a, b) => b.qty - a.qty || b.revenue - a.revenue);
+
+    this.topTrending = arr.slice(0, 3);
+  }
+
+  // -------------------------
+  // Chart
+  // -------------------------
   toggleChartType(type: ChartType): void {
     if (type === 'line' && this.days.length < 5) return;
     this.selectedChartType = type;
@@ -241,7 +289,7 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
       this.displayMode === 'days'
         ? this.days.map(d =>
             d.ordersList.reduce(
-              (s: number, o: StatOrder) => s + o.totalPrice,
+              (s: number, o: StatOrder) => s + Number(o.totalPrice ?? 0),
               0
             )
           )
@@ -265,7 +313,6 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
     const ctx = this.chartCanvas.nativeElement.getContext('2d');
     if (ctx) this.chart = new Chart(ctx, cfg);
   }
-
 
   exportFinancePDF(): void {
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
@@ -300,56 +347,50 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
     }
   }
 
+  // -------------------------
+  // Orders Filtering + View
+  // -------------------------
+  get filteredDays(): DayData[] {
+    const q = this.orderQuery.trim().toLowerCase();
+    const result: DayData[] = [];
 
-get filteredDays(): DayData[] {
-  const q = this.orderQuery.trim().toLowerCase();
+    for (const day of this.days) {
+      let orders = [...day.ordersList];
 
-  const result: DayData[] = [];
+      if (q) {
+        orders = orders.filter(o => {
+          const user = (o.user?.name ?? '').toLowerCase();
+          const date = (day.date ?? '').toLowerCase();
+          const dishes = this.orderDishNames(o).join(' ').toLowerCase();
+          return user.includes(q) || date.includes(q) || dishes.includes(q);
+        });
+      }
 
-  for (const day of this.days) {
-    let orders = [...day.ordersList];
+      if (this.deliveredFilter === 'delivered') {
+        orders = orders.filter(o => (o as any).delivered === true);
+      } else if (this.deliveredFilter === 'open') {
+        orders = orders.filter(o => (o as any).delivered === false);
+      }
 
-    // Suche
-    if (q) {
-      orders = orders.filter(o =>
-        o.id.toLowerCase().includes(q) ||
-        (o.user?.name ?? '').toLowerCase().includes(q) ||
-        day.date.toLowerCase().includes(q)
-      );
+      switch (this.sortOrdersBy) {
+        case 'priceAsc':
+          orders.sort((a, b) => Number(a.totalPrice ?? 0) - Number(b.totalPrice ?? 0));
+          break;
+        case 'priceDesc':
+          orders.sort((a, b) => Number(b.totalPrice ?? 0) - Number(a.totalPrice ?? 0));
+          break;
+        case 'oldest':
+          break;
+        case 'newest':
+        default:
+          orders = [...orders].reverse();
+      }
+
+      if (orders.length) result.push({ date: day.date, ordersList: orders });
     }
 
-    if (this.deliveredFilter === 'delivered') {
-      orders = orders.filter(o => o.delivered === true);
-    } else if (this.deliveredFilter === 'open') {
-      orders = orders.filter(o => o.delivered === false);
-    }
-
-    //Sortierung
-    switch (this.sortOrdersBy) {
-      case 'priceAsc':
-        orders.sort((a, b) => a.totalPrice - b.totalPrice);
-        break;
-      case 'priceDesc':
-        orders.sort((a, b) => b.totalPrice - a.totalPrice);
-        break;
-      case 'oldest':
-        break;
-      case 'newest':
-      default:
-        orders = [...orders].reverse();
-    }
-
-    if (orders.length) {
-      result.push({
-        date: day.date,
-        ordersList: orders
-      });
-    }
+    return result;
   }
-
-  return result;
-}
-
 
   deliveredLabel(order: StatOrder): string {
     return (order as any).delivered ? 'Geliefert' : 'Offen';
@@ -375,5 +416,50 @@ get filteredDays(): DayData[] {
 
   trackByOrderId(_: number, o: StatOrder): string {
     return o.id;
+  }
+
+  // ✅ Gerichte für Orders-List (kurz)
+  orderDishNames(order: StatOrder): string[] {
+    const items = this.extractItems(order);
+    const names = items
+      .map(it => it.name)
+      .filter(Boolean)
+      .map(n => String(n).trim())
+      .filter(n => !!n);
+
+    // unique, Reihenfolge behalten
+    const seen = new Set<string>();
+    const uniq: string[] = [];
+    for (const n of names) {
+      const k = n.toLowerCase();
+      if (seen.has(k)) continue;
+      seen.add(k);
+      uniq.push(n);
+    }
+    return uniq;
+  }
+
+  // Items extrahieren (für Trending + Gerichte)
+  private extractItems(order: StatOrder): UiOrderItem[] {
+    const raw =
+      (order as any).items ??
+      (order as any).orderItems ??
+      (order as any).positions ??
+      [];
+
+    const arr = Array.isArray(raw) ? raw : [];
+
+    return arr.map((x: any, idx: number): UiOrderItem => {
+      const qty = Number(x.quantity ?? x.qty ?? 1);
+      const mi = x.menuItem ?? x.item ?? x.menu_item ?? {};
+      const name = String(mi.name ?? x.name ?? 'Unbekannt');
+      const price = Number(mi.price ?? x.price ?? 0);
+      const note = (x.note ?? '').toString().trim() || undefined;
+
+      const key = String(mi.id ?? x.menuItemId ?? x.menu_item_id ?? idx);
+      const sum = price * qty;
+
+      return { key, name, qty, price, sum, note };
+    });
   }
 }

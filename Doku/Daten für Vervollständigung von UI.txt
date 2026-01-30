@@ -1,0 +1,25 @@
+Daten für Vervollständigung von UI - Impressum + Logo
+HungerSatt Schulbistro, 
+Inhaber Markus Gruber
+Alte Bundestraße 11
+5600 St. Johann
+UID: 68016602
+Regelung für Festlegung von bestellzeiten?
+Gmail Email Adresse --> mahlzeit.hungersatt@gmail.com
+Budget und Account für WorldForYou
+
+
+
+Bestellung mit Uhrzeit von/bis
+geschlossen Knopf
+Abschließen über qr code
+
+TODO:
+- Korrigiere menüitem/dish incostnecy
+- CHeck if everything works
+- Create an env file to Hide Secrets
+- Write the Impressum
+- Implement a geschossen button
+- Uhrzeiten von bis einstellen
+-Vorbereitungen zum Hosting
+- Zugriff auf backend von anderen laptops

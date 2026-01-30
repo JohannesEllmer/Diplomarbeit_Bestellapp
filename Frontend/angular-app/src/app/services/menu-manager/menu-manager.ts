@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, of, map, catchError } from 'rxjs';
 import { environment } from '../env';
 import { MealPlan } from '../../../models/meal-plan.model';
-import { Dish } from '../../../models/dish.model';
+import { MenuItem } from '../../../models/menu-item.model';
 
 @Injectable({ providedIn: 'root' })
 export class MenuManagerService {
@@ -13,124 +12,101 @@ export class MenuManagerService {
 
   constructor(private http: HttpClient) {}
 
+  private mapMenuItem(x: any): MenuItem {
+    return {
+      id: String(x.id),
+      name: x.name ?? '',
+      description: x.description ?? '',
+      price: Number(x.price ?? 0),
+      category: x.category ?? '',
+      vegetarian: !!x.vegetarian,
+      available: x.available !== false,
+      allergens: Array.isArray(x.allergens) ? x.allergens : [],
+      drink: x.drink ?? undefined,
+      dessert: x.dessert ?? undefined,
+    };
+  }
+
+  private mapMealPlan(m: any): MealPlan {
+    const raw =
+      Array.isArray(m.menuItems) ? m.menuItems :
+      Array.isArray(m.menu_items) ? m.menu_items :
+      Array.isArray(m.dishes) ? m.dishes :
+      [];
+
+    return {
+      id: String(m.id),
+      title: m.title ?? '',
+      isSelected: !!m.isSelected || !!m.is_selected,
+      menuItems: raw.map((x: any) => this.mapMenuItem(x)),
+    };
+  }
+
   getMenus(): Observable<MealPlan[]> {
     if (environment.useMockData) return of([]);
-
     return this.http.get<any[]>(this.mealPlansEndpoint).pipe(
+      map(rows => (rows ?? []).map(r => this.mapMealPlan(r))),
       catchError(err => {
-        console.error('MenuManager getMenus failed:', err);
+        console.error('MenuManagerService.getMenus failed:', err);
         return of([]);
       }),
-    
-      ((source$) => new Observable<MealPlan[]>(subscriber => {
-        source$.subscribe({
-          next: (rows: any[]) => {
-            const menus = (rows ?? []).map((m: any) => ({
-              id: String(m.id),
-              title: m.title ?? '',
-              isSelected: !!m.isSelected || !!m.is_selected,
-              dishes: (Array.isArray(m.dishes) ? m.dishes : []).map((d: any): Dish => ({
-                id: String(d.id),
-                name: d.name ?? '',
-                description: d.description ?? '',
-                price: Number(d.price ?? 0),
-                category: d.category ?? 'Hauptgericht',
-                vegetarian: !!d.vegetarian,
-                available: d.available !== false, 
-                allergens: Array.isArray(d.allergens) ? d.allergens : (Array.isArray(d.allergenes) ? d.allergenes : []),
-              })),
-            })) as MealPlan[];
-
-            subscriber.next(menus);
-            subscriber.complete();
-          },
-          error: (e: any) => subscriber.error(e),
-        });
-      }))
-    ) as any;
+    );
   }
 
   deleteMenu(id: string): Observable<void> {
     if (environment.useMockData) return of(void 0);
     return this.http.delete<void>(`${this.mealPlansEndpoint}/${encodeURIComponent(id)}`).pipe(
       catchError(err => {
-        console.error('MenuManager deleteMenu failed:', err);
+        console.error('MenuManagerService.deleteMenu failed:', err);
         return of(void 0);
-      })
+      }),
     );
   }
 
   getSelectedMealPlan(): Observable<MealPlan | null> {
     if (environment.useMockData) return of(null);
 
-    return this.http.get<any>(`${this.mealPlansEndpoint}/selected`).pipe(
+    const selected$ = this.http.get<any>(`${this.mealPlansEndpoint}/selected`);
+    const active$ = this.http.get<any>(`${this.mealPlansEndpoint}/active`);
+
+    return selected$.pipe(
       catchError(err1 => {
-        return this.http.get<any>(`${this.mealPlansEndpoint}/active`).pipe(
+        return active$.pipe(
           catchError(err2 => {
-            console.error('getSelectedMealPlan failed:', err1, err2);
+            console.error('MenuManagerService.getSelectedMealPlan failed:', err1, err2);
             return of(null);
-          })
+          }),
         );
       }),
-      // @ts-ignore
-      ((source$) => new Observable<MealPlan | null>(subscriber => {
-        source$.subscribe({
-          next: (plan: any) => {
-            if (!plan) {
-              subscriber.next(null);
-              subscriber.complete();
-              return;
-            }
-
-            const dishes = (Array.isArray(plan.dishes) ? plan.dishes : []).map((d: any): Dish => ({
-              id: String(d.id),
-              name: d.name ?? '',
-              description: d.description ?? '',
-              price: Number(d.price ?? 0),
-              category: d.category ?? 'Hauptgericht',
-              vegetarian: !!d.vegetarian,
-              available: d.available !== false, 
-              allergens: Array.isArray(d.allergens) ? d.allergens : (Array.isArray(d.allergenes) ? d.allergenes : []),
-            }));
-
-            subscriber.next({
-              id: String(plan.id),
-              title: plan.title ?? '',
-              isSelected: !!plan.isSelected || !!plan.is_selected,
-              dishes,
-            });
-            subscriber.complete();
-          },
-          error: (e: any) => subscriber.error(e),
-        });
-      }))
-    ) as any;
+      map(plan => (plan ? this.mapMealPlan(plan) : null)),
+    );
   }
 
   setSelected(menuId: string): Observable<{ ok: boolean; id?: string }> {
     if (environment.useMockData) return of({ ok: true, id: menuId });
+
     const id = String(menuId ?? '').trim();
     if (!id) return of({ ok: false });
 
     const byBody$ = this.http.patch<{ ok: boolean; id?: string }>(
       `${this.mealPlansEndpoint}/select`,
-      { id }
+      { id },
     );
 
     const byParam$ = this.http.patch<{ ok: boolean; id?: string }>(
       `${this.mealPlansEndpoint}/${encodeURIComponent(id)}/select`,
-      {}
+      {},
     );
 
     return byBody$.pipe(
-      catchError(err1 => {
-        return byParam$.pipe(
+      catchError(err1 =>
+        byParam$.pipe(
           catchError(err2 => {
-            console.error('setSelected failed:', err1, err2);
+            console.error('MenuManagerService.setSelected failed:', err1, err2);
             return of({ ok: false });
-          })
-        );
-      })
+          }),
+        ),
+      ),
     );
   }
 
@@ -139,40 +115,11 @@ export class MenuManagerService {
     if (environment.useMockData) return of(null);
 
     return this.http.get<any>(`${this.mealPlansEndpoint}/${encodeURIComponent(id)}`).pipe(
+      map(plan => (plan ? this.mapMealPlan(plan) : null)),
       catchError(err => {
-        console.error('MenuManager getMealPlanById failed:', err);
+        console.error('MenuManagerService.getMealPlanById failed:', err);
         return of(null);
       }),
-      // @ts-ignore
-      ((source$) => new Observable<MealPlan | null>(subscriber => {
-        source$.subscribe({
-          next: (plan: any) => {
-            if (!plan) {
-              subscriber.next(null);
-              subscriber.complete();
-              return;
-            }
-            const dishes = (Array.isArray(plan.dishes) ? plan.dishes : []).map((d: any): Dish => ({
-              id: String(d.id),
-              name: d.name ?? '',
-              description: d.description ?? '',
-              price: Number(d.price ?? 0),
-              category: d.category ?? 'Hauptgericht',
-              vegetarian: !!d.vegetarian,
-              available: d.available !== false,
-              allergens: Array.isArray(d.allergens) ? d.allergens : (Array.isArray(d.allergenes) ? d.allergenes : []),
-            }));
-            subscriber.next({
-              id: String(plan.id),
-              title: plan.title ?? '',
-              isSelected: !!plan.isSelected || !!plan.is_selected,
-              dishes,
-            });
-            subscriber.complete();
-          },
-          error: (e: any) => subscriber.error(e),
-        });
-      }))
-    ) as any;
+    );
   }
 }

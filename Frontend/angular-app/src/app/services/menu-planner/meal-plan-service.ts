@@ -10,8 +10,8 @@ export class MealPlanService {
 
   constructor(private http: HttpClient) {}
 
-  create(payload: { title: string; dishIds?: string[] }): Observable<any> {
-    if (environment.useMockData) return of({ id: crypto.randomUUID(), ...payload, dishes: [] });
+  create(payload: { title: string; menuItemIds?: string[] }): Observable<any> {
+    if (environment.useMockData) return of({ id: crypto.randomUUID(), ...payload, menuItems: [] });
     return this.http.post<any>(this.endpoint, payload);
   }
 
@@ -20,27 +20,25 @@ export class MealPlanService {
     return this.http.patch<any>(`${this.endpoint}/${encodeURIComponent(id)}`, payload);
   }
 
-  // ✅ Drag&Drop Edit: add/remove sofort
-  addDish(mealPlanId: string, dishId: string): Observable<any> {
+  addMenuItem(mealPlanId: string, menuItemId: string): Observable<any> {
     if (environment.useMockData) return of({ ok: true });
     return this.http.post<any>(
-      `${this.endpoint}/${encodeURIComponent(mealPlanId)}/dishes/${encodeURIComponent(dishId)}`,
+      `${this.endpoint}/${encodeURIComponent(mealPlanId)}/menu-items/${encodeURIComponent(menuItemId)}`,
       {},
     );
   }
 
-  removeDish(mealPlanId: string, dishId: string): Observable<any> {
+  removeMenuItem(mealPlanId: string, menuItemId: string): Observable<any> {
     if (environment.useMockData) return of({ ok: true });
     return this.http.delete<any>(
-      `${this.endpoint}/${encodeURIComponent(mealPlanId)}/dishes/${encodeURIComponent(dishId)}`,
+      `${this.endpoint}/${encodeURIComponent(mealPlanId)}/menu-items/${encodeURIComponent(menuItemId)}`,
     );
   }
 
-  // ✅ Checkbox sofort
-  setDishDisabled(mealPlanId: string, dishId: string, disabled: boolean): Observable<any> {
+  setMenuItemDisabled(mealPlanId: string, menuItemId: string, disabled: boolean): Observable<any> {
     if (environment.useMockData) return of({ ok: true });
     return this.http.patch<any>(
-      `${this.endpoint}/${encodeURIComponent(mealPlanId)}/dishes/${encodeURIComponent(dishId)}/disabled`,
+      `${this.endpoint}/${encodeURIComponent(mealPlanId)}/menu-items/${encodeURIComponent(menuItemId)}/disabled`,
       { disabled },
     );
   }

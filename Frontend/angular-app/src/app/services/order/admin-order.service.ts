@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, map, catchError } from 'rxjs';
+import { Observable, of, catchError } from 'rxjs';
 import { environment } from '../env';
-import { Order, OrderItem } from '../../../models/menu-item.model';
+import { Order } from '../../../models/menu-item.model';
 
 @Injectable({ providedIn: 'root' })
 export class AdminOrderService {
@@ -12,11 +12,11 @@ export class AdminOrderService {
 
   constructor(private http: HttpClient) {}
 
-  getOrdersFlatItems(): Observable<OrderItem[]> {
+  // ✅ NEU: holt Bestellungen als Bestellungen (1 Eintrag = 1 Bestellung)
+  getOrders(): Observable<Order[]> {
     if (environment.useMockData) return of([]);
 
     return this.http.get<Order[]>(this.adminOrdersEndpoint).pipe(
-      map((orders) => (orders ?? []).flatMap(o => (o.items ?? []) as any)),
       catchError(err => {
         console.error('admin getOrders failed:', err);
         return of([]);
@@ -46,7 +46,6 @@ export class AdminOrderService {
     );
   }
 
-  // ✅ capture beim QR Scan
   completeByQrCode(code: string): Observable<{ ok: boolean; order?: any }> {
     if (environment.useMockData) return of({ ok: true });
 
@@ -61,7 +60,8 @@ export class AdminOrderService {
     );
   }
 
-  createOrderFromItem(orderItem: OrderItem): Observable<Order> {
+  // Falls du das noch brauchst, kannst du es lassen:
+  createOrderFromItem(orderItem: any): Observable<Order> {
     if (environment.useMockData) return of({} as any);
 
     const payload = {

@@ -1,9 +1,10 @@
 <div class="order-management-container">
- <div class="top-actions">
+  <div class="top-actions">
     <button type="button" class="complete-btn" (click)="goToScanner()">
       Scanner öffnen
     </button>
   </div>
+
   <div class="filter-container">
     <div class="filter-group">
       <span>Gruppieren nach:</span>
@@ -17,6 +18,7 @@
       </button>
     </div>
   </div>
+
   <div class="pagination-controls">
     <label class="items-per-page">
       Elemente pro Seite:
@@ -43,25 +45,21 @@
     </div>
   </div>
 
-  <!-- Open Count -->
-  <div class="open-count" *ngIf="orderItems.length">
+  <div class="open-count" *ngIf="openOrders.length">
     <p>
-      {{ orderItems.length }} offene Bestellung{{ orderItems.length > 1 ? 'en' : '' }}
+      {{ openOrders.length }} offene Bestellung{{ openOrders.length > 1 ? 'en' : '' }}
       insgesamt — zeige Seite {{ currentPage }} von {{ totalPages }}
     </p>
   </div>
 
   <main class="order-list">
-
     <section class="open-orders">
 
-      <!-- Wenn keine offenen -->
-      <div *ngIf="!orderItems.length" class="no-results global-no-open">
+      <div *ngIf="!openOrders.length" class="no-results global-no-open">
         <p>Aktuell keine offenen Bestellungen.</p>
       </div>
 
-      <!-- Gruppen -->
-      <ng-container *ngIf="orderItems.length">
+      <ng-container *ngIf="openOrders.length">
         <div *ngFor="let group of groupedOrders | keyvalue" class="order-group">
           <h3>{{ group.key }}</h3>
 
@@ -69,61 +67,122 @@
             <p>Keine offenen Bestellungen in dieser Gruppe.</p>
           </div>
 
-          <div *ngFor="let item of group.value" class="order-card">
+          <div *ngFor="let order of group.value" class="order-card">
             <div class="order-summary">
               <div class="order-info">
-                <h2>{{ item.menuItem.name }} × {{ item.quantity }}</h2>
 
-                <p class="meta">
-                  <span>{{ item.menuItem.price * item.quantity | currency:'EUR' }}</span> ·
-                  <span>Lieferzeit: {{ item.deliveryTime }}</span> ·
-                  <span>
-                    Bestellt von:
-                    <a role="button" tabindex="0" (click)="navigateToUser(item.user.id)">
-                      {{ item.user.name }}
+                <!-- Kopfzeile -->
+                <div class="order-title-row">
+                  <h2 class="order-title">
+                    <a role="button" tabindex="0" (click)="navigateToUser(order.user.id)">
+                      {{ userName(order) }}
                     </a>
-                  </span>
-                </p>
+                  </h2>
 
-                <p *ngIf="item.note" class="note">
-                  Anmerkung: {{ item.note }}
-                </p>
+                  <span class="order-status-pill">{{ statusLabel(order) }}</span>
+                </div>
+
+                <!-- ✅ Lieferzeit Chips -->
+                <div class="time-row">
+                  <span class="time-label">Lieferzeit</span>
+
+                  <div class="time-chips">
+                    <span class="time-chip" *ngFor="let t of deliveryTimes(order)">
+                      {{ t }}
+                    </span>
+                    <span class="time-chip unknown" *ngIf="deliveryTimes(order).length === 0">
+                      Unbekannt
+                    </span>
+                  </div>
+
+                  <div class="sum-pill">
+                    {{ order.totalPrice | currency:'EUR' }}
+                  </div>
+                </div>
+
+                <!-- Items -->
+                <div class="order-items">
+                  <div class="order-item-row" *ngFor="let it of order.items">
+                    <div class="left">
+                      <b>{{ it.menuItem.name }}</b>
+                      <span class="qty">× {{ it.quantity }}</span>
+
+                      <div *ngIf="it.note" class="note">
+                        Anmerkung: {{ it.note }}
+                      </div>
+                    </div>
+
+                    <div class="right">
+                      {{ (it.menuItem.price * it.quantity) | currency:'EUR' }}
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
+
         </div>
       </ng-container>
     </section>
 
-    <!-- Abgeschlossene Bestellungen -->
-    <section class="completed-orders" *ngIf="completedItems.length">
+    <section class="completed-orders" *ngIf="completedOrders.length">
       <div class="completed-header" (click)="toggleCompletedOrders()">
         <h2>
-          Abgeschlossene Bestellungen ({{ completedItems.length }})
+          Abgeschlossene Bestellungen ({{ completedOrders.length }})
           <span class="collapse-icon">{{ completedCollapsed ? '▶' : '▼' }}</span>
         </h2>
       </div>
 
       <div class="completed-content" [class.collapsed]="completedCollapsed">
-        <div class="order-card delivered" *ngFor="let item of completedItems">
+        <div class="order-card delivered" *ngFor="let order of completedOrders">
           <div class="order-summary">
             <div class="order-info">
-              <h2>{{ item.menuItem.name }} × {{ item.quantity }}</h2>
 
-              <p class="meta">
-                <span>{{ item.menuItem.price * item.quantity | currency:'EUR' }}</span> ·
-                <span>Lieferzeit: {{ item.deliveryTime }}</span> ·
-                <span>
-                  Bestellt von:
-                  <a role="button" tabindex="0" (click)="navigateToUser(item.user.id)">
-                    {{ item.user.name }}
+              <div class="order-title-row">
+                <h2 class="order-title">
+                  <a role="button" tabindex="0" (click)="navigateToUser(order.user.id)">
+                    {{ userName(order) }}
                   </a>
-                </span>
-              </p>
+                </h2>
 
-              <p *ngIf="item.note" class="note">
-                Anmerkung: {{ item.note }}
-              </p>
+                <span class="order-status-pill done">Abgeschlossen</span>
+              </div>
+
+              <div class="time-row">
+                <span class="time-label">Lieferzeit</span>
+
+                <div class="time-chips">
+                  <span class="time-chip" *ngFor="let t of deliveryTimes(order)">
+                    {{ t }}
+                  </span>
+                  <span class="time-chip unknown" *ngIf="deliveryTimes(order).length === 0">
+                    Unbekannt
+                  </span>
+                </div>
+
+                <div class="sum-pill">
+                  {{ order.totalPrice | currency:'EUR' }}
+                </div>
+              </div>
+
+              <div class="order-items">
+                <div class="order-item-row" *ngFor="let it of order.items">
+                  <div class="left">
+                    <b>{{ it.menuItem.name }}</b>
+                    <span class="qty">× {{ it.quantity }}</span>
+
+                    <div *ngIf="it.note" class="note">
+                      Anmerkung: {{ it.note }}
+                    </div>
+                  </div>
+
+                  <div class="right">
+                    {{ (it.menuItem.price * it.quantity) | currency:'EUR' }}
+                  </div>
+                </div>
+              </div>
+
             </div>
 
             <div class="order-status">
@@ -133,10 +192,8 @@
         </div>
       </div>
     </section>
-
   </main>
 
-  <!-- Footer -->
   <footer class="order-footer">
     <div class="footer-grid">
       <div class="footer-item">
@@ -153,5 +210,4 @@
       </div>
     </div>
   </footer>
-
 </div>

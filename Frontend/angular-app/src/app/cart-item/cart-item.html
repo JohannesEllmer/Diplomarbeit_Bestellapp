@@ -1,48 +1,75 @@
 <article class="cart-card">
   <div class="cart-content">
+
+    <!-- HEADER -->
     <div class="cart-header">
-      <div>
+      <div class="title-area">
         <h3>
           {{ item.menuItem.name }}
           <span class="badge" *ngIf="isMenu">Menü</span>
         </h3>
 
-        <p class="menu-subtitle" *ngIf="isMenu">{{ menuTitle }}</p>
-
         <div class="tags">
           <span class="category-tag">{{ item.menuItem.category }}</span>
-          <span class="vegetarian-tag" *ngIf="item.menuItem.vegetarian">Vegetarisch</span>
+          <span class="vegetarian-tag" *ngIf="item.menuItem.vegetarian">
+            Vegetarisch
+          </span>
         </div>
       </div>
+
       <div class="price">
-        {{ item.menuItem.price * item.quantity | currency:'EUR' }}
+        {{ totalPrice | currency:'EUR' }}
       </div>
     </div>
 
-    <p class="menu-desc" *ngIf="item.menuItem.description">{{ item.menuItem.description }}</p>
+    <!-- BESCHREIBUNG -->
+    <p class="menu-desc" *ngIf="item.menuItem.description">
+      {{ item.menuItem.description }}
+    </p>
 
-    <ul class="menu-extras" *ngIf="isMenu && (menuDrink || menuDessert)">
-      <li *ngIf="menuDrink">Getränk: {{ menuDrink }}</li>
-      <li *ngIf="menuDessert">Dessert: {{ menuDessert }}</li>
-    </ul>
+    <!-- ✅ MENÜ-EXTRAS (NICHT NOTE!) -->
+    <div class="menu-extras" *ngIf="isMenu">
+      <div class="extra-row" *ngIf="menuDrink">
+        <strong>Getränk:</strong> {{ menuDrink }}
+      </div>
 
+      <div class="extra-row" *ngIf="menuDessert">
+        <strong>Dessert:</strong> {{ menuDessert }}
+      </div>
+    </div>
+
+    <!-- ALLERGENE -->
     <div class="allergens" *ngIf="item.menuItem.allergens?.length">
-      <strong>Allergene:</strong> {{ item.menuItem.allergens.join(', ') }}
+      <strong>Allergene:</strong>
+      {{ item.menuItem.allergens.join(', ') }}
     </div>
 
     <div class="note-input">
-      <textarea [(ngModel)]="displayNote" placeholder="Anmerkung..."></textarea>
+      <label>Anmerkung</label>
+      <textarea
+        [(ngModel)]="displayNote"
+        (ngModelChange)="onNoteChange()"
+        placeholder="z. B. ohne Zwiebeln, extra scharf …">
+      </textarea>
     </div>
 
+    <!-- MENGE -->
     <div class="quantity-control">
-      <button (click)="decrease.emit()">−</button>
+      <button type="button" (click)="decrease.emit()">−</button>
       <span>{{ item.quantity }}</span>
-      <button (click)="increase.emit()">+</button>
+      <button type="button" (click)="increase.emit()">+</button>
     </div>
 
+    <!-- FOOTER -->
     <div class="cart-footer">
-      <span class="price-each">Einzelpreis: {{ item.menuItem.price | currency:'EUR' }}</span>
-      <button class="remove-btn" (click)="remove.emit()">Entfernen</button>
+      <span class="price-each">
+        Einzelpreis: {{ item.menuItem.price | currency:'EUR' }}
+      </span>
+
+      <button class="remove-btn" type="button" (click)="remove.emit()">
+        Entfernen
+      </button>
     </div>
+
   </div>
 </article>

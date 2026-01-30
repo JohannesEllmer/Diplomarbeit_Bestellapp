@@ -1,3 +1,4 @@
+/* ====== DEINE CSS (wie vorher) ====== */
 .impressum-popup-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -6,6 +7,7 @@
   align-items: center;
   justify-content: center;
   z-index: 9999;
+  padding: 1rem; /* ✅ damit Popup auf Mobile nicht am Rand klebt */
 }
 
 .impressum-popup {
@@ -14,7 +16,7 @@
   box-shadow: 0 8px 32px rgba(2,132,199,0.13);
   padding: 2rem 1.5rem 1.2rem 1.5rem;
   max-width: 340px;
-  width: 90vw;
+  width: 100%;
   text-align: center;
   animation: popupIn 0.25s ease;
 }
@@ -48,9 +50,8 @@
   box-shadow: 0 2px 8px rgba(2,132,199,0.09);
   transition: background 0.2s;
 }
-.close-btn:hover {
-  background: #075985;
-}
+.close-btn:hover { background: #075985; }
+
 .impressum-btn {
   background: none;
   border: none;
@@ -61,19 +62,17 @@
   padding: 0.2rem 0.5rem;
   transition: color 0.2s;
 }
-.impressum-btn:hover {
-  color: #bae6fd;
-}
+.impressum-btn:hover { color: #bae6fd; }
 
 @keyframes popupIn {
   from { transform: scale(0.95); opacity: 0; }
   to   { transform: scale(1); opacity: 1; }
 }
+
 .statistics-container {
-width: 90%;
+  width: min(1100px, calc(100% - 2rem)); /* ✅ immer passend */
   margin: 0 auto;
   margin-top: 7rem;
-  background: linear-gradient(135deg, #0284c7 0%, #075985 100%);
   box-shadow: 0 3px 6px rgba(2,132,199,.4);
   padding: 1rem;
   background: #f9fafb;
@@ -82,7 +81,7 @@ width: 90%;
   gap: 1rem;
 }
 
-
+/* ✅ Selector-Box: wird auf Mobile sauber */
 .selectors {
   display: flex;
   flex-wrap: wrap;
@@ -97,10 +96,10 @@ width: 90%;
 .selector-group {
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
-  flex: 1;
-  min-width: 140px;
-  margin: 0.8rem;
+  gap: 0.6rem;
+  flex: 1 1 180px;  /* ✅ besserer Wrap */
+  min-width: 160px;
+  margin: 0;
 }
 
 .selector-group label {
@@ -148,9 +147,7 @@ width: 90%;
   cursor: not-allowed;
 }
 
-.spacer {
-  flex: 1;
-}
+.spacer { flex: 1; }
 
 .export-btn {
   padding: 0.6rem 1rem;
@@ -164,6 +161,7 @@ width: 90%;
   font-size: 1rem;
 }
 
+/* ✅ Summary Cards: automatisch responsive */
 .summary-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -201,12 +199,7 @@ width: 90%;
   color: #0284c7;
 }
 
-.trend-icon {
-  font-size: 1.1rem;
-}
-
-.trend-up { color: #10b981; }
-.trend-down { color: #ef4444; }
+.trend-icon { font-size: 1.1rem; }
 
 .orders-section {
   background: white;
@@ -222,77 +215,6 @@ width: 90%;
   font-weight: 700;
   border-bottom: 2px solid #f3f4f6;
   padding-bottom: 0.5rem;
-}
-
-.day-orders {
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 8px;
-  border-left: 4px solid #0284c7;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-}
-
-.day-orders:last-child {
-  margin-bottom: 0;
-}
-
-.day-orders h3 {
-  margin: 0 0 0.8rem 0;
-  color: #374151;
-  font-size: 1rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-
-.day-orders ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.day-orders li {
-  background: white;
-  padding: 0.8rem;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-}
-
-.order-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.order-id {
-  font-weight: 700;
-  color: #0284c7;
-  font-size: 0.9rem;
-}
-
-.order-customer {
-  color: #6b7280;
-  font-size: 0.8rem;
-}
-
-.order-price {
-  font-weight: 700;
-  color: #059669;
-  font-size: 1rem;
-  text-align: left;
-  padding-top: 0.2rem;
-  border-top: 1px solid #f3f4f6;
 }
 
 .no-orders {
@@ -334,188 +256,6 @@ width: 90%;
   text-align: center;
 }
 
-.display-info {
-  background: #eff6ff;
-  border: 1px solid #dbeafe;
-  color: #1e40af;
-  padding: 0.6rem 0.8rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  margin-bottom: 1rem;
-  text-align: center;
-}
-
-@media (min-width: 768px) {
-  .statistics-container {
-    padding: 1.5rem;
-    gap: 1.5rem;
-  }
-  
-  .statistics-header {
-    padding: 1rem 1.5rem;
-  }
-  
-  .statistics-header h1 {
-    font-size: 1.8rem;
-  }
-  
-  .selectors {
-    flex-direction: row;
-    align-items: flex-end;
-  }
-  
-  .selector-group {
-    min-width: 160px;
-    flex: none;
-  }
-  
-  .chart-type-buttons {
-    width: auto;
-  }
-  
-  .chart-type-buttons button {
-    flex: none;
-  }
-  
-  .export-btn {
-    width: auto;
-    align-self: flex-start;
-  }
-  
-  .summary-cards {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 1rem;
-  }
-  
-  .card {
-    padding: 1rem;
-    min-height: 130px;
-  }
-  
-  .card span {
-    font-size: 1rem;
-  }
-  
-  .value-trend strong {
-    font-size: 1.8rem;
-  }
-  
-  .orders-section {
-    padding: 1.5rem;
-  }
-  
-  .day-orders {
-    padding: 1.5rem;
-  }
-  
-  .day-orders h3 {
-    font-size: 1.2rem;
-  }
-  
-  .day-orders li {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-  }
-  
-  .order-price {
-    text-align: right;
-    border-top: none;
-    padding-top: 0;
-    min-width: 80px;
-  }
-  
-  .chart-section {
-    padding: 1.5rem;
-  }
-  
-  .chart-container {
-    height: 400px;
-  }
-  
-  .display-info {
-    font-size: 0.9rem;
-    padding: 0.75rem 1rem;
-    text-align: left;
-  }
-}
-
-@media (min-width: 1024px) {
-  .statistics-container {
-    gap: 2rem;
-  }
-  
-  .summary-cards {
-    gap: 1.5rem;
-  }
-  
-  .card {
-    min-height: 140px;
-  }
-  
-  .day-orders li:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.08);
-    border-color: #d1d5db;
-  }
-  
-  .chart-container {
-    height: 450px;
-  }
-}
-
-@media (max-width: 360px) {
-  .statistics-container {
-    padding: 0.5rem;
-    gap: 0.8rem;
-  }
-  
-  .summary-cards {
-    grid-template-columns: 1fr;
-    gap: 0.6rem;
-  }
-  
-  .card {
-    min-height: 80px;
-    padding: 0.6rem;
-  }
-  
-  .value-trend strong {
-    font-size: 1.1rem;
-  }
-  
-  .orders-section,
-  .chart-section,
-  .selectors {
-    padding: 0.8rem;
-  }
-  
-  .day-orders {
-    padding: 0.8rem;
-  }
-  
-  .day-orders h3 {
-    font-size: 0.9rem;
-  }
-  
-  .order-id {
-    font-size: 0.8rem;
-  }
-  
-  .order-customer {
-    font-size: 0.75rem;
-  }
-  
-  .order-price {
-    font-size: 0.9rem;
-  }
-  
-  .chart-container {
-    height: 250px;
-  }
-}
-
 /* === Finance Table & Alerts === */
 .alerts {
   display: grid;
@@ -533,37 +273,35 @@ width: 90%;
 .alert.warn  { background:#fff7ed; border-color:#fed7aa; color:#9a3412; }
 .alert.danger{ background:#fef2f2; border-color:#fecaca; color:#991b1b; }
 
-.finance-tools {
-  display:flex; flex-wrap:wrap; gap:.75rem; align-items:flex-end; margin:.5rem 0 0 0;
-}
-.finance-tools .selector-group { min-width: 140px; }
-
 .finance-table-wrap {
   overflow:auto; border:1px solid #e5e7eb; border-radius:10px; background:#fff;
 }
 .finance-table {
-  width:100%; border-collapse: collapse; min-width: 720px;
+  width:100%; border-collapse: collapse;
+  min-width: 680px; /* ✅ leicht kleiner */
 }
 .finance-table th, .finance-table td {
   padding:.6rem .7rem; border-bottom:1px solid #f1f5f9; text-align:right; white-space:nowrap;
 }
-.finance-table th:first-child, .finance-table td:first-child { text-align:left; position:sticky; left:0; background:#fff; }
+.finance-table th:first-child, .finance-table td:first-child {
+  text-align:left;
+  position:sticky; left:0;
+  background:#fff;
+}
 .finance-table thead th {
   background:#f8fafc; font-weight:700; color:#374151; border-bottom:2px solid #e5e7eb;
 }
-.finance-table tfoot td {
-  font-weight:700; background:#f8fafc; border-top:2px solid #e5e7eb;
-}
+
 .badge {
-  display:inline-flex; align-items:center; gap:.35rem; padding:.15rem .5rem; border-radius:999px; font-size:.8rem; font-weight:600;
+  display:inline-flex; align-items:center; gap:.35rem;
+  padding:.15rem .5rem; border-radius:999px;
+  font-size:.8rem; font-weight:600;
 }
 .badge.up { background:#ecfdf5; color:#065f46; }
 .badge.down { background:#fef2f2; color:#991b1b; }
 .badge.neutral { background:#f1f5f9; color:#334155; }
 
-@media (max-width: 768px){
-  .finance-table { min-width: 640px; }
-}
+/* ✅ Orders List */
 .orders-list {
   display: flex;
   flex-direction: column;
@@ -583,9 +321,7 @@ width: 90%;
   color: #0284c7;
   margin-bottom: 0.5rem;
 }
-.order-day-date {
-  font-size: 1.05rem;
-}
+.order-day-date { font-size: 1.05rem; }
 .order-day-count {
   background: #e0f2fe;
   color: #075985;
@@ -593,33 +329,35 @@ width: 90%;
   padding: 0.2rem 0.8rem;
   font-size: 0.95rem;
 }
-.order-day-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
+.order-day-list { list-style: none; margin: 0; padding: 0; }
+
 .order-list-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.4rem 0;
+  padding: 0.55rem 0;
   border-bottom: 1px solid #f1f5f9;
   font-size: 0.98rem;
+  gap: 1rem;
 }
-.order-list-item:last-child {
-  border-bottom: none;
+.order-list-item:last-child { border-bottom: none; }
+
+.order-info {
+  display:flex;
+  flex-direction: column;
+  gap: .25rem;
+  min-width: 0;
 }
+
 .order-user {
-  font-weight: 500;
+  font-weight: 700;
   color: #0f172a;
 }
+
 .order-price {
   color: #0284c7;
-  font-weight: 600;
-}
-.order-id {
-  color: #64748b;
-  font-size: 0.92rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .orders-toolbar{
@@ -645,7 +383,7 @@ width: 90%;
   border-radius: 999px;
   font-size: .82rem;
   font-weight: 700;
-  margin-top: .35rem;
+  margin-top: .1rem;
   width: fit-content;
 }
 .status-pill.delivered{
@@ -659,6 +397,34 @@ width: 90%;
   border:1px solid #bfdbfe;
 }
 
+/* ✅ Gerichte Chips */
+.order-dishes{
+  display:flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+  margin-top: .05rem;
+}
+.dish-chip{
+  background:#f1f5f9;
+  border:1px solid #e2e8f0;
+  color:#334155;
+  border-radius: 999px;
+  padding: .12rem .5rem;
+  font-size: .82rem;
+  font-weight: 600;
+  max-width: 220px;
+  overflow:hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dish-more{
+  color:#64748b;
+  font-weight:700;
+  font-size:.85rem;
+  padding: .12rem .2rem;
+}
+
+/* ✅ Modal */
 .modal-overlay{
   position: fixed;
   inset: 0;
@@ -695,9 +461,7 @@ width: 90%;
   padding: .55rem 0;
   border-bottom: 1px solid #f1f5f9;
 }
-.modal-row:last-child{
-  border-bottom:none;
-}
+.modal-row:last-child{ border-bottom:none; }
 .modal-row .label{
   color:#64748b;
   font-weight: 600;
@@ -708,4 +472,136 @@ width: 90%;
   padding: 1rem;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.muted { opacity:.75; }
+
+/* ✅ Trending im Summary-Card Stil */
+.trending-cards {
+  background: white;
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.trending-head{
+  display:flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: .75rem;
+  margin-bottom: .75rem;
+}
+
+.trending-head h2{
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.trending-cards-grid{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .8rem;
+}
+
+.trending-card{ min-height: 90px; }
+
+.trending-name{
+  font-size: 1.05rem;
+  color: #0f172a;
+  line-height: 1.25;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   ✅ RESPONSIVE BREAKPOINTS (Mobile → Tablet → Desktop)
+   ========================================================= */
+
+/* ✅ Small phones */
+@media (max-width: 480px) {
+  .statistics-container {
+    width: calc(100% - 1rem);
+    margin-top: 6rem;
+    padding: 0.75rem;
+  }
+
+  .selectors {
+    padding: 0.85rem;
+    gap: .75rem;
+  }
+
+  .selector-group {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .export-btn { width: 100%; }
+
+  .summary-cards { grid-template-columns: 1fr; }
+  .trending-cards-grid { grid-template-columns: 1fr; }
+
+  .order-list-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .35rem;
+  }
+
+  .order-price {
+    align-self: flex-end;
+  }
+
+  .dish-chip { max-width: 160px; }
+
+  .finance-table { min-width: 560px; } /* ✅ weniger scroll */
+}
+
+/* ✅ Tablets */
+@media (min-width: 481px) and (max-width: 767px) {
+  .summary-cards { grid-template-columns: repeat(2, 1fr); }
+  .trending-cards-grid { grid-template-columns: repeat(2, 1fr); }
+
+  .selector-group { flex: 1 1 220px; }
+  .finance-table { min-width: 620px; }
+}
+
+/* ✅ Desktop */
+@media (min-width: 768px) {
+  .statistics-container { padding: 1.5rem; gap: 1.5rem; }
+  .selectors { align-items: flex-end; }
+  .selector-group { min-width: 160px; flex: none; }
+  .chart-type-buttons { width: auto; }
+  .chart-type-buttons button { flex: none; }
+  .export-btn { width: auto; align-self: flex-start; }
+
+  .summary-cards { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; }
+  .card { padding: 1rem; min-height: 130px; }
+  .card span { font-size: 1rem; }
+  .value-trend strong { font-size: 1.8rem; }
+
+  .orders-section { padding: 1.5rem; }
+  .chart-section { padding: 1.5rem; }
+  .chart-container { height: 400px; }
+
+  .trending-cards { padding: 1.5rem; }
+  .trending-cards-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  .trending-card { min-height: 130px; }
+  .trending-name { font-size: 1.2rem; }
+}
+
+/* ✅ Big desktop polish */
+@media (min-width: 1024px) {
+  .statistics-container { gap: 2rem; }
+  .summary-cards { gap: 1.5rem; }
+
+  .order-list-item:hover {
+    transform: translateY(-1px);
+    transition: transform .15s ease;
+  }
+
+  .chart-container { height: 450px; }
 }

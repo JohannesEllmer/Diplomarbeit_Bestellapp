@@ -42,10 +42,25 @@ export class AuthService {
     return !!this.getToken();
   }
 
-  logout(): void {
+  clearAuth(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);
+  }
+
+  logout(): void {
+    this.clearAuth();
     this.router.navigate(['/login']);
+  }
+
+  // ✅ praktisch für Interceptor: nicht nochmal navigieren, wenn du schon auf /login bist
+  logoutIfNeeded(): void {
+    if (!this.isLoggedIn()) return;
+    this.clearAuth();
+
+    const url = this.router.url || '';
+    if (!url.startsWith('/login')) {
+      this.router.navigate(['/login']);
+    }
   }
 
   checkAccountExists(email: string): Observable<boolean> {
@@ -55,52 +70,55 @@ export class AuthService {
   }
 
   register(payload: {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  class: string;
-  schoolType: 'HTL' | 'HAK';
-  isTeacher: boolean;
-}): Observable<{ ok: true; emailVerificationSent: boolean }> {
-  return this.http.post<{ ok: true; emailVerificationSent: boolean }>(`${this.apiUrl}/auth/register`, payload);
-}
-
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    class: string;
+    schoolType: 'HTL' | 'HAK';
+    isTeacher: boolean;
+  }): Observable<{ ok: true; emailVerificationSent: boolean }> {
+    return this.http.post<{ ok: true; emailVerificationSent: boolean }>(
+      `${this.apiUrl}/auth/register`,
+      payload
+    );
+  }
 
   login(email: string, password: string): Observable<User> {
     return this.http
       .post<LoginResponse>(`${this.apiUrl}/auth/login`, { email, password })
-      .pipe(tap(res => this.save(res.token, res.user)), map(res => res.user));
+      .pipe(
+        tap(res => this.save(res.token, res.user)),
+        map(res => res.user)
+      );
   }
 
   verifyEmail(token: string): Observable<{ ok: true }> {
     return this.http.post<{ ok: true }>(`${this.apiUrl}/auth/verify-email`, { token });
   }
 
- forgotPassword(email: string): Observable<{ ok: true }> {
-  return this.http.post<{ ok: true }>(
-    `${this.apiUrl}/auth/forgot-password`,
-    { email: String(email).trim() },
-    { headers: { 'Content-Type': 'application/json' } }
-  );
-}
-
+  forgotPassword(email: string): Observable<{ ok: true }> {
+    return this.http.post<{ ok: true }>(
+      `${this.apiUrl}/auth/forgot-password`,
+      { email: String(email).trim() },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+  }
 
   resetPassword(token: string, newPassword: string): Observable<{ ok: true }> {
     return this.http.post<{ ok: true }>(`${this.apiUrl}/auth/reset-password`, { token, newPassword });
   }
 
- changePassword(oldPassword: string, newPassword: string): Observable<{ ok: true }> {
-  return this.http.post<{ ok: true }>(`${this.apiUrl}/auth/change-password`, {
-    currentPassword: oldPassword, 
-    newPassword
-  });
-}
-
+  changePassword(oldPassword: string, newPassword: string): Observable<{ ok: true }> {
+    return this.http.post<{ ok: true }>(`${this.apiUrl}/auth/change-password`, {
+      currentPassword: oldPassword,
+      newPassword
+    });
+  }
 
   setCurrentUser(user: User): void {
     const token = this.getToken();
-    if (!token) return;        
+    if (!token) return;
     localStorage.setItem(this.userKey, JSON.stringify(user));
   }
 }

@@ -28,20 +28,23 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
   activeFilter = 'Alle';
   searchTerm = '';
 
-  categories = ['Alle', 'Hauptgericht', 'Dessert', 'Getränk'];
+  // ✅ plus Filter "Menü" (für Set/Menü-Gerichte)
+  categories = ['Alle', 'Menü', 'Hauptgericht', 'Dessert', 'Getränk'];
   filters = ['Alle', 'Vegetarisch'];
 
   menuItems: MenuItem[] = [];
   selectedMenuTitle = '';
   hasActiveMenu = false;
 
+  selectedMenu: MealPlan | null = null;
+
   loadingItems = false;
   statusMsg = '';
 
   private destroy$ = new Subject<void>();
-
   private lastFailAt = 0;
   private readonly failCooldownMs = 60_000;
+  private searchTimer?: any;
 
   constructor(
     private router: Router,
@@ -52,11 +55,9 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    console.log('[MenuPlan] init');
     this.cartService.getCartItems();
 
     const timer$ = timer(0, 10 * 60 * 1000);
-
     const navToHome$ = this.router.events.pipe(
       filter((e): e is NavigationEnd => e instanceof NavigationEnd),
       filter(e => e.urlAfterRedirects === '/' || e.urlAfterRedirects.startsWith('/?'))
@@ -73,15 +74,10 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
   }
 
   private fetchSelectedMenu(): void {
-    if (!this.auth.isLoggedIn()) {
-      console.warn('[MenuPlan] not logged in -> skipping menu fetch');
-      return;
-    }
+    if (!this.auth.isLoggedIn()) return;
 
     const now = Date.now();
-    if (this.lastFailAt && now - this.lastFailAt < this.failCooldownMs) {
-      return;
-    }
+    if (this.lastFailAt && now - this.lastFailAt < this.failCooldownMs) return;
 
     this.loadingItems = true;
     this.statusMsg = '';
@@ -91,6 +87,7 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (plan: MealPlan | null) => {
           if (!plan) {
+            this.selectedMenu = null;
             this.selectedMenuTitle = '';
             this.menuItems = [];
             this.hasActiveMenu = false;
@@ -98,36 +95,67 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
             return;
           }
 
-          this.selectedMenuTitle = (plan as any).title ?? '';
-
-          const dishes = (plan as any).dishes ?? [];
-          const items = Array.isArray(dishes) ? dishes : [];
-
-          // ✅ HIER liegt der Fix:
-          // available default TRUE, falls Feld fehlt
-          this.menuItems = items.map((d: any) => ({
-            id: String(d.id),
-            name: d.name ?? '',
-            description: d.description ?? '',
-            price: Number(d.price ?? 0),
-            category: (d.category ?? 'Hauptgericht'),
-            vegetarian: !!d.vegetarian,
-            available: d.available !== false,
-            allergens: Array.isArray(d.allergens) ? d.allergens : (Array.isArray(d.allergenes) ? d.allergenes : []),
-          })) as MenuItem[];
-
+          this.selectedMenu = plan;
+          this.selectedMenuTitle = plan.title ?? '';
           this.hasActiveMenu = true;
-          console.log('[MenuPlan] selected menu items:', this.menuItems.length);
+
+          // ✅ WICHTIG: aktive Menü-ID im Cart merken
+          const menuId = String((plan as any)?.id ?? '').trim();
+          if (menuId) this.cartService.setCartMenuId(menuId);
+
+          const menuDrink = String((plan as any)?.drink ?? '').trim();
+          const menuDessert = String((plan as any)?.dessert ?? '').trim();
+
+          const raw = (plan as any).menuItems ?? [];
+          const items = Array.isArray(raw) ? raw : [];
+
+          // ✅ Keine Model-Änderung nötig: wir füllen nur die vorhandenen Felder
+          this.menuItems = items.map((m: any): MenuItem => ({
+            id: String(m.id),
+            name: m.name ?? '',
+            description: m.description ?? '',
+            price: Number(m.price ?? 0),
+            category: (m.category ?? ''),
+            vegetarian: !!m.vegetarian,
+            available: m.available !== false,
+            allergens: Array.isArray(m.allergens) ? m.allergens : [],
+            // optional: falls vorhanden, hilft für "Menü"-Badge
+            drink: menuDrink || m.drink || undefined,
+            dessert: menuDessert || m.dessert || undefined,
+          }));
         },
         error: (err) => {
           console.error('[MenuPlan] selected menu error:', err);
           this.lastFailAt = Date.now();
+          this.selectedMenu = null;
           this.selectedMenuTitle = '';
           this.menuItems = [];
           this.hasActiveMenu = false;
           this.statusMsg = 'Fehler beim Laden des aktiven Menüs.';
         },
       });
+  }
+
+  get menuDrink(): string {
+    return String((this.selectedMenu as any)?.drink ?? '').trim();
+  }
+
+  get menuDessert(): string {
+    return String((this.selectedMenu as any)?.dessert ?? '').trim();
+  }
+
+  private buildMenuHint(): string {
+    if (!this.selectedMenu) return '';
+    const title = String(this.selectedMenu.title ?? '').trim();
+    const drink = this.menuDrink;
+    const dessert = this.menuDessert;
+
+    const parts: string[] = [];
+    if (title) parts.push(`Menü: ${title}`);
+    if (drink) parts.push(`Getränk: ${drink}`);
+    if (dessert) parts.push(`Dessert: ${dessert}`);
+
+    return parts.length ? ` [${parts.join(', ')}]` : '';
   }
 
   get balance(): number {
@@ -155,14 +183,18 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
       (item.description ?? '').toLowerCase().includes(term);
 
     const category = (item.category ?? '').trim();
-    const categoryMatch = this.activeCategory === 'Alle' ? true : category === this.activeCategory;
+    const isMenuLike = !!(String((item as any)?.drink ?? '').trim() || String((item as any)?.dessert ?? '').trim());
+
+    let categoryMatch = true;
+    if (this.activeCategory === 'Alle') categoryMatch = true;
+    else if (this.activeCategory === 'Menü') categoryMatch = isMenuLike;
+    else categoryMatch = category === this.activeCategory;
 
     const filterMatch = this.activeFilter !== 'Vegetarisch' || !!item.vegetarian;
 
     return searchMatch && categoryMatch && filterMatch;
   }
 
-  private searchTimer?: any;
   onSearchChange(value: string): void {
     const v = (value ?? '').toString();
     clearTimeout(this.searchTimer);
@@ -180,17 +212,25 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
   addToOrder(menuItem: MenuItem, note = '', deliveryTime = '12:00'): void {
     const user = this.auth.getCurrentUser();
     if (!user) return;
-
-    // optional: blocken, wenn nicht verfügbar
     if (menuItem.available === false) return;
+
+    // ✅ sicherstellen, dass Menü-ID gesetzt ist (falls fetch timing)
+    const menuId = String((this.selectedMenu as any)?.id ?? '').trim();
+    if (menuId) this.cartService.setCartMenuId(menuId);
+
+    const trimmed = String(note ?? '').trim();
+    const finalNote = (trimmed + this.buildMenuHint()).trim();
 
     const items = this.cartService.getCartItems();
     const existing = items.find(
-      (i: any) => i.menuItem.id === menuItem.id && i.note === note && i.deliveryTime === deliveryTime
+      (i: any) =>
+        String(i?.menuItem?.id) === String(menuItem.id) &&
+        String(i.note ?? '') === finalNote &&
+        String(i.deliveryTime ?? '') === String(deliveryTime ?? '')
     );
 
     if (existing) existing.quantity += 1;
-    else items.push({ menuItem, user, note, quantity: 1, delivered: false, deliveryTime });
+    else items.push({ menuItem, user, note: finalNote, quantity: 1, delivered: false, deliveryTime });
 
     this.cartService.saveCartItems(items);
   }

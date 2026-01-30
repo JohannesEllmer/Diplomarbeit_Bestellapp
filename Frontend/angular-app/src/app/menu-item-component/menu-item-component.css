@@ -15,6 +15,35 @@
   box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
 
+/* ✅ neues Label rechts oben */
+.type-label {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #0d55c9;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.75rem;
+  z-index: 2;
+}
+
+/* ✅ unavailable-label nach unten verschieben, damit es nicht kollidiert */
+.unavailable-label {
+  position: absolute;
+  top: 44px;          /* vorher 10px */
+  right: 10px;
+  background: #8d1515;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.75rem;
+  z-index: 2;
+}
+
+
 .menu-card.unavailable {
   opacity: 0.7;
   background: #f8fafc;

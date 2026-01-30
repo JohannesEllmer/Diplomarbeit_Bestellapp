@@ -1,33 +1,43 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNumber, IsString, IsArray } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class CreateMenuDto {
-    @ApiProperty()
-    @IsString()
-    name: string;
+export class CreateMenuItemDto {
+  @ApiProperty()
+  @IsString()
+  name!: string;
 
-    @ApiProperty()
-    @IsString()
-    description: string;
+  @ApiProperty()
+  @IsString()
+  description!: string;
 
-    @ApiProperty()
-    @IsNumber()
-    price: number;
+  @ApiProperty()
+  @Type(() => Number)
+  @IsNumber()
+  price!: number;
 
-    @ApiProperty()
-    @IsString()
-    category: string;
+  @ApiProperty()
+  @IsString()
+  category!: string;
 
-    @ApiProperty()
-    @IsBoolean()
-    available: boolean;
+  @ApiProperty()
+  @IsBoolean()
+  available!: boolean;
 
-    @ApiProperty()
-    @IsBoolean()
-    vegetarian: boolean;
+  @ApiProperty()
+  @IsBoolean()
+  vegetarian!: boolean;
 
-    @ApiProperty()
-    @IsArray()
-    @IsString({ each: true })
-    allergens: string[];
+  @ApiProperty({ type: [String] })
+  @IsArray()
+  @IsString({ each: true })
+  allergens!: string[];
+
+  @IsOptional()
+  @IsString()
+  drink?: string;
+
+  @IsOptional()
+  @IsString()
+  dessert?: string;
 }

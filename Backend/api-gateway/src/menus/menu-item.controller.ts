@@ -1,7 +1,18 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+  ParseUUIDPipe,
+} from '@nestjs/common';
+
 import { MenuItemsService } from './menu-item.service';
-import { CreateMenuDto } from './dto/create-menu.dto';
-import { UpdateMenuDto } from './dto/update-menu.dto';
+import { CreateMenuItemDto } from './dto/create-menu.dto';
+import { UpdateMenuItemDto } from './dto/update-menu.dto';
 import { JwtAuthGuard } from '../auth.guards';
 import { Roles } from '../roles.decorator';
 import { RolesGuard } from '../roles.guard';
@@ -16,28 +27,31 @@ export class MenuItemsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.svc.findOne(id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INHABER', 'ADMIN')
   @Post()
-  create(@Body() dto: CreateMenuDto) {
+  create(@Body() dto: CreateMenuItemDto) {
     return this.svc.create(dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INHABER', 'ADMIN')
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateMenuDto) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateMenuItemDto,
+  ) {
     return this.svc.update(id, dto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INHABER', 'ADMIN')
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.svc.remove(id);
   }
 }

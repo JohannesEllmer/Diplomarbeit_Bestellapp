@@ -16,6 +16,64 @@
   margin-bottom: 12px;
 }
 
+.time-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:.35rem 0 .75rem;
+  flex-wrap:wrap;
+}
+
+.time-label{
+  font-size:.8rem;
+  color:#64748b;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+.time-chips{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.time-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:.25rem .55rem;
+  border-radius:999px;
+  border:1px solid #e2e8f0;
+  background:#f8fafc;
+  font-weight:800;
+  font-size:.85rem;
+  color:#0f172a;
+}
+
+.time-chip::before{
+  content:"⏱";
+  font-size:.85rem;
+  opacity:.9;
+}
+
+.time-chip.unknown{
+  opacity:.75;
+  font-weight:700;
+}
+
+.sum-pill{
+  margin-left:auto;
+  padding:.25rem .65rem;
+  border-radius:999px;
+  background:#0ea5e9;
+  color:#fff;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+
 
 .menu-header {
   background: #0284c7;

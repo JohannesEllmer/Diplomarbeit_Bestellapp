@@ -8,7 +8,5 @@ export class UpdateMealPlanDto {
   @IsOptional()
   @IsArray()
   @IsUUID('all', { each: true })
-  dishIds?: string[];
-
-
+  menuItemIds?: string[];
 }

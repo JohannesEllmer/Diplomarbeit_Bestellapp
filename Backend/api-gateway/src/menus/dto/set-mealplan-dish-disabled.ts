@@ -1,6 +1,6 @@
 import { IsBoolean } from 'class-validator';
 
-export class SetDishDisabledDto {
+export class SetMenuItemDisabledDto {
   @IsBoolean()
-  disabled!: boolean; // true = deaktiviert, false = aktiv/available
+  disabled!: boolean;
 }

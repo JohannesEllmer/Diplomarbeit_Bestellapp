@@ -67,9 +67,19 @@
 
   <footer class="menu-footer">
     <div class="footer-center">
-      <button class="checkout-btn" (click)="onOrder()" [disabled]="submitting || cartItems.length === 0">
-        {{ submitting ? 'Sende…' : 'Jetzt bestellen' }}
-      </button>
+     <button
+      type="button"
+      class="checkout-btn"
+      (click)="onOrder()"
+      [disabled]="!canOrder"
+      [class.disabled]="!canOrder"
+    >
+      Bestellen
+    </button>
+<div class="hint-disabled" *ngIf="!orderingEnabled">
+  Bestellen ist aktuell deaktiviert.
+</div>
+
 
       <div class="impressum-desktop">
         <span>Firma Muster GmbH</span>

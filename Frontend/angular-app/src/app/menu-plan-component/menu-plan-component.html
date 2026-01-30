@@ -51,6 +51,12 @@
         {{ selectedMenuTitle || 'Aktives Menü' }}
       </h2>
 
+      <div class="hint" *ngIf="hasActiveMenu && (menuDrink || menuDessert)">
+        <span *ngIf="menuDrink"><b>Getränk:</b> {{ menuDrink }}</span>
+        <span *ngIf="menuDrink && menuDessert"> · </span>
+        <span *ngIf="menuDessert"><b>Dessert:</b> {{ menuDessert }}</span>
+      </div>
+
       <div *ngIf="loadingItems" class="hint">
         Lädt Menü…
       </div>
@@ -59,6 +65,7 @@
         @for (item of filteredItems; track item.id) {
           <app-menu-item
             [item]="item"
+            [menu]="selectedMenu"
             (addItem)="addToOrder(item, $event)"
           ></app-menu-item>
         }
@@ -75,7 +82,7 @@
       </main>
     </section>
   </div>
-
+  
   <footer class="menu-footer">
     <div class="footer-grid">
       <div class="footer-item">

@@ -1,94 +1,238 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../env';
-import { Observable } from 'rxjs';
-import { OrderItem } from '../../../models/menu-item.model';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
-type CreateOrderPayload = {
-  items: Array<{
-    menuItemId: string;
-    quantity: number;
-    note?: string;
-    deliveryTime?: string;
-  }>;
+import { environment } from '../env';
+import { MenuService } from '../../services/menu/menu-service';
+import { AuthService } from '../AuthService';
+
+type CreateOrderItemDto = {
+  menuItemId: string;
+  quantity: number;
+  note?: string;
+  deliveryTime?: string; // ISO
+};
+
+type CreateOrderDto = {
+  items: CreateOrderItemDto[];
 };
 
 @Injectable({ providedIn: 'root' })
 export class CartService {
   private readonly apiBase = environment.apiBaseUrl ?? 'http://localhost:3000/api';
-  private readonly ordersEndpoint = `${this.apiBase}/orders`;
 
-  private storageKey = 'cart';
+  private readonly STORAGE_KEY = 'cart_items';
+  private readonly STORAGE_MENU_KEY = 'cart_active_menu_id';
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private menuService: MenuService,
+    private auth: AuthService,
+  ) {}
 
-  // --- persistence ---
-  getCartItems(): OrderItem[] {
+  // -------------------------
+  // Auth helper (fix für isLoggedIn)
+  // -------------------------
+  private isAuthenticated(): boolean {
+    // ✅ nimm das, was du in deinem AuthService wirklich hast
+    // - getToken() kommt bei dir in AuthInterceptor vor -> existiert sehr wahrscheinlich
+    // - getCurrentUser() hast du bereits im Menü/Cart Code benutzt
     try {
-      const raw = localStorage.getItem(this.storageKey);
-      return raw ? (JSON.parse(raw) as OrderItem[]) : [];
+      const token = (this.auth as any)?.getToken?.();
+      if (token) return true;
+    } catch {}
+
+    try {
+      const user = (this.auth as any)?.getCurrentUser?.();
+      return !!user;
+    } catch {
+      return false;
+    }
+  }
+
+  // -------------------------
+  // Storage
+  // -------------------------
+  getCartItems(): any[] {
+    try {
+      const raw = localStorage.getItem(this.STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
     }
   }
 
-  private saveCart(items: OrderItem[]): void {
-    localStorage.setItem(this.storageKey, JSON.stringify(items));
-  }
-
-  // ✅ Kompatibilität: wird von MenuPlan + Specs erwartet
-  saveCartItems(items: OrderItem[]): void {
-    this.saveCart(items ?? []);
+  saveCartItems(items: any[]): void {
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(items ?? []));
   }
 
   clearCart(): void {
-    localStorage.removeItem(this.storageKey);
+    this.saveCartItems([]);
   }
 
-  // --- item ops ---
-  increaseQuantity(items: OrderItem[], index: number): OrderItem[] {
-    const next = [...(items ?? [])];
-    next[index] = { ...next[index], quantity: (next[index].quantity ?? 0) + 1 };
-    this.saveCart(next);
-    return next;
+  // -------------------------
+  // Menü-Marker (für Menüwechsel-Erkennung)
+  // -------------------------
+  setCartMenuId(menuId: string): void {
+    const v = String(menuId ?? '').trim();
+    if (!v) return;
+    localStorage.setItem(this.STORAGE_MENU_KEY, v);
   }
 
-  decreaseQuantity(items: OrderItem[], index: number): OrderItem[] {
-    const next = [...(items ?? [])];
-    const q = (next[index].quantity ?? 0) - 1;
-    next[index] = { ...next[index], quantity: Math.max(1, q) };
-    this.saveCart(next);
-    return next;
+  getCartMenuId(): string {
+    return String(localStorage.getItem(this.STORAGE_MENU_KEY) ?? '').trim();
   }
 
-  updateNote(items: OrderItem[], index: number, note: string): OrderItem[] {
-    const next = [...(items ?? [])];
-    next[index] = { ...next[index], note };
-    this.saveCart(next);
-    return next;
+  clearCartMenuId(): void {
+    localStorage.removeItem(this.STORAGE_MENU_KEY);
   }
 
-  removeItem(items: OrderItem[], index: number): OrderItem[] {
-    const next = (items ?? []).filter((_, i) => i !== index);
-    this.saveCart(next);
-    return next;
+  // -------------------------
+  // UI Helpers
+  // -------------------------
+  getItemCount(items: any[]): number {
+    return (items ?? []).reduce((sum, it) => sum + Number(it?.quantity ?? 0), 0);
   }
 
-  // ✅ Kompatibilität: wird von MenuPlan + Specs erwartet
-  getItemCount(items: OrderItem[]): number {
-    return (items ?? []).reduce((sum, it) => sum + Number(it.quantity ?? 0), 0);
+  getTotal(items: any[]): number {
+    return (items ?? []).reduce((sum, it) => {
+      const price = Number(it?.menuItem?.price ?? 0);
+      const qty = Number(it?.quantity ?? 0);
+      return sum + price * qty;
+    }, 0);
   }
 
-  getTotal(items: OrderItem[]): number {
-    return (items ?? []).reduce((sum, it) => sum + (it.menuItem.price * it.quantity), 0);
+  // -------------------------
+  // Cart mutations (wie bei dir genutzt)
+  // -------------------------
+  increaseQuantity(items: any[], index: number): any[] {
+    const arr = [...(items ?? [])];
+    if (!arr[index]) return arr;
+    arr[index].quantity = Number(arr[index].quantity ?? 0) + 1;
+    this.saveCartItems(arr);
+    return arr;
   }
 
-  isValidTimeFormat(time: string): boolean {
-    return /^([01]\d|2[0-3]):[0-5]\d$/.test((time || '').trim());
+  decreaseQuantity(items: any[], index: number): any[] {
+    const arr = [...(items ?? [])];
+    if (!arr[index]) return arr;
+
+    const q = Number(arr[index].quantity ?? 0) - 1;
+    if (q <= 0) arr.splice(index, 1);
+    else arr[index].quantity = q;
+
+    this.saveCartItems(arr);
+    return arr;
   }
 
-  // Backend submit
-  submitOrder(payload: CreateOrderPayload): Observable<any> {
-    return this.http.post(this.ordersEndpoint, payload);
+  updateNote(items: any[], index: number, note: string): any[] {
+    const arr = [...(items ?? [])];
+    if (!arr[index]) return arr;
+    arr[index].note = String(note ?? '');
+    this.saveCartItems(arr);
+    return arr;
+  }
+
+  removeItem(items: any[], index: number): any[] {
+    const arr = [...(items ?? [])];
+    if (index < 0 || index >= arr.length) return arr;
+    arr.splice(index, 1);
+    this.saveCartItems(arr);
+    return arr;
+  }
+
+  // -------------------------
+  // Time validation
+  // -------------------------
+  isValidTimeFormat(hhmm: string): boolean {
+    return /^([01]\d|2[0-3]):([0-5]\d)$/.test(String(hhmm ?? '').trim());
+  }
+
+  // -------------------------
+  // ✅ Cart validieren gegen aktives Menü
+  // - Wenn Menü gewechselt -> Cart leeren
+  // - Wenn Gericht nicht mehr im Menü oder available=false -> entfernen
+  // -------------------------
+  validateCartAgainstActiveMenu(): Observable<{
+    clearedBecauseMenuChanged: boolean;
+    removedItemsCount: number;
+  }> {
+    // wenn nicht eingeloggt -> wir lassen local cart in ruhe
+    if (!this.isAuthenticated()) {
+      return of({ clearedBecauseMenuChanged: false, removedItemsCount: 0 });
+    }
+
+    const before = this.getCartItems();
+
+    return this.menuService.getSelectedMealPlan().pipe(
+      map((plan: any) => {
+        // Kein aktives Menü -> Cart leeren
+        if (!plan) {
+          const removed = before.length;
+          if (removed) {
+            this.clearCart();
+            this.clearCartMenuId();
+          }
+          return { clearedBecauseMenuChanged: true, removedItemsCount: removed };
+        }
+
+        const activeMenuId = String(plan?.id ?? '').trim();
+        const storedMenuId = this.getCartMenuId();
+
+        // Menüwechsel -> kompletten Cart leeren (wenn wir schon mal ein Menü gespeichert hatten)
+        if (storedMenuId && activeMenuId && storedMenuId !== activeMenuId) {
+          const removed = before.length;
+          this.clearCart();
+          this.setCartMenuId(activeMenuId);
+          return { clearedBecauseMenuChanged: true, removedItemsCount: removed };
+        }
+
+        // Falls noch kein storedMenuId vorhanden -> merken
+        if (!storedMenuId && activeMenuId) {
+          this.setCartMenuId(activeMenuId);
+        }
+
+        // Items des aktiven Menüs + availability
+        const raw = (plan as any)?.menuItems ?? [];
+        const menuItems = Array.isArray(raw) ? raw : [];
+
+        // allowed[id] = true/false (available)
+        const allowed = new Map<string, boolean>();
+        for (const mi of menuItems) {
+          const id = String(mi?.id ?? '').trim();
+          if (!id) continue;
+          allowed.set(id, mi?.available !== false);
+        }
+
+        const filtered = (before ?? []).filter(ci => {
+          const id = String(ci?.menuItem?.id ?? '').trim();
+          if (!id) return false;
+          if (!allowed.has(id)) return false;          // nicht mehr im Menü
+          if (allowed.get(id) === false) return false; // nicht verfügbar
+          return true;
+        });
+
+        const removedItemsCount = before.length - filtered.length;
+        if (removedItemsCount > 0) this.saveCartItems(filtered);
+
+        return { clearedBecauseMenuChanged: false, removedItemsCount };
+      }),
+      catchError(() => of({ clearedBecauseMenuChanged: false, removedItemsCount: 0 })),
+    );
+  }
+
+  // -------------------------
+  // Submit order (wie bei dir)
+  // -------------------------
+  submitOrder(dto: CreateOrderDto): Observable<any> {
+    if (environment.useMockData) return of({ ok: true });
+
+    return this.http.post(`${this.apiBase}/orders`, dto).pipe(
+      catchError(err => {
+        throw err;
+      }),
+    );
   }
 }

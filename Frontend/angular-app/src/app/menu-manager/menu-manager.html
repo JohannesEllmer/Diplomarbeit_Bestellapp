@@ -56,26 +56,26 @@
         </div>
 
         <div class="menu-dishes">
-         @if (menu.dishes.length > 0) {
-            @for (dish of menu.dishes; track dish.id) {
+          @if ((menu.menuItems?.length ?? 0) > 0) {
+            @for (item of (menu.menuItems ?? []); track item.id) {
               <div class="menu-dish">
                 <div class="menu-dish-main">
-                  <span class="dish-name">{{ dish.name }}</span>
+                  <span class="dish-name">{{ item.name }}</span>
                   <span class="dish-price">
-                    {{ dish.price }} €
+                    {{ item.price }} €
                   </span>
                 </div>
 
-                @if (dish.description) {
+                @if (item.description) {
                   <div class="dish-description">
-                    {{ dish.description }}
+                    {{ item.description }}
                   </div>
                 }
               </div>
             }
           } @else {
             <div class="menu-dish menu-dish-empty">
-              Keine Gerichte vorhanden.
+              Keine Menu-Items vorhanden.
             </div>
           }
         </div>
@@ -87,10 +87,24 @@
     <button
       class="add-menu-button"
       type="button"
-      (click)="goToMenuPlanner({ id: 'new', title: '', dishes: [] })"
+      (click)="goToMenuPlanner({ id: 'new', title: '', menuItems: [] })"
     >
       <span class="material-icons">add</span>
       Neues Menü hinzufügen
     </button>
+      <button
+    class="add-menu-button"
+    type="button"
+    style="margin-left: 12px;"
+    [class.danger]="orderingEnabled"
+    (click)="toggleOrdering()"
+    [disabled]="togglingOrdering"
+    title="Bestellen global aktivieren/deaktivieren"
+  >
+    <span class="material-icons">
+      {{ orderingEnabled ? 'lock_open' : 'lock' }}
+    </span>
+    {{ orderingEnabled ? 'Bestellen deaktivieren' : 'Bestellen aktivieren' }}
+  </button>
   </div>
 </div>

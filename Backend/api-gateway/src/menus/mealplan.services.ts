@@ -1,4 +1,3 @@
-// src/menus/mealplan.services.ts
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Pool } from 'pg';
 import { PG_POOL } from '../db';
@@ -7,12 +6,17 @@ import { UpdateMealPlanDto } from './dto/update-mealplan.dto';
 
 type MealPlanRow = { id: string; title: string; is_selected?: boolean };
 
-type DishJoinRow = {
+type MenuItemJoinRow = {
   id: string;
   name: string;
   description?: string | null;
   price?: any;
-  allergenes?: any;
+  category?: string | null;
+  available?: boolean | null;
+  vegetarian?: boolean | null;
+  allergens?: any;
+  drink?: string | null;
+  dessert?: string | null;
   is_disabled?: boolean | null;
 };
 
@@ -34,9 +38,14 @@ export class MealPlansService {
     const r = res.rows[0];
     const id = String(r.id);
 
-    // optional: initial dishes setzen (nur beim Erstellen)
-    if (dto.dishIds?.length) {
-      await this.setDishes(id, dto.dishIds);
+    // optional: initial menu items setzen
+    if ((dto as any).menuItemIds?.length) {
+      await this.setMenuItems(id, (dto as any).menuItemIds);
+    }
+
+    // backward-compat optional: falls dto noch dishIds sendet (kannst du später entfernen)
+    if ((dto as any).dishIds?.length) {
+      await this.setMenuItems(id, (dto as any).dishIds);
     }
 
     return this.findOne(id);
@@ -55,24 +64,23 @@ export class MealPlansService {
         COALESCE(
           json_agg(
             json_build_object(
-              'id', d.id,
-              'name', d.name,
-              'description', COALESCE(d.description, ''),
-              'price', COALESCE(d.price, 0),
-              'allergenes', COALESCE(d.allergenes, ARRAY[]::text[]),
-
-              -- ✅ wichtig für dein Frontend:
-              'available', NOT COALESCE(mpd.is_disabled, false),
-              'vegetarian', false,
-              'category', 'Hauptgericht',
-              'allergens', COALESCE(d.allergenes, ARRAY[]::text[])
+              'id', mi.id,
+              'name', mi.name,
+              'description', COALESCE(mi.description, ''),
+              'price', COALESCE(mi.price, 0),
+              'category', COALESCE(mi.category, ''),
+              'available', NOT COALESCE(mpmi.is_disabled, false),
+              'vegetarian', COALESCE(mi.vegetarian, false),
+              'allergens', COALESCE(mi.allergens, ARRAY[]::text[]),
+              'drink', mi.drink,
+              'dessert', mi.dessert
             )
-          ) FILTER (WHERE d.id IS NOT NULL),
+          ) FILTER (WHERE mi.id IS NOT NULL),
           '[]'::json
-        ) AS dishes
+        ) AS menu_items
       FROM app.meal_plans mp
-      LEFT JOIN app.meal_plan_dishes mpd ON mpd.meal_plan_id = mp.id
-      LEFT JOIN app.dishes d ON d.id = mpd.dish_id
+      LEFT JOIN app.meal_plan_menu_items mpmi ON mpmi.meal_plan_id = mp.id
+      LEFT JOIN app.menu_items mi ON mi.id = mpmi.menu_item_id
       GROUP BY mp.id
       ORDER BY mp.title ASC
       `,
@@ -82,7 +90,7 @@ export class MealPlansService {
       id: String(r.id),
       title: r.title,
       isSelected: !!r.is_selected,
-      dishes: Array.isArray(r.dishes) ? r.dishes : [],
+      menuItems: Array.isArray(r.menu_items) ? r.menu_items : [],
     }));
   }
 
@@ -99,14 +107,23 @@ export class MealPlansService {
     );
     if (planRes.rowCount === 0) throw new NotFoundException('MEAL_PLAN_NOT_FOUND');
 
-    const dishesRes = await this.db.query<DishJoinRow>(
+    const itemsRes = await this.db.query<MenuItemJoinRow>(
       `SELECT
-         d.id, d.name, d.description, d.price, d.allergenes,
-         mpd.is_disabled
-       FROM app.meal_plan_dishes mpd
-       JOIN app.dishes d ON d.id = mpd.dish_id
-       WHERE mpd.meal_plan_id = $1
-       ORDER BY d.name ASC`,
+         mi.id,
+         mi.name,
+         mi.description,
+         mi.price,
+         mi.category,
+         mi.available,
+         mi.vegetarian,
+         mi.allergens,
+         mi.drink,
+         mi.dessert,
+         mpmi.is_disabled
+       FROM app.meal_plan_menu_items mpmi
+       JOIN app.menu_items mi ON mi.id = mpmi.menu_item_id
+       WHERE mpmi.meal_plan_id = $1
+       ORDER BY mi.name ASC`,
       [id],
     );
 
@@ -116,28 +133,23 @@ export class MealPlansService {
       id: String(plan.id),
       title: plan.title,
       isSelected: !!plan.is_selected,
-      dishes: (dishesRes.rows ?? []).map((d: any) => ({
-        id: String(d.id),
-        name: String(d.name ?? ''),
-        description: d.description ?? '',
-        price: d.price == null ? 0 : Number(d.price),
-
-        // beide Namen, damit dein Frontend nie “leer” ist:
-        allergenes: Array.isArray(d.allergenes) ? d.allergenes : [],
-        allergens: Array.isArray(d.allergenes) ? d.allergenes : [],
-
-        // ✅ entscheidend:
-        available: !(d.is_disabled ?? false),
-
-        // falls du es brauchst:
-        vegetarian: false,
-        category: 'Hauptgericht',
+      menuItems: (itemsRes.rows ?? []).map((mi: any) => ({
+        id: String(mi.id),
+        name: String(mi.name ?? ''),
+        description: mi.description ?? '',
+        price: mi.price == null ? 0 : Number(mi.price),
+        category: mi.category ?? '',
+        vegetarian: !!mi.vegetarian,
+        available: !(mi.is_disabled ?? false),
+        allergens: Array.isArray(mi.allergens) ? mi.allergens : [],
+        drink: mi.drink ?? undefined,
+        dessert: mi.dessert ?? undefined,
       })),
     };
   }
 
   // -------------------------
-  // Update (Titel + optional bulk)
+  // Update
   // -------------------------
   async update(id: string, dto: UpdateMealPlanDto) {
     const res = await this.db.query(
@@ -149,9 +161,14 @@ export class MealPlansService {
     );
     if (res.rowCount === 0) throw new NotFoundException('MEAL_PLAN_NOT_FOUND');
 
-    // optional bulk: wenn du es irgendwann wieder brauchst
-    if (dto.dishIds) {
-      await this.setDishes(id, dto.dishIds);
+    // optional bulk: menuItemIds
+    if ((dto as any).menuItemIds) {
+      await this.setMenuItems(id, (dto as any).menuItemIds);
+    }
+
+    // backward-compat optional: dishIds
+    if ((dto as any).dishIds) {
+      await this.setMenuItems(id, (dto as any).dishIds);
     }
 
     return this.findOne(id);
@@ -163,9 +180,9 @@ export class MealPlansService {
   }
 
   // -------------------------
-  // Bulk Set (ersetzt alle Beziehungen)
+  // Bulk Set
   // -------------------------
-  async setDishes(mealPlanId: string, dishIds: string[]) {
+  async setMenuItems(mealPlanId: string, menuItemIds: string[]) {
     const client = await this.db.connect();
     try {
       await client.query('BEGIN');
@@ -176,14 +193,18 @@ export class MealPlansService {
       );
       if (exists.rowCount === 0) throw new NotFoundException('MEAL_PLAN_NOT_FOUND');
 
-      await client.query(`DELETE FROM app.meal_plan_dishes WHERE meal_plan_id = $1`, [mealPlanId]);
+      await client.query(
+        `DELETE FROM app.meal_plan_menu_items WHERE meal_plan_id = $1`,
+        [mealPlanId],
+      );
 
-      for (const dishId of dishIds ?? []) {
+      for (const menuItemId of menuItemIds ?? []) {
         await client.query(
-          `INSERT INTO app.meal_plan_dishes (meal_plan_id, dish_id, is_disabled)
+          `INSERT INTO app.meal_plan_menu_items (meal_plan_id, menu_item_id, is_disabled)
            VALUES ($1, $2, false)
-           ON CONFLICT (meal_plan_id, dish_id) DO UPDATE SET is_disabled = EXCLUDED.is_disabled`,
-          [mealPlanId, dishId],
+           ON CONFLICT (meal_plan_id, menu_item_id)
+           DO UPDATE SET is_disabled = EXCLUDED.is_disabled`,
+          [mealPlanId, menuItemId],
         );
       }
 
@@ -198,50 +219,57 @@ export class MealPlansService {
   }
 
   // -------------------------
-  // ✅ Single add/remove (für Drag&Drop Edit)
+  // Single add/remove
   // -------------------------
-  async addDish(mealPlanId: string, dishId: string) {
-    const res = await this.db.query(
-      `INSERT INTO app.meal_plan_dishes (meal_plan_id, dish_id, is_disabled)
+  async addMenuItem(mealPlanId: string, menuItemId: string) {
+    await this.db.query(
+      `INSERT INTO app.meal_plan_menu_items (meal_plan_id, menu_item_id, is_disabled)
        VALUES ($1, $2, false)
-       ON CONFLICT (meal_plan_id, dish_id) DO NOTHING`,
-      [mealPlanId, dishId],
+       ON CONFLICT (meal_plan_id, menu_item_id) DO NOTHING`,
+      [mealPlanId, menuItemId],
     );
 
-    // wenn mealPlan nicht existiert, kommt hier kein FK? -> lieber checken:
-    const check = await this.db.query(`SELECT id FROM app.meal_plans WHERE id = $1 LIMIT 1`, [mealPlanId]);
+    const check = await this.db.query(
+      `SELECT id FROM app.meal_plans WHERE id = $1 LIMIT 1`,
+      [mealPlanId],
+    );
     if (check.rowCount === 0) throw new NotFoundException('MEAL_PLAN_NOT_FOUND');
 
     return this.findOne(mealPlanId);
   }
 
-  async removeDish(mealPlanId: string, dishId: string) {
+  async removeMenuItem(mealPlanId: string, menuItemId: string) {
     await this.db.query(
-      `DELETE FROM app.meal_plan_dishes
-       WHERE meal_plan_id = $1 AND dish_id = $2`,
-      [mealPlanId, dishId],
+      `DELETE FROM app.meal_plan_menu_items
+       WHERE meal_plan_id = $1 AND menu_item_id = $2`,
+      [mealPlanId, menuItemId],
     );
 
-    const check = await this.db.query(`SELECT id FROM app.meal_plans WHERE id = $1 LIMIT 1`, [mealPlanId]);
+    const check = await this.db.query(
+      `SELECT id FROM app.meal_plans WHERE id = $1 LIMIT 1`,
+      [mealPlanId],
+    );
     if (check.rowCount === 0) throw new NotFoundException('MEAL_PLAN_NOT_FOUND');
 
     return this.findOne(mealPlanId);
   }
 
   // -------------------------
-  // ✅ Checkbox sofort: disabled setzen
+  // Disabled setzen
   // -------------------------
-  async setDishDisabled(mealPlanId: string, dishId: string, disabled: boolean) {
-    // Upsert: falls Beziehung noch nicht existiert, wird sie erstellt
+  async setMenuItemDisabled(mealPlanId: string, menuItemId: string, disabled: boolean) {
     await this.db.query(
-      `INSERT INTO app.meal_plan_dishes (meal_plan_id, dish_id, is_disabled)
+      `INSERT INTO app.meal_plan_menu_items (meal_plan_id, menu_item_id, is_disabled)
        VALUES ($1, $2, $3)
-       ON CONFLICT (meal_plan_id, dish_id)
+       ON CONFLICT (meal_plan_id, menu_item_id)
        DO UPDATE SET is_disabled = EXCLUDED.is_disabled`,
-      [mealPlanId, dishId, !!disabled],
+      [mealPlanId, menuItemId, !!disabled],
     );
 
-    const check = await this.db.query(`SELECT id FROM app.meal_plans WHERE id = $1 LIMIT 1`, [mealPlanId]);
+    const check = await this.db.query(
+      `SELECT id FROM app.meal_plans WHERE id = $1 LIMIT 1`,
+      [mealPlanId],
+    );
     if (check.rowCount === 0) throw new NotFoundException('MEAL_PLAN_NOT_FOUND');
 
     return this.findOne(mealPlanId);

@@ -46,6 +46,22 @@
     <button class="export-btn" (click)="exportFinancePDF()">PDF exportieren</button>
   </div>
 
+  <section class="trending-cards" *ngIf="topTrending?.length">
+  <div class="trending-head">
+    <h2>Top-Trending</h2>
+    <span class="muted">Top 3 im Zeitraum</span>
+  </div>
+
+  <div class="trending-cards-grid">
+    <div class="card trending-card" *ngFor="let t of topTrending; let i = index">
+      <span>Platz #{{ i + 1 }}</span>
+      <div class="value-trend">
+        <strong class="trending-name">{{ t.name }}</strong>
+      </div>
+    </div>
+  </div>
+</section>
+
   <section class="summary-cards">
     <div class="card">
       <span>Bestellungen</span>
@@ -82,6 +98,7 @@
     </div>
   </div>
 
+  <!-- ✅ ORDERS SECTION: User + Gerichte + Gesamtpreis + Status (keine Bestellnummer) -->
   <section class="orders-section" *ngIf="days?.length">
     <div class="orders-toolbar">
       <h2>Bestellungen</h2>
@@ -91,13 +108,13 @@
           <label>Suche</label>
           <input
             type="text"
-            placeholder="#ID, Kunde, Datum…"
+            placeholder="Kunde, Gericht, Datum…"
             [(ngModel)]="orderQuery"
           >
         </div>
 
         <div class="selector-group" style="margin:0; min-width:160px;">
-          <label>Lieferung</label>
+          <label>Status</label>
           <select [(ngModel)]="deliveredFilter">
             <option value="all">Alle</option>
             <option value="open">Offen</option>
@@ -125,8 +142,17 @@
             (click)="openOrder(day, order)"
           >
             <div class="order-info">
-              <div class="order-id">#{{ order.id }}</div>
               <div class="order-user">{{ order.user?.name || 'Unbekannt' }}</div>
+
+              <div class="order-dishes" *ngIf="orderDishNames(order).length">
+                <span class="dish-chip" *ngFor="let n of orderDishNames(order) | slice:0:3">
+                  {{ n }}
+                </span>
+                <span class="dish-more" *ngIf="orderDishNames(order).length > 3">
+                  +{{ orderDishNames(order).length - 3 }}
+                </span>
+              </div>
+
               <span class="status-pill" [ngClass]="deliveredClass(order)">
                 {{ deliveredLabel(order) }}
               </span>
@@ -139,11 +165,12 @@
     </div>
   </section>
 
+  <!-- Modal (optional, bleibt schlicht) -->
   <div class="modal-overlay" *ngIf="selectedOrder as so" (click)="closeOrder()">
     <div class="modal" (click)="stopOverlayClick($event)">
       <div class="modal-head">
         <div>
-          <h2 style="margin:0;">Bestellung #{{ so.id }}</h2>
+          <h2 style="margin:0;">Bestellung</h2>
           <div class="muted">
             {{ selectedDay?.date }} · {{ so.user?.name || 'Unbekannt' }}
           </div>
@@ -165,10 +192,6 @@
         <div class="modal-row">
           <span class="label">Preis</span>
           <strong>{{ so.totalPrice | currency:'EUR' }}</strong>
-        </div>
-
-        <div class="muted" style="margin-top:.8rem;">
-          Hinweis: „Was bestellt wurde“ ist nicht verfügbar, weil dein StatOrder keine Items enthält.
         </div>
       </div>
     </div>

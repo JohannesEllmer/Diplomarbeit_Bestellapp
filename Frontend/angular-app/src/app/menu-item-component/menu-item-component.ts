@@ -1,8 +1,9 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { MenuItem } from '../../models/menu-item.model';
-import { Menu } from '../../models/menu.model';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+
+import { MenuItem } from '../../models/menu-item.model';
+import { MealPlan } from '../../models/meal-plan.model';
 
 @Component({
   selector: 'app-menu-item',
@@ -12,18 +13,46 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./menu-item-component.css']
 })
 export class MenuItemComponent {
-  @Input() item!: MenuItem;    
-  @Input() menu?: Menu;        
+  @Input() item!: MenuItem;
+  @Input() menu: MealPlan | null = null;
+
   @Output() addItem = new EventEmitter<string>();
 
-  note: string = '';
+  note = '';
+
+  get isExtraItem(): boolean {
+    const id = String(this.item?.id ?? '');
+    return id.startsWith('extra:');
+  }
+
+  get canOrder(): boolean {
+    if (!this.item) return false;
+    if (this.isExtraItem) return false;
+    return this.item.available !== false;
+  }
+
+  // ✅ Menü-Extras kommen zuverlässig vom Item (vom Parent "eingebacken")
+  get menuDrink(): string {
+    return String((this.item as any)?.drink ?? '').trim();
+  }
+
+  get menuDessert(): string {
+    return String((this.item as any)?.dessert ?? '').trim();
+  }
+
+  // ✅ "Menü" wenn Extras vorhanden, sonst "Gericht"
+  get isMenuSet(): boolean {
+    return !!(this.menuDrink || this.menuDessert);
+  }
+
+  get typeLabel(): string {
+    return this.isMenuSet ? 'Menü' : 'Gericht';
+  }
 
   addToOrder(): void {
-    const trimmedNote = this.note.trim();
-    const menuHint = this.menu
-      ? ` [Menü: ${this.menu.title}${this.menu.drink ? ', Getränk: ' + this.menu.drink : ''}${this.menu.dessert ? ', Dessert: ' + this.menu.dessert : ''}]`
-      : '';
-    this.addItem.emit(trimmedNote + (this.menu ? menuHint : ''));
+    if (!this.canOrder) return;
+    const trimmedNote = (this.note ?? '').trim();
+    this.addItem.emit(trimmedNote);
     this.note = '';
   }
 }

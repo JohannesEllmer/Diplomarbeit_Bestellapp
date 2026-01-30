@@ -1,8 +1,7 @@
-import { IsArray, IsOptional, IsUUID } from 'class-validator';
+import { IsArray, IsUUID } from 'class-validator';
 
-export class SetMealPlanDishesDto {
+export class SetMealPlanMenuItemsDto {
   @IsArray()
   @IsUUID('all', { each: true })
-  dishIds!: string[];
-
+  menuItemIds!: string[];
 }

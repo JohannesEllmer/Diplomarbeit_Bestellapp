@@ -283,6 +283,35 @@
   min-height: 32px;
 }
 
+.btn-edit {
+  padding: 0.4rem;
+  border-radius: 999px;
+  border: 1.5px solid #bae6fd;
+  background: #eff6ff;
+  color: #0284c7;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease;
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.btn-edit:hover {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25);
+}
+
+.btn-edit:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+}
+
+
 .dish-action-btn:hover {
   background: #0ea5e9;
   color: #ffffff;

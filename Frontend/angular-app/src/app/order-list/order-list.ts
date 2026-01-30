@@ -3,7 +3,7 @@ import { interval, Subject, takeUntil } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { OrderItem } from '../../models/menu-item.model';
+import { Order } from '../../models/menu-item.model';
 import { AdminOrderService } from '../services/order/admin-order.service';
 
 @Component({
@@ -17,12 +17,15 @@ export class OrderListComponent implements OnInit, OnDestroy {
   activeGroup: string = 'Keine Gruppierung';
   readonly groupOptions = ['Keine Gruppierung', 'Nach Gericht', 'Nach Lieferzeit'];
 
-  orderItems: OrderItem[] = [];
-  paginatedItems: OrderItem[] = [];
+  orders: Order[] = [];
+  openOrders: Order[] = [];
+  completedOrders: Order[] = [];
+
+  paginatedOrders: Order[] = [];
   currentPage = 1;
   itemsPerPage = 10;
   pages: number[] = [];
-  completedItems: OrderItem[] = [];
+
   completedCollapsed = true;
 
   private destroy$ = new Subject<void>();
@@ -33,11 +36,12 @@ export class OrderListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.loadOrders();
+    this.loadOrders(true);
 
-    interval(5000)
+    // ✅ alle 2 Minuten automatisch aktualisieren
+    interval(2 * 60 * 1000)
       .pipe(takeUntil(this.destroy$))
-      .subscribe(() => this.loadOrders());
+      .subscribe(() => this.loadOrders(false));
   }
 
   ngOnDestroy(): void {
@@ -45,13 +49,34 @@ export class OrderListComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  loadOrders(): void {
-    this.adminOrders.getOrdersFlatItems().subscribe(items => {
-      const all = items ?? [];
-      this.orderItems = all.filter(i => !i.delivered);
-      this.completedItems = all.filter(i => i.delivered);
+  /**
+   * @param resetPage true = beim Initialload
+   */
+  loadOrders(resetPage: boolean): void {
+    const prevPage = this.currentPage;
+    const prevTotal = this.openOrders.length;
 
-      this.currentPage = 1;
+    this.adminOrders.getOrders().subscribe((orders) => {
+      const all = orders ?? [];
+      this.orders = all;
+
+      this.openOrders = all.filter(o => String(o.status ?? '') !== 'closed');
+      this.completedOrders = all.filter(o => String(o.status ?? '') === 'closed');
+
+      const newTotalPages = Math.max(
+        1,
+        Math.ceil(this.openOrders.length / this.itemsPerPage)
+      );
+
+      // ✅ Seite beibehalten, wenn möglich
+      if (resetPage) {
+        this.currentPage = 1;
+      } else if (prevPage > newTotalPages) {
+        this.currentPage = newTotalPages;
+      } else {
+        this.currentPage = prevPage;
+      }
+
       this.updatePagination();
     });
   }
@@ -59,7 +84,7 @@ export class OrderListComponent implements OnInit, OnDestroy {
   updatePagination(): void {
     const start = (this.currentPage - 1) * this.itemsPerPage;
     const end = start + this.itemsPerPage;
-    this.paginatedItems = this.orderItems.slice(start, end);
+    this.paginatedOrders = this.openOrders.slice(start, end);
     this.updatePages();
   }
 
@@ -80,33 +105,84 @@ export class OrderListComponent implements OnInit, OnDestroy {
   }
 
   get totalPages(): number {
-    return this.orderItems.length === 0
+    return this.openOrders.length === 0
       ? 1
-      : Math.ceil(this.orderItems.length / this.itemsPerPage);
+      : Math.ceil(this.openOrders.length / this.itemsPerPage);
   }
 
   get totalSum(): number {
-    return this.orderItems.reduce((sum, item) => sum + item.menuItem.price * item.quantity, 0);
+    return this.openOrders.reduce((sum, o) => sum + Number(o.totalPrice ?? 0), 0);
   }
 
-  get groupedOrders(): { [key: string]: OrderItem[] } {
+  // -------------------------
+  // UI helpers
+  // -------------------------
+  userName(order: Order): string {
+    return String((order as any)?.user?.name ?? '').trim() || 'Unbekannter Nutzer';
+  }
+
+  statusLabel(order: Order): string {
+    const s = String(order.status ?? '').toLowerCase();
+    if (s === 'closed') return 'Abgeschlossen';
+    if (s === 'open') return 'Offen';
+    return String(order.status ?? '');
+  }
+
+  deliveryTimes(order: Order): string[] {
+    const times = (order.items ?? [])
+      .map((it: any) => this.prettyTime(it?.deliveryTime))
+      .filter(Boolean);
+
+    return Array.from(new Set(times));
+  }
+
+  prettyTime(value: any): string {
+    const s = String(value ?? '').trim();
+    if (!s) return '';
+
+    if (/^([01]\d|2[0-3]):[0-5]\d$/.test(s)) return s;
+
+    const d = new Date(s);
+    if (!Number.isNaN(d.getTime())) {
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    return s;
+  }
+
+  dishKey(order: Order): string {
+    const names = Array.from(
+      new Set(
+        (order.items ?? [])
+          .map((it: any) => String(it?.menuItem?.name ?? ''))
+          .filter(Boolean)
+      )
+    );
+    if (!names.length) return 'Unbekannt';
+    return names.length === 1 ? names[0] : 'Gemischt';
+  }
+
+  get groupedOrders(): { [key: string]: Order[] } {
     switch (this.activeGroup) {
       case 'Nach Gericht':
-        return this.groupBy(item => `${item.menuItem.name}`);
+        return this.groupBy(o => this.dishKey(o));
       case 'Nach Lieferzeit':
-        return this.groupBy(item => item.deliveryTime || 'Unbekannt');
+        return this.groupBy(o => {
+          const t = this.deliveryTimes(o);
+          return t.length ? t.join(', ') : 'Unbekannt';
+        });
       default:
-        return { 'Alle Bestellungen': this.paginatedItems };
+        return { 'Alle Bestellungen': this.paginatedOrders };
     }
   }
 
-  groupBy(fn: (item: OrderItem) => string): { [key: string]: OrderItem[] } {
-    return this.paginatedItems.reduce((groups, item) => {
-      const key = fn(item);
+  private groupBy(fn: (order: Order) => string): { [key: string]: Order[] } {
+    return this.paginatedOrders.reduce((groups, order) => {
+      const key = fn(order);
       if (!groups[key]) groups[key] = [];
-      groups[key].push(item);
+      groups[key].push(order);
       return groups;
-    }, {} as { [key: string]: OrderItem[] });
+    }, {} as { [key: string]: Order[] });
   }
 
   toggleCompletedOrders(): void {
@@ -114,8 +190,6 @@ export class OrderListComponent implements OnInit, OnDestroy {
   }
 
   goToScanner(): void {
-    // ggf. an deine echte Route anpassen:
-    // z.B. '/admin/balance-scan' oder '/admin/balance'
     this.router.navigate(['/admin/balance-scan']);
   }
 

@@ -5,6 +5,11 @@ import jsPDF from 'jspdf';
 
 import { MealPlan } from '../../models/meal-plan.model';
 import { MenuManagerService } from '../services/menu-manager/menu-manager';
+import {
+  SettingsService,
+  OrderingState,
+  SetOrderingResponse
+} from '../services/settings/settings.service';
 
 @Component({
   selector: 'app-menu-manager',
@@ -23,13 +28,53 @@ export class MenuManager implements OnInit {
   loadError: string | null = null;
   activating = false;
 
+  // ✅ Ordering toggle
+  orderingEnabled = true;
+  togglingOrdering = false;
+
   constructor(
     private router: Router,
-    private menuService: MenuManagerService
+    private menuService: MenuManagerService,
+    private settings: SettingsService,
   ) {}
 
-    ngOnInit(): void {
+  ngOnInit(): void {
     this.loadMenus();
+    this.loadSettings();
+  }
+
+  private loadSettings(): void {
+    this.settings.getOrderingEnabled().subscribe({
+      next: (s: OrderingState) => {
+        this.orderingEnabled = !!s?.orderingEnabled;
+      },
+      error: () => {
+        // Fallback (eigentlich unnötig weil Service bereits fallbackt)
+        this.orderingEnabled = true;
+      }
+    });
+  }
+
+  toggleOrdering(): void {
+    if (this.togglingOrdering) return;
+    this.togglingOrdering = true;
+
+    const next = !this.orderingEnabled;
+
+    this.settings.setOrderingEnabled(next).subscribe({
+      next: (res: SetOrderingResponse) => {
+        this.togglingOrdering = false;
+
+        // ✅ Fix für TS2367: kein "=== false" Vergleich
+        if (!res?.ok) return;
+
+        // nimm den Wert vom Backend (robuster als "next")
+        this.orderingEnabled = !!res.orderingEnabled;
+      },
+      error: () => {
+        this.togglingOrdering = false;
+      }
+    });
   }
 
   private loadMenus(): void {
@@ -40,8 +85,9 @@ export class MenuManager implements OnInit {
       next: (menus: MealPlan[]) => {
         this.Menus = (menus ?? []).map(m => ({
           ...m,
-          dishes: (m as any).dishes ?? []
-        })) as any;
+          // ✅ falls Backend noch nicht sauber typisiert liefert
+          menuItems: (m as any).menuItems ?? [],
+        }));
 
         this.loading = false;
         this.loadActiveMenuId();
@@ -59,9 +105,9 @@ export class MenuManager implements OnInit {
       next: (plan) => {
         this.activeMenuId = plan?.id ?? null;
         this.Menus = this.Menus.map(m => ({
-          ...(m as any),
+          ...m,
           isSelected: !!this.activeMenuId && m.id === this.activeMenuId
-        })) as any;
+        }));
       },
       error: () => {
         this.activeMenuId = null;
@@ -81,7 +127,7 @@ export class MenuManager implements OnInit {
     this.loadError = null;
 
     if (this.activeMenuId === menu.id) {
-      this.Menus = this.Menus.map(m => ({ ...(m as any), isSelected: m.id === menu.id })) as any;
+      this.Menus = this.Menus.map(m => ({ ...m, isSelected: m.id === menu.id }));
       return;
     }
 
@@ -99,9 +145,9 @@ export class MenuManager implements OnInit {
 
         this.activeMenuId = menu.id;
         this.Menus = this.Menus.map(m => ({
-          ...(m as any),
+          ...m,
           isSelected: m.id === menu.id
-        })) as any;
+        }));
       },
       error: (err) => {
         console.error('Aktiv setzen fehlgeschlagen:', err);
@@ -126,11 +172,7 @@ export class MenuManager implements OnInit {
       }
     });
   }
-
-
-  // -------------------------
-  // ✅ PDF: MUCH NICER VERSION (dein Code bleibt wie du ihn gepostet hast)
-  // -------------------------
+  // --- printMenu: dein Code bleibt wie gehabt ---
   async printMenu(menu: MealPlan): Promise<void> {
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
@@ -138,154 +180,237 @@ export class MenuManager implements OnInit {
     const pageH = doc.internal.pageSize.getHeight();
 
     const M = 14;
-    const headerH = 34;
-    const footerH = 12;
+    const headerH = 32;
+    const footerH = 14;
     const contentW = pageW - M * 2;
 
     const C = {
-      primary: { r: 14, g: 165, b: 233 },
-      primaryDark: { r: 3, g: 105, b: 161 },
-      soft: { r: 224, g: 250, b: 255 },
+      brand: { r: 17, g: 94, b: 163 },
+      brand2: { r: 59, g: 130, b: 246 },
       ink: { r: 15, g: 23, b: 42 },
       muted: { r: 100, g: 116, b: 139 },
       line: { r: 226, g: 232, b: 240 },
-      card: { r: 250, g: 252, b: 255 },
-      card2: { r: 243, g: 248, b: 255 },
-      pill: { r: 219, g: 234, b: 254 },
+      soft: { r: 241, g: 245, b: 249 },
+      card: { r: 255, g: 255, b: 255 },
+      vegBg: { r: 236, g: 253, b: 245 },
       veg: { r: 16, g: 185, b: 129 },
-      warn: { r: 245, g: 158, b: 11 },
+      pillBg: { r: 219, g: 234, b: 254 },
     };
 
-    const menuTitle = (menu.title ?? 'Speisekarte').trim() || 'Speisekarte';
-    const today = new Date().toLocaleDateString('de-AT');
+    const fill = (rgb: { r: number; g: number; b: number }) => doc.setFillColor(rgb.r, rgb.g, rgb.b);
+    const stroke = (rgb: { r: number; g: number; b: number }) => doc.setDrawColor(rgb.r, rgb.g, rgb.b);
+    const text = (rgb: { r: number; g: number; b: number }) => doc.setTextColor(rgb.r, rgb.g, rgb.b);
 
-    const setColor = (rgb: {r:number;g:number;b:number}) => doc.setTextColor(rgb.r, rgb.g, rgb.b);
-    const fill = (rgb: {r:number;g:number;b:number}) => doc.setFillColor(rgb.r, rgb.g, rgb.b);
-    const stroke = (rgb: {r:number;g:number;b:number}) => doc.setDrawColor(rgb.r, rgb.g, rgb.b);
-
-    const roundRect = (x:number, y:number, w:number, h:number, r=3, style:'S'|'F'|'FD'='S') => {
+    const roundRect = (x: number, y: number, w: number, h: number, r = 4, style: 'S'|'F'|'FD' = 'S') => {
       // @ts-ignore
       doc.roundedRect(x, y, w, h, r, r, style);
     };
 
-    const safeStr = (v:any) => (v === null || v === undefined) ? '' : String(v);
-    const safeNum = (v:any) => {
+    const safeStr = (v: any) => (v === null || v === undefined) ? '' : String(v);
+    const safeNum = (v: any) => {
       const n = Number(v);
       return Number.isFinite(n) ? n : 0;
     };
 
-    const getAllergens = (dish:any): string[] => {
-      const a1 = (dish as any).allergenes;
-      const a2 = (dish as any).allergens;
-      const arr = Array.isArray(a1) ? a1 : Array.isArray(a2) ? a2 : [];
-      return arr.map((x:any) => String(x)).filter(Boolean);
+    const fmtEUR = (v: any) => {
+      const n = safeNum(v);
+      return n.toFixed(2).replace('.', ',') + ' €';
     };
 
-    const groupByCategory = (dishes:any[]): Array<{ category: string; items: any[] }> => {
-      const map = new Map<string, any[]>();
-      for (const d of dishes) {
-        const cat = (safeStr(d?.category).trim() || 'Sonstiges');
-        if (!map.has(cat)) map.set(cat, []);
-        map.get(cat)!.push(d);
+    const today = new Date().toLocaleDateString('de-AT');
+    const menuTitle = (menu?.title ?? 'Speisekarte').trim() || 'Speisekarte';
+
+    const companyLines = [
+      'Firma Muster GmbH · Musterstraße 1 · 12345 Musterstadt',
+      'Tel: 01234 / 567890 · E-Mail: info@musterfirma.de'
+    ];
+
+    const itemsRaw = Array.isArray((menu as any)?.menuItems) ? (menu as any).menuItems : [];
+    const items = itemsRaw.map((x: any) => ({
+      id: safeStr(x.id),
+      name: safeStr(x.name).trim(),
+      description: safeStr(x.description).trim(),
+      category: safeStr(x.category).trim() || 'Sonstiges',
+      price: safeNum(x.price),
+      vegetarian: !!x.vegetarian,
+      available: x.available !== false,
+      allergens: Array.isArray(x.allergens) ? x.allergens.map((a: any) => safeStr(a)).filter(Boolean) : [],
+    }));
+
+    const menuDrink = safeStr((menu as any)?.drink).trim();
+    const menuDessert = safeStr((menu as any)?.dessert).trim();
+
+    const preferredOrder = ['Hauptgericht', 'Hauptspeise', 'Dessert', 'Nachspeise', 'Getränk', 'Getraenk', 'Snack', 'Sonstiges'];
+
+    type PdfMenuItem = {
+      id: string;
+      name: string;
+      description: string;
+      category: string;
+      price: number;
+      vegetarian: boolean;
+      available: boolean;
+      allergens: string[];
+    };
+
+    const groupByCategory = (rows: PdfMenuItem[]) => {
+      const map = new Map<string, PdfMenuItem[]>();
+      for (const it of rows) {
+        const key = it.category || 'Sonstiges';
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(it);
       }
-      const preferred = ['Hauptgericht', 'Hauptspeise', 'Dessert', 'Nachspeise', 'Getränk', 'Getraenk', 'Snack'];
-      const keys = Array.from(map.keys());
-      keys.sort((a,b) => {
-        const ia = preferred.findIndex(p => p.toLowerCase() === a.toLowerCase());
-        const ib = preferred.findIndex(p => p.toLowerCase() === b.toLowerCase());
+
+      const cats = Array.from(map.keys());
+      cats.sort((a, b) => {
+        const ia = preferredOrder.findIndex(p => p.toLowerCase() === a.toLowerCase());
+        const ib = preferredOrder.findIndex(p => p.toLowerCase() === b.toLowerCase());
         if (ia !== -1 && ib !== -1) return ia - ib;
         if (ia !== -1) return -1;
         if (ib !== -1) return 1;
         return a.localeCompare(b);
       });
-      return keys.map(k => ({ category: k, items: map.get(k)! }));
+
+      return cats.map((c) => ({
+        category: c,
+        items: map.get(c)!.sort((x: PdfMenuItem, y: PdfMenuItem) => x.name.localeCompare(y.name)),
+      }));
     };
 
-    const drawHeader = async (pageIndex:number) => {
-      fill(C.primary);
+    const grouped = groupByCategory(items);
+
+    const ensureSpace = (y: number, needed: number, pageIndex: number) => {
+      const bottomLimit = pageH - footerH - 6;
+      if (y + needed <= bottomLimit) return { y, pageIndex };
+
+      drawFooter(pageIndex);
+      doc.addPage();
+      pageIndex++;
+      drawHeader(pageIndex);
+      return { y: headerH + 10, pageIndex };
+    };
+
+    const drawHeader = (pageIndex: number) => {
+      fill(C.soft);
       doc.rect(0, 0, pageW, headerH, 'F');
 
-      fill(C.primaryDark);
-      doc.rect(0, headerH - 4, pageW, 4, 'F');
-
-    
+      fill(C.brand);
+      doc.rect(0, 0, pageW, 6, 'F');
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(18);
-      doc.setTextColor(255, 255, 255);
-      doc.text('Speisekarte', pageW / 2, 14, { align: 'center' });
+      doc.setFontSize(16);
+      text(C.ink);
+      doc.text('Speisekarte', M, 16);
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
-      doc.text(menuTitle, pageW / 2, 22, { align: 'center' });
+      text(C.muted);
+      doc.text(menuTitle, M, 23);
 
+      doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
-      doc.text(`Stand: ${today}`, pageW - M, 13, { align: 'right' });
+      text(C.muted);
+      doc.text(`Stand: ${today}`, pageW - M, 16, { align: 'right' });
 
       doc.setFontSize(9);
-      doc.setTextColor(230, 247, 255);
-      doc.text(`Seite ${pageIndex}`, pageW - M, 27, { align: 'right' });
+      doc.text(`Seite ${pageIndex}`, pageW - M, 23, { align: 'right' });
+
+      stroke(C.line);
+      doc.setLineWidth(0.3);
+      doc.line(M, headerH - 2, pageW - M, headerH - 2);
     };
 
-    const drawFooter = (pageIndex:number) => {
+    const drawFooter = (pageIndex: number) => {
       stroke(C.line);
       doc.setLineWidth(0.3);
       doc.line(M, pageH - footerH, pageW - M, pageH - footerH);
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8.5);
-      setColor(C.muted);
-      doc.text('Alle Preise in Euro inkl. gesetzlicher MwSt. | Allergene gemäß Aushang', M, pageH - 6);
+      text(C.muted);
 
-      doc.setFontSize(8.5);
-      doc.text(`Seite ${pageIndex}`, pageW - M, pageH - 6, { align: 'right' });
+      doc.text(companyLines[0], M, pageH - 7);
+      doc.text(companyLines[1], M, pageH - 3);
+
+      doc.text(`Seite ${pageIndex}`, pageW - M, pageH - 5, { align: 'right' });
     };
 
-    const drawSectionTitle = (y:number, title:string) => {
-      fill(C.soft);
+    const drawMenuExtrasBox = (y: number) => {
+      const hasExtras = !!menuDrink || !!menuDessert;
+      if (!hasExtras) return y;
+
+      const boxH = 14;
+      fill(C.pillBg);
       stroke(C.line);
-      roundRect(M, y, contentW, 10, 4, 'FD');
+      doc.setLineWidth(0.35);
+      roundRect(M, y, contentW, boxH, 4, 'FD');
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.setTextColor(C.primaryDark.r, C.primaryDark.g, C.primaryDark.b);
-      doc.text(title.toUpperCase(), M + 6, y + 6.7);
-      return y + 14;
+      doc.setFontSize(10.5);
+      text(C.brand);
+      doc.text('Menü-Extras', M + 6, y + 6.8);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      text(C.ink);
+
+      const parts: string[] = [];
+      if (menuDrink) parts.push(`Getränk: ${menuDrink}`);
+      if (menuDessert) parts.push(`Dessert: ${menuDessert}`);
+
+      doc.text(parts.join('  ·  '), M + 6, y + 11.8);
+
+      return y + boxH + 8;
     };
 
-    const drawDishCard = (dish:any, y:number) => {
+    const drawSectionTitle = (y: number, title: string) => {
+      const h = 10;
+
+      fill(C.soft);
+      stroke(C.line);
+      doc.setLineWidth(0.35);
+      roundRect(M, y, contentW, h, 4, 'FD');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10.5);
+      text(C.ink);
+      doc.text(title.toUpperCase(), M + 6, y + 6.8);
+
+      return y + h + 6;
+    };
+
+    const drawItemCard = (it: any, y: number) => {
       const cardX = M;
       const cardW = contentW;
 
-      const name = safeStr(dish?.name).trim() || 'Gericht';
-      const desc = safeStr(dish?.description).trim();
-      const price = safeNum(dish?.price);
-      const isVeg = !!dish?.vegetarian;
-
-      const allergens = getAllergens(dish);
-      const allergensText = allergens.length ? `Allergene: ${allergens.join(', ')}` : '';
+      const name = safeStr(it.name) || 'Gericht';
+      const desc = safeStr(it.description);
+      const allergens = (it.allergens ?? []) as string[];
+      const priceStr = fmtEUR(it.price);
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(13);
-      const nameLines = doc.splitTextToSize(name, cardW - 52);
+      doc.setFontSize(12);
+      const nameLines = doc.splitTextToSize(name, cardW - 48);
 
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10.5);
+      doc.setFontSize(10.2);
       const descLines = desc ? doc.splitTextToSize(desc, cardW - 12) : [];
 
       doc.setFont('helvetica', 'italic');
-      doc.setFontSize(9.5);
-      const allLines = allergensText ? doc.splitTextToSize(allergensText, cardW - 12) : [];
+      doc.setFontSize(9.3);
+      const allergenText = allergens.length ? `Allergene: ${allergens.join(', ')}` : '';
+      const allergenLines = allergenText ? doc.splitTextToSize(allergenText, cardW - 12) : [];
 
-      const base = 10;
+      const basePad = 8;
       const nameH = nameLines.length * 5.2;
-      const descH = descLines.length ? (descLines.length * 4.6 + 2) : 0;
-      const allH = allLines.length ? (allLines.length * 4.2 + 1) : 0;
-      const badgeH = isVeg ? 6 : 0;
-      const cardH = base + nameH + descH + allH + badgeH + 6;
+      const descH = descLines.length ? (descLines.length * 4.6 + 1.5) : 0;
+      const allH = allergenLines.length ? (allergenLines.length * 4.2 + 1) : 0;
+      const badgeH = it.vegetarian ? 7 : 0;
+
+      const cardH = basePad + nameH + descH + allH + badgeH + 8;
 
       fill({ r: 15, g: 23, b: 42 });
-      (doc as any).setGState?.(new (doc as any).GState({ opacity: 0.06 }));
+      (doc as any).setGState?.(new (doc as any).GState({ opacity: 0.05 }));
       roundRect(cardX + 1.2, y + 1.2, cardW, cardH, 5, 'F');
       (doc as any).setGState?.(new (doc as any).GState({ opacity: 1 }));
 
@@ -294,47 +419,46 @@ export class MenuManager implements OnInit {
       doc.setLineWidth(0.35);
       roundRect(cardX, y, cardW, cardH, 5, 'FD');
 
-      fill(C.primary);
+      fill(it.available ? C.brand2 : C.muted);
       doc.rect(cardX, y, 2.2, cardH, 'F');
 
       const pillW = 34;
-      const pillH = 10;
-      const pillX = cardX + cardW - pillW - 8;
+      const pillH = 9;
+      const pillX = cardX + cardW - pillW - 7;
       const pillY = y + 7;
 
-      fill(C.pill);
-      stroke(C.primary);
-      doc.setLineWidth(0.35);
+      fill(C.pillBg);
+      stroke(C.line);
+      doc.setLineWidth(0.25);
       roundRect(pillX, pillY, pillW, pillH, 4, 'FD');
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.setTextColor(C.primaryDark.r, C.primaryDark.g, C.primaryDark.b);
-      const priceStr = price.toFixed(2).replace('.', ',') + ' €';
-      doc.text(priceStr, pillX + pillW / 2, pillY + 6.7, { align: 'center' });
+      doc.setFontSize(10.5);
+      text(C.ink);
+      doc.text(priceStr, pillX + pillW / 2, pillY + 6.2, { align: 'center' });
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(13);
-      doc.setTextColor(C.ink.r, C.ink.g, C.ink.b);
+      doc.setFontSize(12);
+      text(C.ink);
       doc.text(nameLines, cardX + 8, y + 12);
 
       let yy = y + 12 + nameLines.length * 5.2;
 
-      if (isVeg) {
-        const bW = 22;
+      if (it.vegetarian) {
+        const bW = 26;
         const bH = 6.5;
         const bX = cardX + 8;
         const bY = yy + 2;
 
-        fill({ r: 236, g: 253, b: 245 });
+        fill(C.vegBg);
         stroke(C.veg);
-        doc.setLineWidth(0.35);
+        doc.setLineWidth(0.3);
         roundRect(bX, bY, bW, bH, 3, 'FD');
 
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(8.5);
-        doc.setTextColor(C.veg.r, C.veg.g, C.veg.b);
-        doc.text('VEG', bX + bW / 2, bY + 4.6, { align: 'center' });
+        text(C.veg);
+        doc.text('VEGETARISCH', bX + bW / 2, bY + 4.7, { align: 'center' });
 
         yy += 9;
       } else {
@@ -343,62 +467,77 @@ export class MenuManager implements OnInit {
 
       if (descLines.length) {
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10.5);
-        doc.setTextColor(C.muted.r, C.muted.g, C.muted.b);
+        doc.setFontSize(10.2);
+        text(C.muted);
         doc.text(descLines, cardX + 8, yy + 4.2);
-        yy += descLines.length * 4.6 + 2;
+        yy += descLines.length * 4.6 + 1.5;
       }
 
-      if (allLines.length) {
+      if (allergenLines.length) {
         doc.setFont('helvetica', 'italic');
-        doc.setFontSize(9.5);
-        doc.setTextColor(148, 163, 184);
-        doc.text(allLines, cardX + 8, yy + 4);
-        yy += allLines.length * 4.2 + 1;
+        doc.setFontSize(9.3);
+        text({ r: 148, g: 163, b: 184 } as any);
+        doc.text(allergenLines, cardX + 8, yy + 4);
+        yy += allergenLines.length * 4.2 + 1;
       }
 
-      return { nextY: y + cardH + 8 };
+      if (it.available === false) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.2);
+        text({ r: 220, g: 38, b: 38 } as any);
+        doc.text('Nicht verfügbar', cardX + cardW - 8, y + cardH - 5, { align: 'right' });
+      }
+
+      return { nextY: y + cardH + 7, height: cardH + 7 };
     };
 
-    const dishes = (menu as any).dishes ?? [];
-    const grouped = groupByCategory(Array.isArray(dishes) ? dishes : []);
-
     let pageIndex = 1;
-    await drawHeader(pageIndex);
+    drawHeader(pageIndex);
 
     let y = headerH + 10;
 
-    fill(C.card2);
+    fill(C.soft);
     stroke(C.line);
-    roundRect(M, y, contentW, 14, 5, 'FD');
+    roundRect(M, y, contentW, 12, 4, 'FD');
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10.5);
-    doc.setTextColor(C.muted.r, C.muted.g, C.muted.b);
-    doc.text('Alle Speisen frisch zubereitet – Änderungen vorbehalten.', M + 6, y + 8.8);
-    y += 20;
+    doc.setFontSize(10.2);
+    text(C.muted);
+    doc.text('Alle Preise in Euro inkl. gesetzlicher MwSt. · Änderungen vorbehalten.', M + 6, y + 7.8);
+    y += 18;
 
-    for (const sec of grouped) {
-      if (y + 18 > pageH - footerH - 6) {
-        drawFooter(pageIndex);
-        doc.addPage();
-        pageIndex++;
-        await drawHeader(pageIndex);
-        y = headerH + 10;
-      }
+    y = drawMenuExtrasBox(y);
 
-      y = drawSectionTitle(y, sec.category);
+    if (!grouped.length || grouped.every(g => !g.items.length)) {
+      const space = ensureSpace(y, 30, pageIndex);
+      y = space.y; pageIndex = space.pageIndex;
 
-      for (const dish of sec.items) {
-        if (y + 50 > pageH - footerH - 6) {
-          drawFooter(pageIndex);
-          doc.addPage();
-          pageIndex++;
-          await drawHeader(pageIndex);
-          y = headerH + 10;
-        }
+      fill(C.soft);
+      stroke(C.line);
+      roundRect(M, y, contentW, 18, 5, 'FD');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      text(C.ink);
+      doc.text('Keine Gerichte vorhanden.', M + 6, y + 11);
+      drawFooter(pageIndex);
 
-        const res = drawDishCard(dish, y);
-        y = res.nextY;
+      doc.save(`${menuTitle.toLowerCase().replace(/[^a-z0-9]+/g, '_')}.pdf`);
+      return;
+    }
+
+    for (const section of grouped) {
+      if (!section.items.length) continue;
+
+      let res = ensureSpace(y, 18, pageIndex);
+      y = res.y; pageIndex = res.pageIndex;
+
+      y = drawSectionTitle(y, section.category);
+
+      for (const it of section.items) {
+        res = ensureSpace(y, 42, pageIndex);
+        y = res.y; pageIndex = res.pageIndex;
+
+        const r = drawItemCard(it, y);
+        y = r.nextY;
       }
 
       y += 2;

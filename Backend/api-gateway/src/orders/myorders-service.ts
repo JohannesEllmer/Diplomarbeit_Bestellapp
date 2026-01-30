@@ -7,10 +7,10 @@ export class MyOrdersService {
   constructor(private readonly orders: OrdersService) {}
 
   getMyOrders(userId: string) {
-    return this.orders.getMyOrders(userId);
+    return this.orders.getMyOrders(String(userId));
   }
 
   createOrder(userId: string, dto: CreateOrderDto) {
-    return this.orders.createForUser(userId, dto);
+    return this.orders.createForUser(String(userId), dto);
   }
 }

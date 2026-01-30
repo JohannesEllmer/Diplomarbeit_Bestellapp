@@ -238,6 +238,8 @@
   transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
 }
 
+
+
 /* Primär-Button für "Hinzufügen" */
 .add-btn {
   background: #22c55e;
@@ -291,3 +293,4 @@
     align-items: flex-start;
   }
 }
+

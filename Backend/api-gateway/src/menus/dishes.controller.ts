@@ -10,16 +10,16 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 
-import { DishesService } from './dishes.service';
-import { CreateDishDto } from './dto/create-dish.dto';
-import { UpdateDishDto } from './dto/update-dish.dto';
+import { MenuItemsService } from './menu-item.service';
+import { CreateMenuItemDto } from './dto/create-menu.dto';
+import { UpdateMenuItemDto } from './dto/update-menu.dto';
 import { JwtAuthGuard } from '../auth.guards';
 import { Roles } from '../roles.decorator';
 import { RolesGuard } from '../roles.guard';
 
-@Controller('dishes')
-export class DishesController {
-  constructor(private readonly svc: DishesService) {}
+@Controller('menu-items')
+export class MenuItemsController {
+  constructor(private readonly svc: MenuItemsService) {}
 
   @Get()
   findAll() {
@@ -34,7 +34,7 @@ export class DishesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INHABER', 'ADMIN')
   @Post()
-  create(@Body() dto: CreateDishDto) {
+  create(@Body() dto: CreateMenuItemDto) {
     return this.svc.create(dto);
   }
 
@@ -43,7 +43,7 @@ export class DishesController {
   @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateDishDto,
+    @Body() dto: UpdateMenuItemDto,
   ) {
     return this.svc.update(id, dto);
   }

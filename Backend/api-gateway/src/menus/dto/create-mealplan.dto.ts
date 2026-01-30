@@ -6,8 +6,6 @@ export class CreateMealPlanDto {
 
   @IsOptional()
   @IsArray()
-  @IsUUID('all', { each: true })
-  dishIds?: string[];
-
- 
+  @IsUUID('4', { each: true })
+  menuItemIds?: string[];
 }

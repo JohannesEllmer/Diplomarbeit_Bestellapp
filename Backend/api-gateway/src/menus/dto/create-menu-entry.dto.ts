@@ -6,7 +6,7 @@ export class CreateMenuEntryDto {
 
   @IsOptional()
   @IsUUID()
-  dishMenuItemId?: string;
+  menuItemId?: string;
 
   @IsOptional()
   @IsString()

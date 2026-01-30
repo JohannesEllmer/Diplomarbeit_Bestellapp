@@ -1,19 +1,15 @@
+import 'dotenv/config'; 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import 'dotenv/config';
-import * as path from 'node:path';
-import * as dotenv from 'dotenv';
 import * as express from 'express';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import type { Pool } from 'pg';
 import { authRouter } from './auth-express/src/auth.routes';
 import { PG_POOL } from './db';
 import { verifyMailer } from './auth-express/src/mailer';
-import { CORS_ORIGINS } from './auth-express/src/config';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { from } from 'rxjs';
-import { ClassPolicyGuard } from './profile-update.guard';
 import { UsersService } from './users/users.service';
+import { ClassPolicyGuard } from './profile-update.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -24,7 +20,6 @@ async function bootstrap() {
   app.use(express.urlencoded({ extended: true }));
 
   app.useGlobalGuards(new ClassPolicyGuard(app.get(UsersService)));
-
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }));
 
   app.enableCors({
@@ -33,9 +28,6 @@ async function bootstrap() {
     methods: ['GET','POST','PATCH','PUT','DELETE','OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
-
-dotenv.config();
-
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Bestellapp API')
@@ -58,13 +50,9 @@ dotenv.config();
     console.error('[MAILER] verify failed:', e);
   }
 
-  
-
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port, '0.0.0.0');
   console.log(`Gateway läuft auf http://0.0.0.0:${port}`);
 }
-
-
 
 bootstrap();
