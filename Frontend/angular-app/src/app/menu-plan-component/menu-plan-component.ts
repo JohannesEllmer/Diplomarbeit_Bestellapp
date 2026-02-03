@@ -13,11 +13,12 @@ import { MenuService } from '../services/menu/menu-service';
 import { CartService } from '../services/cart/cart-service';
 import { AuthService } from '../auth/auth.service';
 import { MenuHeaderService } from '../app-menu/menu-header.service';
+import { SiteFooterComponent } from '../site-footer/footer';
 
 @Component({
   selector: 'app-menu-plan',
   standalone: true,
-  imports: [CommonModule, MenuItemComponent, FormsModule],
+  imports: [CommonModule, MenuItemComponent, FormsModule, SiteFooterComponent],
   templateUrl: './menu-plan-component.html',
   styleUrls: ['./menu-plan-component.css'],
 })
@@ -28,7 +29,6 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
   activeFilter = 'Alle';
   searchTerm = '';
 
-  // ✅ plus Filter "Menü" (für Set/Menü-Gerichte)
   categories = ['Alle', 'Menü', 'Hauptgericht', 'Dessert', 'Getränk'];
   filters = ['Alle', 'Vegetarisch'];
 

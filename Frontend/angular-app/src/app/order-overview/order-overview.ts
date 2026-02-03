@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Order } from '../../models/menu-item.model';
 import { MyOrderService } from '../services/order-overview/my-order.service';
+import { SiteFooterComponent } from '../site-footer/footer';
 
 @Component({
   selector: 'app-order-overview',
   templateUrl: './order-overview.html',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, SiteFooterComponent],
   styleUrls: ['./order-overview.css']
 })
 export class OrderOverviewComponent implements OnInit {

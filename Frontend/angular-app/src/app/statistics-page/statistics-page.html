@@ -3,64 +3,41 @@
   <div class="selectors">
     <div class="selector-group">
       <label for="startDate">Von:</label>
-      <input
-        type="date"
-        id="startDate"
-        [(ngModel)]="startDate"
-        (change)="loadStatistics()"
-      >
+      <input type="date" id="startDate" [(ngModel)]="startDate" (change)="loadStatistics()">
     </div>
 
     <div class="selector-group">
       <label for="endDate">Bis:</label>
-      <input
-        type="date"
-        id="endDate"
-        [(ngModel)]="endDate"
-        (change)="loadStatistics()"
-      >
+      <input type="date" id="endDate" [(ngModel)]="endDate" (change)="loadStatistics()">
     </div>
 
     <div class="selector-group">
       <label>Diagrammtyp:</label>
       <div class="chart-type-buttons">
-        <button
-          [class.active]="selectedChartType==='bar'"
-          (click)="toggleChartType('bar')"
-        >
-          Balken
-        </button>
-
-        <button
-          [class.active]="selectedChartType==='line'"
-          [disabled]="days.length < 5"
-          (click)="toggleChartType('line')"
-        >
-          Linie
-        </button>
+        <button [class.active]="selectedChartType==='bar'" (click)="toggleChartType('bar')">Balken</button>
+        <button [class.active]="selectedChartType==='line'" [disabled]="days.length < 5" (click)="toggleChartType('line')">Linie</button>
       </div>
     </div>
 
     <div class="spacer"></div>
-
     <button class="export-btn" (click)="exportFinancePDF()">PDF exportieren</button>
   </div>
 
   <section class="trending-cards" *ngIf="topTrending?.length">
-  <div class="trending-head">
-    <h2>Top-Trending</h2>
-    <span class="muted">Top 3 im Zeitraum</span>
-  </div>
+    <div class="trending-head">
+      <h2>Top-Trending</h2>
+      <span class="muted">Top 3 im Zeitraum</span>
+    </div>
 
-  <div class="trending-cards-grid">
-    <div class="card trending-card" *ngFor="let t of topTrending; let i = index">
-      <span>Platz #{{ i + 1 }}</span>
-      <div class="value-trend">
-        <strong class="trending-name">{{ t.name }}</strong>
+    <div class="trending-cards-grid">
+      <div class="card trending-card" *ngFor="let t of topTrending; let i = index">
+        <span>Platz #{{ i + 1 }}</span>
+        <div class="value-trend">
+          <strong class="trending-name">{{ t.name }}</strong>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
   <section class="summary-cards">
     <div class="card">
@@ -98,7 +75,6 @@
     </div>
   </div>
 
-  <!-- ✅ ORDERS SECTION: User + Gerichte + Gesamtpreis + Status (keine Bestellnummer) -->
   <section class="orders-section" *ngIf="days?.length">
     <div class="orders-toolbar">
       <h2>Bestellungen</h2>
@@ -106,11 +82,7 @@
       <div class="orders-filters">
         <div class="selector-group" style="margin:0; min-width:180px;">
           <label>Suche</label>
-          <input
-            type="text"
-            placeholder="Kunde, Gericht, Datum…"
-            [(ngModel)]="orderQuery"
-          >
+          <input type="text" placeholder="Kunde, Gericht, Datum…" [(ngModel)]="orderQuery">
         </div>
 
         <div class="selector-group" style="margin:0; min-width:160px;">
@@ -165,7 +137,6 @@
     </div>
   </section>
 
-  <!-- Modal (optional, bleibt schlicht) -->
   <div class="modal-overlay" *ngIf="selectedOrder as so" (click)="closeOrder()">
     <div class="modal" (click)="stopOverlayClick($event)">
       <div class="modal-head">
@@ -224,29 +195,8 @@
           </tr>
         </tbody>
       </table>
-
-      <div class="impressum-mobile">
-        <button class="impressum-btn" (click)="showImpressumPopup = true">Impressum</button>
-      </div>
-
-      <div
-        class="impressum-popup-overlay"
-        *ngIf="showImpressumPopup"
-        (click)="showImpressumPopup = false"
-      >
-        <div class="impressum-popup" (click)="$event.stopPropagation()">
-          <h2>Impressum</h2>
-          <div class="impressum-details">
-            <p><strong>Firma Muster GmbH</strong></p>
-            <p>Musterstraße 1, 12345 Musterstadt</p>
-            <p>Tel: 01234 / 567890</p>
-            <p>E-Mail: info@musterfirma.de</p>
-          </div>
-          <button class="close-btn" (click)="showImpressumPopup = false">Schließen</button>
-        </div>
-      </div>
-
     </div>
   </section>
 
+  <app-site-footer></app-site-footer>
 </div>

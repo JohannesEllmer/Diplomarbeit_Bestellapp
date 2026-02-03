@@ -22,15 +22,34 @@ export class CartItemComponent implements OnInit {
   displayNote = '';
 
   ngOnInit(): void {
-    this.displayNote = this.item.note ?? '';
+    // ✅ Alte/unerwünschte Prefixe entfernen (z.B. "[Menü: Curry]")
+    this.displayNote = this.normalizeNote(this.item?.note);
   }
 
   onNoteChange(): void {
-    this.noteChange.emit(this.displayNote);
+    // ✅ Beim Tippen ebenfalls bereinigen (optional, aber verhindert “Zurückspringen” alter Werte)
+    const cleaned = this.normalizeNote(this.displayNote);
+
+    // optional: textarea-Inhalt direkt aktualisieren
+    if (cleaned !== this.displayNote) {
+      this.displayNote = cleaned;
+    }
+
+    this.noteChange.emit(cleaned);
+  }
+
+  /** Entfernt Prefixe am Anfang wie "[Menü]" oder "[Menü: irgendwas]" */
+  private normalizeNote(value: any): string {
+    const s = String(value ?? '');
+
+    // Entfernt NUR am Anfang:
+    // [Menü] / [Menu] / [Menü: Curry] / [Menu: Curry]
+    // inkl. nachfolgender Leerzeichen/Zeilen
+    return s.replace(/^\s*\[(?:menü|menu)(?::[^\]]*)?\]\s*/i, '').trimStart();
   }
 
   get isMenu(): boolean {
-    return !!(this.item.menuItem.drink || this.item.menuItem.dessert);
+    return !!(this.item?.menuItem?.drink || this.item?.menuItem?.dessert);
   }
 
   get menuTitle(): string {
@@ -38,14 +57,14 @@ export class CartItemComponent implements OnInit {
   }
 
   get menuDrink(): string | null {
-    return this.item.menuItem.drink ?? null;
+    return this.item?.menuItem?.drink ?? null;
   }
 
   get menuDessert(): string | null {
-    return this.item.menuItem.dessert ?? null;
+    return this.item?.menuItem?.dessert ?? null;
   }
 
   get totalPrice(): number {
-    return Number(this.item.menuItem.price ?? 0) * Number(this.item.quantity ?? 0);
+    return Number(this.item?.menuItem?.price ?? 0) * Number(this.item?.quantity ?? 0);
   }
 }

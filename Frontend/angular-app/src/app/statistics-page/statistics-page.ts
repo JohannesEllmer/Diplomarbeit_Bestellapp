@@ -22,6 +22,7 @@ import {
   WeekData,
   StatOrder
 } from '../services/statistics/statistics-service';
+import { SiteFooterComponent } from '../site-footer/footer';
 
 Chart.register(...registerables);
 
@@ -52,7 +53,7 @@ type UiOrderItem = {
 @Component({
   selector: 'app-statistics-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SiteFooterComponent],
   templateUrl: './statistics-page.html',
   styleUrls: ['./statistics-page.css']
 })

@@ -71,7 +71,6 @@
             <div class="order-summary">
               <div class="order-info">
 
-                <!-- Kopfzeile -->
                 <div class="order-title-row">
                   <h2 class="order-title">
                     <a role="button" tabindex="0" (click)="navigateToUser(order.user.id)">
@@ -82,7 +81,6 @@
                   <span class="order-status-pill">{{ statusLabel(order) }}</span>
                 </div>
 
-                <!-- ✅ Lieferzeit Chips -->
                 <div class="time-row">
                   <span class="time-label">Lieferzeit</span>
 
@@ -100,7 +98,6 @@
                   </div>
                 </div>
 
-                <!-- Items -->
                 <div class="order-items">
                   <div class="order-item-row" *ngFor="let it of order.items">
                     <div class="left">
@@ -194,20 +191,17 @@
     </section>
   </main>
 
-  <footer class="order-footer">
-    <div class="footer-grid">
-      <div class="footer-item">
-        <div class="footer-text">
-          <span>Gesamtsumme:</span>
-          <strong>{{ totalSum | currency:'EUR' }}</strong>
-        </div>
-      </div>
-
-      <div class="footer-actions">
-        <button type="button" class="finance-btn" (click)="goToFinance()">
-          Alle anzeigen / Finanzseite
-        </button>
-      </div>
+ <app-site-footer [(showImpressumPopup)]="showImpressumPopup">
+  <div footer-actions class="order-footer-row">
+    <div class="order-footer-left">
+      <span>Offene Summe gesamt:</span>
+      <strong>{{ totalSum | currency:'EUR' }}</strong>
     </div>
-  </footer>
+
+    <button type="button" class="finance-btn" (click)="goToFinance()">
+      Alle anzeigen / Finanzseite
+    </button>
+  </div>
+</app-site-footer>
+
 </div>

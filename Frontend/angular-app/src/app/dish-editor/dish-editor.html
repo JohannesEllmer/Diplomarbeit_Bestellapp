@@ -36,12 +36,18 @@
         <div class="input-row">
           <div class="input-group">
             <label for="dish-category">Kategorie</label>
-            <input
+
+            <select
               id="dish-category"
-              type="text"
-              placeholder="Kategorie"
               [(ngModel)]="dish.category"
-            />
+              (ngModelChange)="onCategoryChange()"
+            >
+              <option value="" disabled>Bitte wählen…</option>
+              @for (cat of categoryOptions; track cat) {
+                <option [value]="cat">{{ cat }}</option>
+              }
+            </select>
+
           </div>
 
           <div class="input-group allergens-container">
@@ -95,8 +101,8 @@
           </div>
         </div>
 
-        <!-- ✅ drink/dessert gehören zum MenuItem (dish), nicht zu MealPlan -->
-        <div class="input-row">
+        <!-- ✅ drink/dessert nur bei Kategorie "Menü" -->
+        <div class="input-row" *ngIf="isMenuCategory">
           <div class="input-group">
             <label for="drink">Getränk</label>
             <input
@@ -121,6 +127,10 @@
 
       <button class="save-dish-button" (click)="onSave()" [disabled]="!canSave">
         Speichern
+      </button>
+
+      <button class="cancel-dish-button" type="button" (click)="onCancel()" [disabled]="saving">
+        Abbrechen
       </button>
 
       @if (saveError) {

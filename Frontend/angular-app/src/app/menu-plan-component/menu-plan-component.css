@@ -760,3 +760,197 @@
 .menu-scroll-area::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* =========================
+   MOBILE: Footer deutlich kleiner
+   (GANZ ans Ende setzen)
+========================= */
+@media (max-width: 768px) {
+
+  /* Footer-Höhe runter */
+  .menu-footer{
+    padding: 0.45rem 0.75rem 0.55rem 0.75rem;
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -2px 12px rgba(2,132,199,.12);
+  }
+
+  /* Innencontainer kleiner */
+  .footer-inner{
+    padding: 0;
+    gap: 0.35rem;
+  }
+
+  /* Statt 1 Spalte: 2 Spalten -> spart massiv Höhe */
+  .footer-grid{
+    display: grid !important; /* du überschreibst es teils als flex */
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem 0.6rem;
+    margin: 0 0 0.35rem 0;
+    padding: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Wenn du 3 footer-items hast: 3. Item über beide Spalten */
+  .footer-item:nth-child(3){
+    grid-column: 1 / -1;
+  }
+
+  /* Items kompakt */
+  .footer-item{
+    min-height: unset;        /* 🔥 killt 50px/40px */
+    padding: 0.15rem 0;
+    gap: 0.35rem;
+    flex-direction: row;      /* nicht untereinander */
+    align-items: center;
+    justify-content: center;
+  }
+
+  .footer-item .icon{ font-size: 1rem; }
+
+  .footer-text{ gap: 0.1rem; align-items: center; }
+  .footer-text strong{
+    font-size: 0.95rem;
+    line-height: 1.05;
+  }
+  .footer-text span{
+    font-size: 0.72rem;
+    line-height: 1.05;
+  }
+
+  /* Button kleiner + weniger Margin */
+  .checkout-btn{
+    width: auto;
+    max-width: 220px;
+    padding: 0.55rem 1rem;
+    margin: 0.15rem auto 0 auto;
+    font-size: 0.95rem;
+  }
+
+  /* Impressum als "kleine Zeile" statt großer Block */
+  .impressum-mobile{
+    padding: 0.25rem 0.5rem 0 0.5rem;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    line-height: 1.1;
+    border-top: 1px solid rgba(255,255,255,0.22);
+  }
+}
+
+/* Extra klein */
+@media (max-width: 420px){
+  .menu-footer{ padding: 0.4rem 0.6rem 0.5rem 0.6rem; }
+  .checkout-btn{ padding: 0.5rem 0.9rem; font-size: 0.9rem; }
+  .impressum-mobile{ font-size: 0.7rem; }
+}
+
+/* =========================
+   MOBILE FIX (nur Footer!)
+   GANZ ans Ende setzen
+========================= */
+@media (max-width: 768px) {
+
+  /* Footer etwas kompakter */
+  .menu-footer {
+    padding: 0.55rem 0.75rem 0.65rem 0.75rem;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -2px 16px rgba(2, 132, 199, 0.12);
+  }
+
+  /* Grid bleibt Grid (nicht flex!) */
+  .footer-grid {
+    display: grid !important;
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    margin: 0 0 0.35rem 0;
+
+    /* 2 Spalten: Guthaben links, Summe rechts */
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem 0.7rem;
+    align-items: center;
+  }
+
+  /* 1. Item links */
+  .footer-item:nth-child(1) {
+    justify-content: flex-start;
+    text-align: left;
+    justify-self: start;
+  }
+
+  /* 2. Item rechts */
+  .footer-item:nth-child(2) {
+    justify-content: flex-end;
+    text-align: right;
+    justify-self: end;
+  }
+
+  /* Button über beide Spalten, mittig */
+  .checkout-btn {
+    grid-column: 1 / -1;
+    justify-self: center;
+
+    width: auto;
+    max-width: 220px;
+    padding: 0.6rem 1.1rem;
+    margin: 0.15rem 0 0 0;
+
+    /* ganz wichtig: NICHT absolute */
+    position: relative !important;
+    left: auto !important;
+    transform: none !important;
+  }
+
+  /* Footer-Items kompakt */
+  .footer-item {
+    min-height: unset;
+    padding: 0.15rem 0;
+    gap: 0.35rem;
+    width: 100%;
+  }
+
+  .footer-item .icon {
+    font-size: 1rem;
+  }
+
+  .footer-text strong {
+    font-size: 0.95rem;
+    line-height: 1.05;
+  }
+
+  .footer-text span {
+    font-size: 0.72rem;
+    line-height: 1.05;
+  }
+
+  /* Impressum klein darunter */
+  .impressum-desktop {
+    display: none;
+  }
+
+  .impressum-mobile {
+    display: block;
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid rgba(255,255,255,0.22);
+    font-size: 0.75rem;
+    line-height: 1.1;
+    text-align: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .menu-footer {
+    padding: 0.45rem 0.6rem 0.55rem 0.6rem;
+  }
+
+  .checkout-btn {
+    max-width: 200px;
+    padding: 0.55rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .impressum-mobile {
+    font-size: 0.7rem;
+  }
+}

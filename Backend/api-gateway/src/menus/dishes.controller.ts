@@ -7,7 +7,6 @@ import {
   Patch,
   Post,
   UseGuards,
-  ParseUUIDPipe,
 } from '@nestjs/common';
 
 import { MenuItemsService } from './menu-item.service';
@@ -16,6 +15,7 @@ import { UpdateMenuItemDto } from './dto/update-menu.dto';
 import { JwtAuthGuard } from '../auth.guards';
 import { Roles } from '../roles.decorator';
 import { RolesGuard } from '../roles.guard';
+import { ParseUuidAllPipe } from '../common/parse-uuid-all.pipe';
 
 @Controller('menu-items')
 export class MenuItemsController {
@@ -27,7 +27,7 @@ export class MenuItemsController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
+  findOne(@Param('id', new ParseUuidAllPipe()) id: string) {
     return this.svc.findOne(id);
   }
 
@@ -42,7 +42,7 @@ export class MenuItemsController {
   @Roles('INHABER', 'ADMIN')
   @Patch(':id')
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', new ParseUuidAllPipe()) id: string,
     @Body() dto: UpdateMenuItemDto,
   ) {
     return this.svc.update(id, dto);
@@ -51,7 +51,7 @@ export class MenuItemsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INHABER', 'ADMIN')
   @Delete(':id')
-  remove(@Param('id', ParseUUIDPipe) id: string) {
+  remove(@Param('id', new ParseUuidAllPipe()) id: string) {
     return this.svc.remove(id);
   }
 }

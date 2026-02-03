@@ -5,11 +5,12 @@ import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Order } from '../../models/menu-item.model';
 import { AdminOrderService } from '../services/order/admin-order.service';
+import { SiteFooterComponent } from '../site-footer/footer';
 
 @Component({
   selector: 'app-order-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, SiteFooterComponent],
   templateUrl: './order-list.html',
   styleUrls: ['./order-list.css']
 })
@@ -20,7 +21,7 @@ export class OrderListComponent implements OnInit, OnDestroy {
   orders: Order[] = [];
   openOrders: Order[] = [];
   completedOrders: Order[] = [];
-
+  showImpressumPopup = false;
   paginatedOrders: Order[] = [];
   currentPage = 1;
   itemsPerPage = 10;

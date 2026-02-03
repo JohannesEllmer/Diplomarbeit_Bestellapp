@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { UserItemsComponent } from '../user-items/user-items';
 import { User } from '../../models/user.model';
 import { UserService } from '../services/user/user-service';
+import { SiteFooterComponent } from '../site-footer/footer';
 
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, UserItemsComponent],
+  imports: [CommonModule, FormsModule, UserItemsComponent, SiteFooterComponent],
   templateUrl: './user-management.html',
   styleUrls: ['./user-management.css']
 })

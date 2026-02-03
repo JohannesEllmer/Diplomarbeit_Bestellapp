@@ -1,15 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { MenusService } from './menus.service';
-import { CreateMenuItemDto } from './dto/create-menu.dto';
-import { UpdateMenuItemDto } from './dto/update-menu.dto';
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { MenusEntriesService } from './menu-entries.service';
+import { CreateMenuEntryDto } from './dto/create-menu-entry.dto';
+import { UpdateMenuEntryDto } from './dto/update-menu-entry.dto';
 
 @Controller('menus')
 export class MenusController {
-  constructor(private readonly menusService: MenusService) {}
+  constructor(private readonly menusService: MenusEntriesService) {}
 
   @Post()
-  create(@Body() createMenuDto: CreateMenuItemDto) {
-    return this.menusService.create(createMenuDto);
+  create(@Body() dto: CreateMenuEntryDto) {
+    return this.menusService.create(dto);
   }
 
   @Get()
@@ -19,16 +19,16 @@ export class MenusController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.menusService.findOne(+id);
+    return this.menusService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateMenuDto: UpdateMenuItemDto) {
-    return this.menusService.update(+id, updateMenuDto);
+  update(@Param('id') id: string, @Body() dto: UpdateMenuEntryDto) {
+    return this.menusService.update(id, dto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.menusService.remove(+id);
+    return this.menusService.remove(id);
   }
 }

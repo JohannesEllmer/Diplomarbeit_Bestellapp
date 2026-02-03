@@ -3,12 +3,14 @@
     <div class="header-left">
       <div class="logo-circle">
         <span>H</span>
+        <!--NEU: Logo-Platzhalter (statt title-block), damit mehr Platz für Page-Title -->
+        <div class="brand-logo" *ngIf="!isMobile" aria-label="Logo Platzhalter">
+          <!-- später einfach durch <img class="brand-logo-img" src="..." alt="Logo"> ersetzen -->
+          <div class="brand-logo-placeholder"></div>
+        </div>
       </div>
 
-      <div class="title-block" *ngIf="!isMobile">
-        <span class="app-name">HungerSatt Bestellsystem</span>
-        <span class="app-subtitle">Bestellen · Verwalten · Auswerten</span>
-      </div>
+
       <div class="mobile-page-title" *ngIf="isMobile">
         {{ getCurrentPageTitle() }}
       </div>
@@ -93,7 +95,6 @@
               <div class="dropdown-balance">
                 Guthaben: <strong>{{ formatBalance() }} €</strong>
               </div>
-
             </div>
           </div>
 

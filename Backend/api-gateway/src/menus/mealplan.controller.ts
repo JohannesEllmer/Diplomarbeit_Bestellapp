@@ -6,125 +6,112 @@ import {
   Param,
   Patch,
   Post,
-  UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
-
 import { MealPlansService } from './mealplan.services';
 import { CreateMealPlanDto } from './dto/create-mealplan.dto';
 import { UpdateMealPlanDto } from './dto/update-mealplan.dto';
-import { SetMealPlanMenuItemsDto } from './dto/set-mealplan-dishes.dto';
-import { SetMenuItemDisabledDto } from './dto/set-mealplan-dish-disabled';
-
-import { JwtAuthGuard } from '../auth.guards';
-import { Roles } from '../roles.decorator';
-import { RolesGuard } from '../roles.guard';
-
 import { ParseUuidAllPipe } from '../common/parse-uuid-all.pipe';
 
 @Controller('meal-plans')
 export class MealPlansController {
-  constructor(private readonly svc: MealPlansService) {}
+  constructor(
+    private readonly mealPlans: MealPlansService,
+    private readonly uuidAll: ParseUuidAllPipe,
+  ) {}
 
-  @Get('selected')
-  getSelected() {
-    return this.svc.getSelected();
-  }
-
-  @Get('active')
-  active() {
-    return this.svc.getSelected();
+  @Post()
+  create(@Body() dto: CreateMealPlanDto) {
+    return this.mealPlans.create(dto);
   }
 
   @Get()
   findAll() {
-    return this.svc.findAll();
+    return this.mealPlans.findAll();
   }
+
+  @Get('selected')
+  getSelected() {
+    return this.mealPlans.getSelected();
+  }
+
+  // -------------------------
+  // ✅ /:id/select (PARAM) — getrennt registrieren
+  // -------------------------
+  @Post(':id/select')
+  setSelectedPost(@Param('id', ParseUuidAllPipe) id: string) {
+    return this.mealPlans.setSelected(id);
+  }
+
+  @Patch(':id/select')
+  setSelectedPatch(@Param('id', ParseUuidAllPipe) id: string) {
+    return this.mealPlans.setSelected(id);
+  }
+
+  // -------------------------
+  // ✅ /select (BODY) — getrennt registrieren
+  // -------------------------
+  @Post('select')
+  setSelectedByBodyPost(@Body('id') id: string) {
+    return this.setSelectedByBodyImpl(id);
+  }
+
+  @Patch('select')
+  setSelectedByBodyPatch(@Body('id') id: string) {
+    return this.setSelectedByBodyImpl(id);
+  }
+
+private setSelectedByBodyImpl(id: string) {
+  const raw = String(id ?? '').trim();
+  if (!raw) throw new BadRequestException('MISSING_MEAL_PLAN_ID');
+
+  // ✅ Pipe nur mit 1 Argument (passt zu deiner Signatur)
+  const validated = this.uuidAll.transform(raw) as any;
+
+  return this.mealPlans.setSelected(String(validated));
+}
+
 
   @Get(':id')
-  findOne(@Param('id', new ParseUuidAllPipe()) id: string) {
-    return this.svc.findOne(id);
+  findOne(@Param('id', ParseUuidAllPipe) id: string) {
+    return this.mealPlans.findOne(id);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('INHABER', 'ADMIN')
-  @Post()
-  create(@Body() dto: CreateMealPlanDto) {
-    return this.svc.create(dto);
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('INHABER', 'ADMIN')
   @Patch(':id')
   update(
-    @Param('id', new ParseUuidAllPipe()) id: string,
+    @Param('id', ParseUuidAllPipe) id: string,
     @Body() dto: UpdateMealPlanDto,
   ) {
-    return this.svc.update(id, dto);
+    return this.mealPlans.update(id, dto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('INHABER', 'ADMIN')
   @Delete(':id')
-  remove(@Param('id', new ParseUuidAllPipe()) id: string) {
-    return this.svc.remove(id);
+  remove(@Param('id', ParseUuidAllPipe) id: string) {
+    return this.mealPlans.remove(id);
   }
 
-  // -------------------------
-  // RELATION ROUTES (menu-items)
-  // -------------------------
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('INHABER', 'ADMIN')
-  @Post(':id/menu-items')
-  setMenuItemsBulk(
-    @Param('id', new ParseUuidAllPipe()) id: string,
-    @Body() dto: SetMealPlanMenuItemsDto,
-  ) {
-    return this.svc.setMenuItems(id, dto.menuItemIds);
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('INHABER', 'ADMIN')
-  @Post(':id/menu-items/:menuItemId')
+  @Post(':id/items/:menuItemId')
   addMenuItem(
-    @Param('id', new ParseUuidAllPipe()) mealPlanId: string,
-    @Param('menuItemId', new ParseUuidAllPipe()) menuItemId: string,
+    @Param('id', ParseUuidAllPipe) id: string,
+    @Param('menuItemId', ParseUuidAllPipe) menuItemId: string,
   ) {
-    return this.svc.addMenuItem(mealPlanId, menuItemId);
+    return this.mealPlans.addMenuItem(id, menuItemId);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('INHABER', 'ADMIN')
-  @Delete(':id/menu-items/:menuItemId')
+  @Delete(':id/items/:menuItemId')
   removeMenuItem(
-    @Param('id', new ParseUuidAllPipe()) mealPlanId: string,
-    @Param('menuItemId', new ParseUuidAllPipe()) menuItemId: string,
+    @Param('id', ParseUuidAllPipe) id: string,
+    @Param('menuItemId', ParseUuidAllPipe) menuItemId: string,
   ) {
-    return this.svc.removeMenuItem(mealPlanId, menuItemId);
+    return this.mealPlans.removeMenuItem(id, menuItemId);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('INHABER', 'ADMIN')
-  @Patch(':id/menu-items/:menuItemId/disabled')
-  setMenuItemDisabled(
-    @Param('id', new ParseUuidAllPipe()) mealPlanId: string,
-    @Param('menuItemId', new ParseUuidAllPipe()) menuItemId: string,
-    @Body() dto: SetMenuItemDisabledDto,
+  @Patch(':id/items/:menuItemId/disabled/:disabled')
+  setDisabled(
+    @Param('id', ParseUuidAllPipe) id: string,
+    @Param('menuItemId', ParseUuidAllPipe) menuItemId: string,
+    @Param('disabled') disabled: string,
   ) {
-    return this.svc.setMenuItemDisabled(mealPlanId, menuItemId, dto.disabled);
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('INHABER', 'ADMIN')
-  @Patch(':id/select')
-  selectByParam(@Param('id', new ParseUuidAllPipe()) id: string) {
-    return this.svc.setSelected(id);
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('INHABER', 'ADMIN')
-  @Patch('select')
-  selectByBody(@Body() dto: { id: string }) {
-    return this.svc.setSelected(dto.id);
+    return this.mealPlans.setMenuItemDisabled(id, menuItemId, disabled === 'true');
   }
 }

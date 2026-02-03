@@ -1,5 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { Pool } from 'pg';
+import { config } from './config';
 
 export const PG_POOL = Symbol('PG_POOL');
 
@@ -10,20 +11,22 @@ export const PG_POOL = Symbol('PG_POOL');
       provide: PG_POOL,
       useFactory: async () => {
         const pool = new Pool({
-          host: process.env.PG_HOST ?? 'localhost',
-          port: Number(process.env.PG_PORT ?? 5433),
-          user: process.env.PG_USER ?? 'app_user',
-          password: process.env.PG_PASSWORD ?? 'supersecret',
-          database: process.env.PG_DATABASE ?? 'app_db',
-          max: Number(process.env.PG_POOL_MAX ?? 20),
+          host: config.pg.host,
+          port: config.pg.port,
+          user: config.pg.user,
+          password: config.pg.password,
+          database: config.pg.database,
+          max: config.pg.poolMax,
           idleTimeoutMillis: 30000,
           connectionTimeoutMillis: 5000,
+          ssl: config.pg.ssl ? { rejectUnauthorized: false } : undefined,
         });
 
         pool.on('connect', client => {
           client.query(`SET search_path TO app, public;`).catch(() => {});
         });
 
+        // ✅ Fail fast, wenn DB nicht erreichbar
         await pool.query('SELECT 1');
         return pool;
       },

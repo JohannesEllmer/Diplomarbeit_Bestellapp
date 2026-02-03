@@ -6,13 +6,14 @@ import { finalize } from 'rxjs/operators';
 
 import { UserProfileService } from '../services/user-profile';
 import { AuthService } from '../auth/auth.service';
+import { SiteFooterComponent } from '../site-footer/footer';
 
 type StatusType = 'success' | 'warning' | 'error' | '';
 
 @Component({
   selector: 'app-user-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SiteFooterComponent],
   templateUrl: './user-profile.html',
   styleUrls: ['./user-profile.css']
 })

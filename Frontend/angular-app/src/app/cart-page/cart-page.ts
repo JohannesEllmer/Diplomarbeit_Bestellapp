@@ -7,6 +7,7 @@ import { CartItemComponent } from '../cart-item/cart-item';
 import { OrderItem } from '../../models/menu-item.model';
 import { CartService } from '../services/cart/cart-service';
 import { UserProfileService } from '../services/user-profile';
+import { SiteFooterComponent } from '../site-footer/footer';
 
 type CreateOrderItemDto = {
   menuItemId: string;
@@ -22,7 +23,7 @@ type CreateOrderDto = {
 @Component({
   selector: 'app-cart-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, CartItemComponent],
+  imports: [CommonModule, FormsModule, CartItemComponent, SiteFooterComponent],
   templateUrl: './cart-page.html',
   styleUrls: ['./cart-page.css']
 })

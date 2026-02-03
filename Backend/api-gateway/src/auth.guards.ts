@@ -12,10 +12,16 @@ export interface AuthJwtPayload {
 export class JwtAuthGuard implements CanActivate {
   canActivate(ctx: ExecutionContext): boolean {
     const req = ctx.switchToHttp().getRequest();
+
+    // ✅ Preflight immer erlauben (sonst wirkt es wie CORS Fehler)
+    if (req.method === 'OPTIONS') return true;
+
     const header: string = req.headers?.authorization ?? '';
     const [type, token] = header.split(' ');
 
-    if (type !== 'Bearer' || !token) throw new UnauthorizedException('AUTH_REQUIRED');
+    if (type !== 'Bearer' || !token) {
+      throw new UnauthorizedException('AUTH_REQUIRED');
+    }
 
     const secret = process.env.JWT_SECRET;
     if (!secret) throw new UnauthorizedException('JWT_SECRET_NOT_CONFIGURED');

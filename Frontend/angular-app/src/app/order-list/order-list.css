@@ -566,3 +566,27 @@
     padding: 1.1rem 1.25rem 0.9rem 1.25rem;
   }
 }
+
+.order-footer-row{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.order-footer-left{
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: #e5e7eb;
+}
+
+/* Mobile: untereinander, sauber zentriert */
+@media (max-width: 720px){
+  .order-footer-row{
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+  }
+}

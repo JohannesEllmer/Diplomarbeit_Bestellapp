@@ -8,21 +8,22 @@ export class ClassPolicyGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
 
+    // ✅ Preflight immer erlauben
+    if (req.method === 'OPTIONS') return true;
+
     // wenn kein JWT-User (z.B. Login/Register) -> durchlassen
     const jwtUser = req.user;
     if (!jwtUser?.id && !jwtUser?.sub) return true;
 
     const userId = String(jwtUser?.id ?? jwtUser?.sub);
 
-    // ✅ Policy erzwingen (setzt ggf. blocked/class=NULL)
     const dbUser = await this.users.enforceClassPolicy(userId);
 
-    if (!dbUser) return true; // user evtl. gelöscht -> restliche Guards/Handler kümmern sich
+    if (!dbUser) return true;
     if (!dbUser.blocked) return true;
 
     const path = String(req.originalUrl || req.url || '');
 
-    // ✅ erlaubte Routen für blockierte User
     const allowed =
       path.startsWith('/api/users/me/profile') ||
       path.startsWith('/api/users/me/activity') ||

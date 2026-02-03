@@ -253,51 +253,60 @@ export class MenuPlanner implements OnInit, OnDestroy {
     this.showDeleteDialog = true;
   }
 
+  
+
   cancelDelete(): void {
     this.showDeleteDialog = false;
     this.dishToDelete = null;
   }
 
-  confirmDelete(): void {
-    const item = this.dishToDelete;
-    if (!item?.id) {
-      this.cancelDelete();
-      return;
-    }
-
-    this.saveError = null;
-    this.deletingId = item.id;
-
-    const prevSelected = [...this.selectedDishes];
-    const prevUnselected = [...this.unselectedDishes];
-
-    // ✅ Sofort UI updaten
-    this.selectedDishes = (this.selectedDishes ?? []).filter(x => x.id !== item.id);
-    this.unselectedDishes = (this.unselectedDishes ?? []).filter(x => x.id !== item.id);
-
-    // ✅ Backend Delete (kann FK-Fix jetzt)
-    this.menuItems.delete(item.id)
-      .pipe(finalize(() => {
-        this.deletingId = null;
-        this.cancelDelete();
-      }))
-      .subscribe({
-        next: () => {},
-        error: (err) => {
-          console.error('[MenuPlanner] deleteMenuItem failed:', err);
-
-          // rollback UI
-          this.selectedDishes = prevSelected;
-          this.unselectedDishes = prevUnselected;
-
-          const msg = (err as any)?.error?.message;
-          this.saveError =
-            msg === 'MENU_ITEM_IN_USE'
-              ? 'Dieses Gericht kann nicht gelöscht werden, weil es bereits in Bestellungen verwendet wurde.'
-              : 'Menu-Item konnte nicht gelöscht werden.';
-        }
-      });
+ confirmDelete(): void {
+  const item = this.dishToDelete;
+  if (!item?.id) {
+    this.cancelDelete();
+    return;
   }
+
+  // ✅ Debug: Damit du siehst, ob die Funktion überhaupt läuft
+  console.log('[MenuPlanner] confirmDelete clicked for id:', item.id);
+
+  this.saveError = null;
+  this.deletingId = item.id;
+
+  const prevSelected = [...this.selectedDishes];
+  const prevUnselected = [...this.unselectedDishes];
+
+  // ✅ UI sofort updaten
+  this.selectedDishes = (this.selectedDishes ?? []).filter(x => x.id !== item.id);
+  this.unselectedDishes = (this.unselectedDishes ?? []).filter(x => x.id !== item.id);
+
+  // ✅ HTTP Call
+  this.menuItems.delete(String(item.id))
+    .pipe(finalize(() => {
+      this.deletingId = null;
+      this.cancelDelete();
+    }))
+    .subscribe({
+      next: () => {
+        console.log('[MenuPlanner] delete OK');
+      },
+      error: (err) => {
+        console.error('[MenuPlanner] deleteMenuItem failed:', err);
+
+        // rollback UI
+        this.selectedDishes = prevSelected;
+        this.unselectedDishes = prevUnselected;
+
+        const msg = (err as any)?.error?.message;
+        this.saveError =
+          msg === 'MENU_ITEM_IN_USE'
+            ? 'Dieses Gericht kann nicht gelöscht werden, weil es bereits in Bestellungen verwendet wurde.'
+            : 'Menu-Item konnte nicht gelöscht werden.';
+      }
+    });
+}
+
+
 
   private buildMenuItemIds(): string[] {
     return (this.selectedDishes ?? [])

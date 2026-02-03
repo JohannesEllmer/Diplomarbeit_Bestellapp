@@ -605,3 +605,20 @@
 
   .chart-container { height: 450px; }
 }
+
+.stats-footer-row{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* links/rechts */
+  gap: 16px;
+}
+
+/* Auf mobile zentriert untereinander */
+@media (max-width: 720px){
+  .stats-footer-row{
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+  }
+}

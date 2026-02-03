@@ -25,6 +25,6 @@
 
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*.ts", "src/scripts/gmail.oauth.mjs"],
+  "include": ["src/**/*.ts", "src/scripts/gmail.oauth.mjs", "src/get-refresh-token.mjs"],
   "exclude": ["dist", "node_modules"]
 }

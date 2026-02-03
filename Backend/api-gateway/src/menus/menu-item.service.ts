@@ -16,15 +16,15 @@ export class MenuItemsService {
   async create(dto: CreateMenuItemDto) {
     const res = await this.db.query(
       `INSERT INTO app.menu_items
-        (name, description, price, category, available, vegetarian, allergens, drink, dessert)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+        (name, description, price, category, available, vegetarian, allergens, drink, dessert, deleted)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,false)
        RETURNING id, name, description, price, category, available, vegetarian, allergens, drink, dessert`,
       [
         dto.name,
         dto.description ?? '',
         dto.price ?? 0,
         dto.category ?? '',
-        !!dto.available,
+        dto.available !== false,
         !!dto.vegetarian,
         dto.allergens ?? [],
         dto.drink ?? null,
@@ -39,6 +39,7 @@ export class MenuItemsService {
     const res = await this.db.query(
       `SELECT id, name, description, price, category, available, vegetarian, allergens, drink, dessert
        FROM app.menu_items
+       WHERE deleted = false
        ORDER BY name ASC`,
     );
 
@@ -52,7 +53,7 @@ export class MenuItemsService {
     const res = await this.db.query(
       `SELECT id, name, description, price, category, available, vegetarian, allergens, drink, dessert
        FROM app.menu_items
-       WHERE id = $1
+       WHERE id = $1 AND deleted = false
        LIMIT 1`,
       [menuItemId],
     );
@@ -76,7 +77,7 @@ export class MenuItemsService {
            allergens = COALESCE($8, allergens),
            drink = COALESCE($9, drink),
            dessert = COALESCE($10, dessert)
-       WHERE id = $1
+       WHERE id = $1 AND deleted = false
        RETURNING id, name, description, price, category, available, vegetarian, allergens, drink, dessert`,
       [
         menuItemId,
@@ -96,46 +97,53 @@ export class MenuItemsService {
     return this.map(res.rows[0]);
   }
 
+  /**
+   * ✅ SOFT DELETE (keine 400 mehr!)
+   * - nicht blocken wenn in orders
+   * - aus meal_plan_menu_items entfernen (damit es "draußen" ist)
+   * - optional: aus app.menus entkoppeln (menu_item_id = NULL), falls FK existiert
+   * - menu_items.deleted = true
+   */
   async remove(id: string) {
-    const menuItemId = String(id ?? '').trim();
-    if (!menuItemId) throw new BadRequestException('MISSING_MENU_ITEM_ID');
+  const menuItemId = String(id ?? '').trim();
+  if (!menuItemId) throw new BadRequestException('MISSING_MENU_ITEM_ID');
 
-    // Existiert es überhaupt?
-    const exists = await this.db.query(
-      `SELECT id FROM app.menu_items WHERE id = $1 LIMIT 1`,
-      [menuItemId],
-    );
-    if ((exists.rowCount ?? 0) === 0) throw new NotFoundException('MENU_ITEM_NOT_FOUND');
+  const exists = await this.db.query(
+    `SELECT id, deleted FROM app.menu_items WHERE id = $1 LIMIT 1`,
+    [menuItemId],
+  );
+  if (exists.rowCount === 0) throw new NotFoundException('MENU_ITEM_NOT_FOUND');
 
-    // 1) Referenz in MealPlans?
-    const inMealPlansRes = await this.db.query(
-      `SELECT COUNT(*)::int AS cnt
-       FROM app.meal_plan_menu_items
-       WHERE menu_item_id = $1`,
-      [menuItemId],
-    );
-    const inMealPlans = Number(inMealPlansRes.rows?.[0]?.cnt ?? 0);
-
-    if (inMealPlans > 0) {
-      throw new BadRequestException('MENU_ITEM_IN_MEAL_PLAN');
-    }
-
-    // 2) Referenz in Bestellungen?
-    const inOrdersRes = await this.db.query(
-      `SELECT COUNT(*)::int AS cnt
-       FROM app.order_items
-       WHERE menu_item_id = $1`,
-      [menuItemId],
-    );
-    const inOrders = Number(inOrdersRes.rows?.[0]?.cnt ?? 0);
-
-    if (inOrders > 0) {
-      throw new BadRequestException('MENU_ITEM_IN_ORDERS');
-    }
-
-    await this.db.query(`DELETE FROM app.menu_items WHERE id = $1`, [menuItemId]);
-    return { deleted: true };
+  if (exists.rows[0].deleted === true) {
+    return { deleted: true, soft: true, alreadyDeleted: true };
   }
+
+  const client = await this.db.connect();
+  try {
+    await client.query('BEGIN');
+
+    // ✅ optional: Beziehungen entfernen, damit es im Menüplan sofort verschwindet
+    await client.query(
+      `DELETE FROM app.meal_plan_menu_items WHERE menu_item_id = $1`,
+      [menuItemId],
+    );
+
+    // ✅ Soft Delete
+    await client.query(
+      `UPDATE app.menu_items SET deleted = true WHERE id = $1`,
+      [menuItemId],
+    );
+
+    await client.query('COMMIT');
+    return { deleted: true, soft: true };
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}
+
 
   private map = (r: any) => ({
     id: String(r.id),

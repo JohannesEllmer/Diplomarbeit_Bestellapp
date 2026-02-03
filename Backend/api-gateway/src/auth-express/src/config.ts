@@ -1,17 +1,35 @@
-export const JWT_SECRET = process.env.JWT_SECRET ?? 'supersecretjwtkey';
-export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN ?? '2h';
+function required(name: string): string {
+  const v = process.env[name];
+  if (!v || !v.trim()) {
+    throw new Error(`Missing environment variable: ${name}`);
+  }
+  return v.trim();
+}
 
-export const APP_BASE_URL =
-  process.env.APP_BASE_URL ?? 'http://10.10.0.174:4200';
+function optional(name: string, fallback = ''): string {
+  return process.env[name]?.trim() || fallback;
+}
 
+export const JWT_SECRET = required('JWT_SECRET');
+export const JWT_EXPIRES_IN = optional('JWT_EXPIRES_IN', '2h');
+
+export const APP_BASE_URL = required('APP_BASE_URL');
+
+/**
+ * CORS:
+ * - "*"  → alle Origins erlaubt
+ * - "http://localhost:4200,http://10.10.0.174:4200"
+ */
+export const CORS_ORIGINS_RAW = optional('CORS_ORIGINS', '*');
 export const CORS_ORIGINS =
-  (process.env.CORS_ORIGINS ?? 'http://10.10.0.174:4200,http://localhost:4200')
-    .split(',')
-    .map(s => s.trim())
-    .filter(Boolean);
+  CORS_ORIGINS_RAW === '*'
+    ? '*'
+    : CORS_ORIGINS_RAW.split(',').map(s => s.trim()).filter(Boolean);
 
-export const GMAIL_SENDER = process.env.GMAIL_SENDER ?? 'hungersatt123@gmail.com';
-
-export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? '546392092664-sfffevp491mr2uaoq6t2u169idin7h82.apps.googleusercontent.com';
-export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ?? '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';
-export const GOOGLE_REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN ?? '1//036kJoNOf11gZCgYIARAAGAMSNwF-L9Ir8bt8RSCS45C3NjtSMkWLCNKfZVndX4Mbgc3WLKUb5Noig-LE4rYQ9hTm2naWTkQHyvg';
+/**
+ * Gmail / Google API
+ */
+export const GMAIL_SENDER = required('GMAIL_SENDER');
+export const GOOGLE_CLIENT_ID = required('GOOGLE_CLIENT_ID');
+export const GOOGLE_CLIENT_SECRET = required('GOOGLE_CLIENT_SECRET');
+export const GOOGLE_REFRESH_TOKEN = required('GOOGLE_REFRESH_TOKEN');
