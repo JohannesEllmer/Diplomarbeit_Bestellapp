@@ -37,100 +37,34 @@ export class AppMenuComponent implements OnInit, OnDestroy {
   currentRoute = '';
   private routerSubscription!: Subscription;
 
-  // Dropdown
   userMenuOpen = false;
 
-  // ✅ Admin View Override (nur UI)
   adminView: AdminView =
     (localStorage.getItem('admin_view') as AdminView) || 'USER';
 
-  // ✅ Header vom Backend (Balance etc.)
   header: MenuHeaderDto | null = null;
   private headerSub?: Subscription;
   private headerRefreshSub?: Subscription;
 
-  // Rollenkonfiguration
   readonly ROLES: { [key: string]: UserRoleConfig } = {
     ADMIN: { name: 'ADMIN', label: 'Administrator', color: '#ef4444' },
     INHABER: { name: 'INHABER', label: 'Verwaltung', color: '#3b82f6' },
     KUNDE: { name: 'KUNDE', label: 'Kunde', color: '#10b981' }
   };
 
-  // Zentrale Menükonfiguration
   readonly NAV_CONFIG: NavLink[] = [
-    // Kundenbereich
-    {
-      label: 'Menüplan',
-      route: '/',
-      roles: ['KUNDE', 'INHABER', 'ADMIN'],
-      section: 'customer'
-    },
-    {
-      label: 'Warenkorb',
-      route: '/warenkorb',
-      roles: ['KUNDE', 'INHABER', 'ADMIN'],
-      section: 'customer'
-    },
-    {
-      label: 'Meine Bestellungen',
-      route: '/my-orders',
-      roles: ['KUNDE', 'INHABER', 'ADMIN'],
-      section: 'customer'
-    },
-    {
-      label: 'Mein Profil',
-      route: '/me',
-      roles: ['KUNDE', 'INHABER', 'ADMIN'],
-      section: 'customer'
-    },
+    { label: 'Menüplan', route: '/', roles: ['KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
+    { label: 'Warenkorb', route: '/warenkorb', roles: ['KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
+    { label: 'Meine Bestellungen', route: '/my-orders', roles: ['KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
+    { label: 'Mein Profil', route: '/me', roles: ['KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
 
-    // Verwaltungsbereich
-    {
-      label: 'Bestellübersicht',
-      route: '/orders',
-      roles: ['INHABER', 'ADMIN'],
-      section: 'management',
-      shortLabel: 'Bestellungen'
-    },
-    {
-      label: 'Statistiken',
-      route: '/statistics',
-      roles: ['INHABER', 'ADMIN'],
-      section: 'management'
-    },
-    {
-      label: 'Benutzerverwaltung',
-      route: '/user',
-      roles: ['ADMIN', 'INHABER'],
-      section: 'management',
-      shortLabel: 'Benutzer'
-    },
-    {
-      label: 'Scanner',
-      route: '/admin/balance-scan',
-      roles: [ 'INHABER', 'ADMIN'],
-      section: 'management'
-    },
-    {
-      label: 'Menü-Manager',
-      route: '/menu-manager',
-      roles: ['INHABER', 'ADMIN'],
-      section: 'management',
-      shortLabel: 'Menüs'
-    },
-    {
-      label: 'Menüplaner',
-      route: '/menuplaner',
-      roles: ['INHABER', 'ADMIN'],
-      section: 'management',
-      shortLabel: 'Planer'
-    },
-    {
-      label: 'Gerichte',
-      route: '/gericht-verwaltung',
-      roles: ['INHABER', 'ADMIN'],
-      section: 'management'
-    }
+    { label: 'Bestellübersicht', route: '/orders', roles: ['INHABER', 'ADMIN'], section: 'management', shortLabel: 'Bestellungen' },
+    { label: 'Statistiken', route: '/statistics', roles: ['INHABER', 'ADMIN'], section: 'management' },
+    { label: 'Benutzerverwaltung', route: '/user', roles: ['ADMIN', 'INHABER'], section: 'management', shortLabel: 'Benutzer' },
+    { label: 'Scanner', route: '/admin/balance-scan', roles: ['INHABER', 'ADMIN'], section: 'management' },
+    { label: 'Menü-Manager', route: '/menu-manager', roles: ['INHABER', 'ADMIN'], section: 'management', shortLabel: 'Menüs' },
+    { label: 'Menüplaner', route: '/menuplaner', roles: ['INHABER', 'ADMIN'], section: 'management', shortLabel: 'Planer' },
+    { label: 'Gerichte', route: '/gericht-verwaltung', roles: ['INHABER', 'ADMIN'], section: 'management' }
   ];
 
   private onDocClickBound = (ev: MouseEvent) => this.onDocumentClick(ev);
@@ -142,7 +76,6 @@ export class AppMenuComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // ✅ Router Events
     this.routerSubscription = this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: any) => {
@@ -150,7 +83,6 @@ export class AppMenuComponent implements OnInit, OnDestroy {
         this.closeMobile();
         this.closeUserMenu();
 
-        // ✅ Nur refresh, wenn eingeloggt (sonst 401-Spam)
         if (this.auth.isLoggedIn()) {
           this.headerService.refresh();
         } else {
@@ -159,25 +91,18 @@ export class AppMenuComponent implements OnInit, OnDestroy {
       });
 
     this.updateMobileState();
-
-    // ✅ Klick außerhalb schließt Desktop-Dropdown
     document.addEventListener('click', this.onDocClickBound, true);
 
-    // ✅ Header abonnieren
-    this.headerSub = this.headerService
-      .watchHeader()
-      .subscribe((h: MenuHeader | null) => {
-        this.header = h as MenuHeaderDto;
-      });
+    this.headerSub = this.headerService.watchHeader().subscribe((h: MenuHeader | null) => {
+      this.header = h as MenuHeaderDto;
+    });
 
-    // ✅ Initial: nur wenn eingeloggt
     if (this.auth.isLoggedIn()) {
       this.headerService.refresh();
     } else {
       this.header = null;
     }
 
-    // ✅ Optional: alle 30s aktualisieren – aber nur wenn eingeloggt
     this.headerRefreshSub = interval(30000).subscribe(() => {
       if (this.auth.isLoggedIn()) {
         this.headerService.refresh();
@@ -192,7 +117,7 @@ export class AppMenuComponent implements OnInit, OnDestroy {
     document.removeEventListener('click', this.onDocClickBound, true);
   }
 
-  // ---------- User Management ----------
+  // ---------- User ----------
   get currentUser(): any | null {
     return this.auth.getCurrentUser();
   }
@@ -201,7 +126,12 @@ export class AppMenuComponent implements OnInit, OnDestroy {
     return this.currentUser?.role ?? null;
   }
 
-  // ✅ Effektive Rolle (Menü)
+  // ✅ WICHTIG: echte Admin-Rechte prüfen (nicht effectiveRole)
+  get isAdmin(): boolean {
+    return this.currentRole === 'ADMIN';
+  }
+
+  // ✅ Effektive Rolle nur fürs Menü (Admin kann so tun als User/Management)
   get effectiveRole(): string | null {
     const role = this.currentRole;
     if (role !== 'ADMIN') return role;
@@ -236,7 +166,6 @@ export class AppMenuComponent implements OnInit, OnDestroy {
     return first + last;
   }
 
-  // ✅ Balance: immer number
   get userBalance(): number {
     const h = this.header?.balance;
     if (typeof h === 'number' && Number.isFinite(h)) return h;
@@ -246,7 +175,6 @@ export class AppMenuComponent implements OnInit, OnDestroy {
     return Number.isFinite(n) ? n : 0;
   }
 
-  // ✅ Crash-sicher (toFixed nur auf number)
   formatBalance(): string {
     const n = Number(this.userBalance);
     return Number.isFinite(n) ? n.toFixed(2) : '0.00';
@@ -258,7 +186,6 @@ export class AppMenuComponent implements OnInit, OnDestroy {
 
     this.auth.logout();
 
-    // Wenn dein Service eine clear()-Methode hat, nimm die:
     if (typeof (this.headerService as any).clear === 'function') {
       (this.headerService as any).clear();
     } else {
@@ -279,19 +206,16 @@ export class AppMenuComponent implements OnInit, OnDestroy {
     return this.adminView === 'USER' ? 'Admin – User' : 'Admin – Management';
   }
 
-  // ---------- Rollenprüfung ----------
+  // ---------- Rollenprüfung für Navigation ----------
   hasAnyRole(roles: string[]): boolean {
     const role = this.effectiveRole;
     return role ? roles.includes(role) : false;
   }
 
-  // ---------- Navigation Links ----------
   getNavLinks(section: 'customer' | 'management'): NavLink[] {
     const role = this.effectiveRole;
     if (!role) return [];
-    return this.NAV_CONFIG.filter(
-      link => link.section === section && link.roles.includes(role)
-    );
+    return this.NAV_CONFIG.filter(link => link.section === section && link.roles.includes(role));
   }
 
   getCustomerLinks(): NavLink[] {
@@ -307,7 +231,14 @@ export class AppMenuComponent implements OnInit, OnDestroy {
     return link.shortLabel || link.label;
   }
 
-  // ---------- Mobile Handling ----------
+  // ✅ Admin-only Navigation action
+  goToCreateAdmin(): void {
+    this.closeUserMenu();
+    this.closeMobile();
+    this.router.navigate(['/register-admin']); // z.B. neue Route
+  }
+
+  // ---------- Mobile ----------
   @HostListener('window:resize')
   onResize(): void {
     this.updateMobileState();
@@ -323,9 +254,7 @@ export class AppMenuComponent implements OnInit, OnDestroy {
   }
 
   getCurrentPageTitle(): string {
-    const currentLink = this.NAV_CONFIG.find(
-      link => link.route === this.currentRoute
-    );
+    const currentLink = this.NAV_CONFIG.find(link => link.route === this.currentRoute);
     return currentLink ? currentLink.label : 'HungerSatt Bestellsystem';
   }
 
@@ -357,7 +286,6 @@ export class AppMenuComponent implements OnInit, OnDestroy {
   private onDocumentClick(ev: MouseEvent): void {
     const target = ev.target as HTMLElement | null;
     if (!target) return;
-
     if (!target.closest('.desktop-user-wrapper')) {
       this.closeUserMenu();
     }

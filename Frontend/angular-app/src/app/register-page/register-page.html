@@ -3,11 +3,24 @@
     <header class="auth-header">
       <div class="auth-title-block">
         <h1>Konto erstellen</h1>
-        <p>Registriere dich als Kunde mit deiner Schul-E-Mail-Adresse.</p>
+
+        <!-- ✅ Text je nach Modus -->
+        <p *ngIf="!isAdminManagementView; else adminSubtitle">
+          Registriere dich als Kunde mit deiner Schul-E-Mail-Adresse.
+        </p>
+
+        <ng-template #adminSubtitle>
+          <p>
+            Admin-Modus: Du kannst hier Benutzerkonten anlegen – inklusive Admin-Konten.
+          </p>
+        </ng-template>
       </div>
 
       <div class="auth-badge">
-        <span class="badge-main">Registrierung</span>
+        <!-- ✅ Badge je nach Modus -->
+        <span class="badge-main">
+          {{ isAdminManagementView ? 'Admin Registrierung' : 'Registrierung' }}
+        </span>
         <span class="badge-sub">HTL · HAK</span>
       </div>
     </header>
@@ -65,9 +78,29 @@
           <div class="form-col">
             <section class="form-section">
               <h2 class="section-title">Zugangsdaten</h2>
-              <p class="section-subtitle">
+
+              <p class="section-subtitle" *ngIf="!isAdminManagementView; else adminAccessSubtitle">
                 Deine Schul-E-Mail bestimmt automatisch Vor- und Nachname.
               </p>
+              <ng-template #adminAccessSubtitle>
+                <p class="section-subtitle">
+                  Admin-Modus: E-Mail bestimmt weiterhin automatisch Vor- und Nachname.
+                  Zusätzlich kannst du eine Rolle auswählen.
+                </p>
+              </ng-template>
+
+              <!-- ✅ ADMIN ONLY: Rolle auswählen (nur wenn Admin + Admin-Ansicht MANAGEMENT) -->
+              <div *ngIf="isAdminManagementView" class="form-group" style="margin-bottom: 1rem;">
+                <label for="role">Rolle</label>
+                <select id="role" formControlName="role">
+                  <option value="KUNDE">Kunde</option>
+                  <option value="INHABER">Inhaber</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+                <p class="hint small">
+                  Achtung: Admin-Konten dürfen nur durch Admins erstellt werden.
+                </p>
+              </div>
 
               <!-- E-Mail -->
               <div
@@ -165,45 +198,45 @@
             </section>
           </div>
         </div>
+
         <div class="form-actions">
-  <button
-    type="submit"
-    class="primary-btn"
-    [disabled]="isSubmitting || registerForm.invalid"
-  >
-    <span class="btn-row">
-      <span class="spinner" *ngIf="isSubmitting"></span>
-      {{ isSubmitting ? 'Registriere...' : 'Registrieren' }}
-    </span>
-  </button>
+          <button
+            type="submit"
+            class="primary-btn"
+            [disabled]="isSubmitting || registerForm.invalid"
+          >
+            <span class="btn-row">
+              <span class="spinner" *ngIf="isSubmitting"></span>
+              {{ isSubmitting ? 'Registriere...' : 'Registrieren' }}
+            </span>
+          </button>
 
-  <div class="status-card" *ngIf="errorMessage || infoMessage"
-       [class.is-error]="!!errorMessage"
-       [class.is-success]="infoType === 'success' && !errorMessage"
-       [class.is-warning]="infoType === 'warning' && !errorMessage">
-    <div class="status-icon">
-      <span *ngIf="!!errorMessage">✕</span>
-      <span *ngIf="!errorMessage && infoType==='success'">✓</span>
-      <span *ngIf="!errorMessage && infoType==='warning'">!</span>
-      <span *ngIf="!errorMessage && infoType==='info'">i</span>
-    </div>
+          <div class="status-card" *ngIf="errorMessage || infoMessage"
+               [class.is-error]="!!errorMessage"
+               [class.is-success]="infoType === 'success' && !errorMessage"
+               [class.is-warning]="infoType === 'warning' && !errorMessage">
+            <div class="status-icon">
+              <span *ngIf="!!errorMessage">✕</span>
+              <span *ngIf="!errorMessage && infoType==='success'">✓</span>
+              <span *ngIf="!errorMessage && infoType==='warning'">!</span>
+              <span *ngIf="!errorMessage && infoType==='info'">i</span>
+            </div>
 
-    <div class="status-text">
-      <div class="status-title">
-        {{ errorMessage ? 'Fehler' : (infoType === 'success' ? 'Erfolg' : 'Info') }}
-      </div>
-      <div class="status-msg">
-        {{ errorMessage || infoMessage }}
-      </div>
-    </div>
+            <div class="status-text">
+              <div class="status-title">
+                {{ errorMessage ? 'Fehler' : (infoType === 'success' ? 'Erfolg' : 'Info') }}
+              </div>
+              <div class="status-msg">
+                {{ errorMessage || infoMessage }}
+              </div>
+            </div>
 
-    <button class="status-close" type="button"
-            (click)="errorMessage=''; infoMessage='';">
-      ✕
-    </button>
-  </div>
-</div>
-
+            <button class="status-close" type="button"
+                    (click)="errorMessage=''; infoMessage='';">
+              ✕
+            </button>
+          </div>
+        </div>
       </form>
     </div>
 

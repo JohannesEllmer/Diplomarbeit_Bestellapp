@@ -14,6 +14,10 @@ import { AuthService } from '../auth/auth.service';
 import { Subscription, switchMap, of, combineLatest } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map, startWith } from 'rxjs/operators';
 
+type SchoolType = 'HTL' | 'HAK' | '';
+type RoleType = 'KUNDE' | 'INHABER' | 'ADMIN';
+type AdminView = 'USER' | 'MANAGEMENT';
+
 @Component({
   selector: 'app-register-page',
   standalone: true,
@@ -34,6 +38,21 @@ export class RegisterPageComponent implements OnDestroy {
   private sub = new Subscription();
 
   schoolTypes: ('HTL' | 'HAK')[] = ['HTL', 'HAK'];
+  readonly roles: RoleType[] = ['KUNDE', 'INHABER', 'ADMIN'];
+
+  private readonly SCHOOL_CONFIG: Record<
+    Exclude<SchoolType, ''>,
+    { pattern: RegExp; map: (match: RegExpMatchArray) => { firstName: string; lastName: string } }
+  > = {
+    HTL: {
+      pattern: /^([A-Za-zÄÖÜäöüß1-9]+)\.([A-Za-zÄÖÜäöüß]+)@htl-saalfelden\.at$/i,
+      map: (m) => ({ firstName: this.capitalize(m[1]), lastName: this.capitalize(m[2]) })
+    },
+    HAK: {
+      pattern: /^([A-Za-zÄÖÜäöüß1-9]+)\.([A-Za-zÄÖÜäöüß]+)@johak\.at$/i,
+      map: (m) => ({ lastName: this.capitalize(m[1]), firstName: this.capitalize(m[2]) })
+    }
+  };
 
   constructor(
     private fb: FormBuilder,
@@ -48,14 +67,20 @@ export class RegisterPageComponent implements OnDestroy {
         class: [''],
         isTeacher: [false],
         firstName: ['', [Validators.required]],
-        lastName: ['', [Validators.required]]
+        lastName: ['', [Validators.required]],
+
+        // ✅ role ist per Default deaktiviert (nur Admin MANAGEMENT darf es verwenden)
+        role: [{ value: 'KUNDE', disabled: true }]
       },
       { validators: [this.schoolEmailValidator()] }
     );
 
+    // ✅ Role-Control passend zum Modus setzen
+    this.applyRoleControlState();
+
     const email$ = this.email!.valueChanges.pipe(
       startWith(this.email!.value),
-      map(v => (String(v ?? '').trim())),
+      map(v => String(v ?? '').trim()),
       debounceTime(120),
       distinctUntilChanged()
     );
@@ -68,9 +93,38 @@ export class RegisterPageComponent implements OnDestroy {
 
     this.sub.add(
       combineLatest([email$, school$]).subscribe(([email, school]) => {
-        this.updateNameFromEmail(email, school as any);
+        this.updateNameFromEmail(email, school as SchoolType);
       })
     );
+  }
+
+  // ---------- Admin / View ----------
+  get currentUser(): any | null {
+    return this.auth.getCurrentUser();
+  }
+
+  get isAdmin(): boolean {
+    return (this.currentUser?.role ?? null) === 'ADMIN';
+  }
+
+  get adminView(): AdminView {
+    return (localStorage.getItem('admin_view') as AdminView) || 'USER';
+  }
+
+  get isAdminManagementView(): boolean {
+    return this.isAdmin && this.adminView === 'MANAGEMENT';
+  }
+
+  private applyRoleControlState(): void {
+    const ctrl = this.registerForm.get('role');
+    if (!ctrl) return;
+
+    if (this.isAdminManagementView) {
+      ctrl.enable({ emitEvent: false });
+    } else {
+      ctrl.disable({ emitEvent: false });
+      ctrl.setValue('KUNDE', { emitEvent: false }); 
+    }
   }
 
   get email() { return this.registerForm.get('email'); }
@@ -79,60 +133,55 @@ export class RegisterPageComponent implements OnDestroy {
   get password() { return this.registerForm.get('password'); }
   get firstName() { return this.registerForm.get('firstName'); }
   get lastName() { return this.registerForm.get('lastName'); }
+  get roleCtrl() { return this.registerForm.get('role'); }
 
-  // Eingabe Validators mit React
+  // ---------- Parsing / Validation ----------
+  private parseNameFromSchoolEmail(
+    email: string,
+    school: SchoolType
+  ): { firstName: string; lastName: string } | null {
+    if (!email || !school) return null;
+    if (school !== 'HTL' && school !== 'HAK') return null;
+
+    const cfg = this.SCHOOL_CONFIG[school];
+    const match = email.match(cfg.pattern);
+    if (!match) return null;
+
+    return cfg.map(match);
+  }
+
   private schoolEmailValidator(): ValidatorFn {
     return (group: AbstractControl): ValidationErrors | null => {
-      const email = (group.get('email')?.value as string) || '';
-      const school = group.get('schoolType')?.value as 'HTL' | 'HAK' | '';
+      const email = String(group.get('email')?.value ?? '').trim();
+      const school = (group.get('schoolType')?.value ?? '') as SchoolType;
       if (!email || !school) return null;
 
-      const htlPattern = /^([a-zA-ZäöüÄÖÜß]+)\.([a-zA-ZäöüÄÖÜß]+)@htl-saalfelden\.at$/i;
-      const hakPattern = /^([a-zA-ZäöüÄÖÜß]+)\.([a-zA-ZäöüÄÖÜß]+)@johak\.at$/i;
-
-      if (school === 'HTL') return htlPattern.test(email) ? null : { schoolEmailMismatch: true };
-      if (school === 'HAK') return hakPattern.test(email) ? null : { schoolEmailMismatch: true };
-      return null;
+      return this.parseNameFromSchoolEmail(email, school)
+        ? null
+        : { schoolEmailMismatch: true };
     };
   }
 
-  private updateNameFromEmail(email: string, school: 'HTL' | 'HAK' | ''): void {
+  private updateNameFromEmail(email: string, school: SchoolType): void {
+    const parsed = this.parseNameFromSchoolEmail(email, school);
+
     if (!email || !school) {
       this.safePatchNames('', '');
       this.nameInfoMessage = 'Vor- und Nachname werden automatisch aus der E-Mail abgeleitet.';
       return;
     }
 
-    const htlPattern = /^([A-Za-zÄÖÜäöüß]+)\.([A-Za-zÄÖÜäöüß]+)@htl-saalfelden\.at$/i;
-    const hakPattern = /^([A-Za-zÄÖÜäöüß]+)\.([A-Za-zÄÖÜäöüß]+)@johak\.at$/i;
-
-    const match =
-      school === 'HTL' ? email.match(htlPattern) :
-      school === 'HAK' ? email.match(hakPattern) :
-      null;
-
-    if (!match) {
+    if (!parsed) {
       this.safePatchNames('', '');
       this.nameInfoMessage = 'E-Mail muss zum gewählten Schultyp passen.';
       return;
     }
 
-    let first = '';
-    let last = '';
-
-    if (school === 'HTL') {
-      first = this.capitalize(match[1]);
-      last = this.capitalize(match[2]);
-    } else {
-      last = this.capitalize(match[1]);
-      first = this.capitalize(match[2]);
-    }
-
-    this.safePatchNames(first, last);
+    this.safePatchNames(parsed.firstName, parsed.lastName);
     this.nameInfoMessage = 'Name erkannt ✓';
   }
 
-  private safePatchNames(first: string, last: string) {
+  private safePatchNames(first: string, last: string): void {
     const curFirst = this.firstName?.value ?? '';
     const curLast = this.lastName?.value ?? '';
     if (curFirst === first && curLast === last) return;
@@ -144,67 +193,77 @@ export class RegisterPageComponent implements OnDestroy {
     return value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
   }
 
-onSubmit(): void {
-  this.errorMessage = '';
-  this.infoMessage = '';
+  // ---------- Submit ----------
+  onSubmit(): void {
+    //falls AdminView währenddessen geändert wurde: state nochmals anwenden
+    this.applyRoleControlState();
 
-  if (this.registerForm.invalid) {
-    this.registerForm.markAllAsTouched();
-    this.infoType = 'warning';
-    this.infoMessage = 'Bitte prüfe deine Eingaben (rot markierte Felder).';
-    return;
-  }
+    this.errorMessage = '';
+    this.infoMessage = '';
 
-  const raw = this.registerForm.getRawValue();
-
-  this.isSubmitting = true;
-  this.infoType = 'info';
-  this.infoMessage = 'Registrierung wird gestartet…es wird Ihnen ein Bestätigungslink per Email zugesendet. Dies kann einen Moment dauern.';
-
-  this.auth.checkAccountExists(raw.email).pipe(
-    switchMap(exists => {
-      if (exists) {
-        this.isSubmitting = false;
-        this.infoMessage = ''; 
-        this.errorMessage = 'Diese E-Mail-Adresse ist bereits registriert.';
-        return of(null);
-      }
-
-      this.infoType = 'info';
-      this.infoMessage =
-        'Fast fertig! Bitte bestätige deine E-Mail. Erst danach wird dein Account erstellt. Dies kann einen Moment dauern.';
-
-      return this.auth.register({
-        email: raw.email,
-        password: raw.password,
-        firstName: raw.firstName,
-        lastName: raw.lastName,
-        class: (raw.class ?? '').trim(),
-        schoolType: raw.schoolType,
-        isTeacher: raw.isTeacher
-      });
-    })
-  ).subscribe({
-    next: (res) => {
-      this.isSubmitting = false;
-
-      if (!res) return;
-
-      this.infoType = 'success';
-      this.infoMessage =
-        'Fast fertig! Bitte bestätige deine E-Mail. Erst danach wird dein Account erstellt';
-    },
-    error: (err) => {
-      this.isSubmitting = false;
-      console.error(err);
-
-      
-      this.infoMessage = '';
-      this.errorMessage = 'Registrierung fehlgeschlagen. Bitte versuche es erneut.';
+    if (this.registerForm.invalid) {
+      this.registerForm.markAllAsTouched();
+      this.infoType = 'warning';
+      this.infoMessage = 'Bitte prüfe deine Eingaben (rot markierte Felder).';
+      return;
     }
-  });
-}
 
+    // getRawValue beinhaltet disabled Controls -> ok, wir prüfen aber trotzdem isAdminManagementView
+    const raw = this.registerForm.getRawValue();
+
+    this.isSubmitting = true;
+    this.infoType = 'info';
+    this.infoMessage =
+      'Registrierung wird gestartet…es wird Ihnen ein Bestätigungslink per Email zugesendet. Dies kann einen Moment dauern.';
+
+    this.auth.checkAccountExists(raw.email).pipe(
+      switchMap(exists => {
+        if (exists) {
+          this.isSubmitting = false;
+          this.infoMessage = '';
+          this.errorMessage = 'Diese E-Mail-Adresse ist bereits registriert.';
+          return of(null);
+        }
+
+        this.infoType = 'info';
+        this.infoMessage =
+          'Fast fertig! Bitte bestätige deine E-Mail. Erst danach wird dein Account erstellt. Dies kann einen Moment dauern.';
+
+        const payload: any = {
+          email: raw.email,
+          password: raw.password,
+          firstName: raw.firstName,
+          lastName: raw.lastName,
+          class: (raw.class ?? '').trim(),
+          schoolType: raw.schoolType,
+          isTeacher: raw.isTeacher
+        };
+
+        //NUR Admin im MANAGEMENT-View darf role mitsenden (inkl. ADMIN)
+        if (this.isAdminManagementView) {
+          payload.role = raw.role as RoleType;
+        }
+
+        return this.auth.register(payload);
+      })
+    ).subscribe({
+      next: (res) => {
+        this.isSubmitting = false;
+        if (!res) return;
+
+        this.infoType = 'success';
+        this.infoMessage =
+          'Fast fertig! Bitte bestätige deine E-Mail. Erst danach wird dein Account erstellt';
+      },
+      error: (err) => {
+        this.isSubmitting = false;
+        console.error(err);
+
+        this.infoMessage = '';
+        this.errorMessage = 'Registrierung fehlgeschlagen. Bitte versuche es erneut.';
+      }
+    });
+  }
 
   ngOnDestroy(): void {
     this.sub.unsubscribe();

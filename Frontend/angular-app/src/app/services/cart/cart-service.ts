@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import { environment } from '../env';
@@ -32,12 +32,9 @@ export class CartService {
   ) {}
 
   // -------------------------
-  // Auth helper (fix für isLoggedIn)
+  // Auth helper
   // -------------------------
   private isAuthenticated(): boolean {
-    // ✅ nimm das, was du in deinem AuthService wirklich hast
-    // - getToken() kommt bei dir in AuthInterceptor vor -> existiert sehr wahrscheinlich
-    // - getCurrentUser() hast du bereits im Menü/Cart Code benutzt
     try {
       const token = (this.auth as any)?.getToken?.();
       if (token) return true;
@@ -70,6 +67,7 @@ export class CartService {
 
   clearCart(): void {
     this.saveCartItems([]);
+    this.clearCartMenuId();
   }
 
   // -------------------------
@@ -105,11 +103,12 @@ export class CartService {
   }
 
   // -------------------------
-  // Cart mutations (wie bei dir genutzt)
+  // Cart mutations
   // -------------------------
   increaseQuantity(items: any[], index: number): any[] {
     const arr = [...(items ?? [])];
     if (!arr[index]) return arr;
+
     arr[index].quantity = Number(arr[index].quantity ?? 0) + 1;
     this.saveCartItems(arr);
     return arr;
@@ -130,6 +129,7 @@ export class CartService {
   updateNote(items: any[], index: number, note: string): any[] {
     const arr = [...(items ?? [])];
     if (!arr[index]) return arr;
+
     arr[index].note = String(note ?? '');
     this.saveCartItems(arr);
     return arr;
@@ -138,6 +138,7 @@ export class CartService {
   removeItem(items: any[], index: number): any[] {
     const arr = [...(items ?? [])];
     if (index < 0 || index >= arr.length) return arr;
+
     arr.splice(index, 1);
     this.saveCartItems(arr);
     return arr;
@@ -151,7 +152,7 @@ export class CartService {
   }
 
   // -------------------------
-  // ✅ Cart validieren gegen aktives Menü
+  // Cart validieren gegen aktives Menü
   // - Wenn Menü gewechselt -> Cart leeren
   // - Wenn Gericht nicht mehr im Menü oder available=false -> entfernen
   // -------------------------
@@ -159,7 +160,6 @@ export class CartService {
     clearedBecauseMenuChanged: boolean;
     removedItemsCount: number;
   }> {
-    // wenn nicht eingeloggt -> wir lassen local cart in ruhe
     if (!this.isAuthenticated()) {
       return of({ clearedBecauseMenuChanged: false, removedItemsCount: 0 });
     }
@@ -171,10 +171,7 @@ export class CartService {
         // Kein aktives Menü -> Cart leeren
         if (!plan) {
           const removed = before.length;
-          if (removed) {
-            this.clearCart();
-            this.clearCartMenuId();
-          }
+          if (removed) this.clearCart();
           return { clearedBecauseMenuChanged: true, removedItemsCount: removed };
         }
 
@@ -184,7 +181,7 @@ export class CartService {
         // Menüwechsel -> kompletten Cart leeren (wenn wir schon mal ein Menü gespeichert hatten)
         if (storedMenuId && activeMenuId && storedMenuId !== activeMenuId) {
           const removed = before.length;
-          this.clearCart();
+          this.clearCart();            // löscht auch MenuId
           this.setCartMenuId(activeMenuId);
           return { clearedBecauseMenuChanged: true, removedItemsCount: removed };
         }
@@ -198,7 +195,6 @@ export class CartService {
         const raw = (plan as any)?.menuItems ?? [];
         const menuItems = Array.isArray(raw) ? raw : [];
 
-        // allowed[id] = true/false (available)
         const allowed = new Map<string, boolean>();
         for (const mi of menuItems) {
           const id = String(mi?.id ?? '').trim();
@@ -209,8 +205,8 @@ export class CartService {
         const filtered = (before ?? []).filter(ci => {
           const id = String(ci?.menuItem?.id ?? '').trim();
           if (!id) return false;
-          if (!allowed.has(id)) return false;          // nicht mehr im Menü
-          if (allowed.get(id) === false) return false; // nicht verfügbar
+          if (!allowed.has(id)) return false;           // nicht mehr im Menü
+          if (allowed.get(id) === false) return false;  // nicht verfügbar
           return true;
         });
 
@@ -224,15 +220,13 @@ export class CartService {
   }
 
   // -------------------------
-  // Submit order (wie bei dir)
+  // Submit order
   // -------------------------
   submitOrder(dto: CreateOrderDto): Observable<any> {
     if (environment.useMockData) return of({ ok: true });
 
     return this.http.post(`${this.apiBase}/orders`, dto).pipe(
-      catchError(err => {
-        throw err;
-      }),
+      catchError(err => throwError(() => err)),
     );
   }
 }

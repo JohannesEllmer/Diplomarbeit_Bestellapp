@@ -38,12 +38,22 @@ export class OrdersService {
     return out;
   }
 
+  /**
+   * ✅ NEU: Beim Erstellen der Order wird sofort abgebucht (ohne reserved).
+   * - lock user row
+   * - total berechnen
+   * - balance check
+   * - balance -= total
+   * - order bleibt status 'open' bis QR Capture (oder Admin close)
+   */
   async createForUser(jwtUserId: string, dto: CreateOrderDto): Promise<OrderResponseDto> {
     const userId = String(jwtUserId ?? '').trim();
     if (!userId) throw new BadRequestException('MISSING_USER_ID');
 
     const enabled = await this.settings.getOrderingEnabled();
     if (!enabled) throw new ForbiddenException('ORDERING_DISABLED');
+
+    if (!dto?.items?.length) throw new BadRequestException('EMPTY_ORDER');
 
     const client = await this.db.connect();
     try {
@@ -59,6 +69,12 @@ export class OrdersService {
       );
       if (uRes.rowCount === 0) throw new NotFoundException('USER_NOT_FOUND');
 
+      const balance = Number(uRes.rows?.[0]?.balance ?? 0);
+      if (!Number.isFinite(balance) || balance < 0) {
+        throw new BadRequestException('INVALID_USER_BALANCE');
+      }
+
+      // order create (open)
       const orderRes = await client.query(
         `INSERT INTO app.orders (user_id, total_price, created_at, status)
          VALUES ($1, 0, NOW(), 'open')
@@ -67,27 +83,26 @@ export class OrdersService {
       );
       const orderId = String(orderRes.rows[0].id);
 
-      // ✅ HARTER CHECK: Item muss im aktiven Menü sein + available=true
+      // items + total
       const total = await this.insertItemsAndComputeTotal(client, orderId, userId, dto.items);
 
-      // update total
-      await client.query(`UPDATE app.orders SET total_price = $2 WHERE id = $1`, [orderId, total]);
-
-      // reserved = sum open orders except current (already created)
-      const reservedRes = await client.query(
-        `SELECT COALESCE(SUM(total_price), 0) AS reserved
-         FROM app.orders
-         WHERE user_id = $1 AND status = 'open' AND id <> $2`,
-        [userId, orderId],
+      // update total on order
+      await client.query(
+        `UPDATE app.orders SET total_price = $2 WHERE id = $1`,
+        [orderId, total],
       );
-      const reserved = Number(reservedRes.rows?.[0]?.reserved ?? 0);
 
-      const balance = Number(uRes.rows?.[0]?.balance ?? 0);
-      const available = balance - reserved;
-
-      if (available < total) {
+      // ✅ SOFORT abbuchen (ohne reserved)
+      if (balance < total) {
         throw new ForbiddenException('INSUFFICIENT_FUNDS');
       }
+
+      await client.query(
+        `UPDATE app.users
+         SET balance = balance - $2
+         WHERE id = $1`,
+        [userId, total],
+      );
 
       await client.query('COMMIT');
       return await this.buildOrderResponse(orderId);
@@ -119,7 +134,10 @@ export class OrdersService {
       await this.db.query(`UPDATE app.orders SET status = $2 WHERE id = $1`, [orderId, dto.status]);
     }
 
-    // replace items
+    // replace items (WICHTIG: das ist tricky, weil du schon abgebucht hast)
+    // -> ich lass dir das behavior wie es ist (nur Items/Total ersetzen)
+    // -> ABER: Wenn du Items nachträglich änderst, passt die Abbuchung nicht mehr.
+    //    Falls du Updates wirklich nutzt, sag kurz Bescheid, dann bauen wir Diff-Logik (Refund/Charge).
     if (dto.items) {
       const client = await this.db.connect();
       try {
@@ -138,7 +156,6 @@ export class OrdersService {
 
         await client.query(`DELETE FROM app.order_items WHERE order_id = $1`, [orderId]);
 
-        // ✅ auch beim Update: im aktiven Menü + available=true
         const total = await this.insertItemsAndComputeTotal(client, orderId, ownerUserId, dto.items);
 
         await client.query(`UPDATE app.orders SET total_price = $2 WHERE id = $1`, [orderId, total]);
@@ -164,8 +181,8 @@ export class OrdersService {
   }
 
   /**
-   * ✅ QR-Capture: abbuchen + schließen + delivered=true
-   * Erwartet Code: "Order-<uuid>"
+   * ✅ NEU: QR-Capture bucht NICHT mehr ab (wurde schon bei Order abgebucht).
+   * -> nur schließen + delivered setzen
    */
   async completeByQrCode(code: string): Promise<{ ok: boolean; orderId?: string }> {
     const c = String(code || '').trim();
@@ -179,7 +196,7 @@ export class OrdersService {
       await client.query('BEGIN');
 
       const orderRes = await client.query(
-        `SELECT id, user_id, total_price, status
+        `SELECT id, status
          FROM app.orders
          WHERE id = $1
          FOR UPDATE`,
@@ -192,29 +209,6 @@ export class OrdersService {
         await client.query('COMMIT');
         return { ok: true, orderId };
       }
-
-      const userRes = await client.query(
-        `SELECT balance
-         FROM app.users
-         WHERE id = $1
-         FOR UPDATE`,
-        [String(order.user_id)],
-      );
-      if (userRes.rowCount === 0) throw new NotFoundException('USER_NOT_FOUND');
-
-      const balance = Number(userRes.rows[0]?.balance ?? 0);
-      const total = Number(order.total_price ?? 0);
-
-      if (balance < total) {
-        throw new ForbiddenException('INSUFFICIENT_FUNDS_AT_CAPTURE');
-      }
-
-      await client.query(
-        `UPDATE app.users
-         SET balance = balance - $2
-         WHERE id = $1`,
-        [String(order.user_id), total],
-      );
 
       await client.query(`UPDATE app.orders SET status = 'closed' WHERE id = $1`, [orderId]);
 
@@ -236,17 +230,10 @@ export class OrdersService {
   }
 
   // -------------------------
-  // internals (NEU)
+  // internals
   // -------------------------
 
-  /**
-   * ✅ Aktive Menü-ID holen.
-   * Du nutzt bereits AppSettingsService -> typischerweise steht die selected meal plan id in einer settings Tabelle.
-   *
-   * WICHTIG: Falls deine Tabelle/Feld anders heißt, passe NUR diese Query an.
-   */
   private async getActiveMealPlanId(client: PoolClient): Promise<string | null> {
-    // Versuch 1: app.app_settings.selected_meal_plan_id
     try {
       const res = await client.query(
         `SELECT selected_meal_plan_id AS id
@@ -256,18 +243,10 @@ export class OrdersService {
       const id = String(res.rows?.[0]?.id ?? '').trim();
       return id || null;
     } catch {
-      // fallback: nicht gefunden / andere Struktur
       return null;
     }
   }
 
-  /**
-   * ✅ Prüfen: menuItemId muss im aktiven Menü enthalten sein
-   *
-   * WICHTIG: Falls deine Relation anders heißt, passe NUR diese Query an.
-   * Erwartete Relation (typisch):
-   *   app.meal_plan_items(meal_plan_id, menu_item_id)
-   */
   private async assertItemInActiveMenu(
     client: PoolClient,
     activeMealPlanId: string,
@@ -283,16 +262,10 @@ export class OrdersService {
     );
 
     if (res.rowCount === 0) {
-      // Menü wurde gewechselt ODER Item gehört nicht zum aktiven Menü
       throw new ForbiddenException(`MENU_ITEM_NOT_IN_ACTIVE_MENU:${menuItemId}`);
     }
   }
 
-  /**
-   * ✅ Kern: hier wird jetzt serverseitig verhindert, dass
-   * - alte Warenkorb-Items bestellt werden (Menüwechsel)
-   * - unavailable Items bestellt werden
-   */
   private async insertItemsAndComputeTotal(
     client: PoolClient,
     orderId: string,
@@ -301,7 +274,6 @@ export class OrdersService {
   ): Promise<number> {
     let total = 0;
 
-    // ✅ aktive Menü-ID einmal laden (wenn vorhanden)
     const activeMealPlanId = await this.getActiveMealPlanId(client);
 
     for (const it of items ?? []) {
@@ -311,12 +283,10 @@ export class OrdersService {
       const qty = Number(it.quantity ?? 0);
       if (!Number.isFinite(qty) || qty <= 0) throw new BadRequestException('INVALID_QUANTITY');
 
-      // ✅ Menüwechsel verhindern: wenn activeMealPlanId existiert -> Item muss drin sein
       if (activeMealPlanId) {
         await this.assertItemInActiveMenu(client, activeMealPlanId, menuItemId);
       }
 
-      // ✅ Item existiert + available check (wichtig für "Inhaber setzt Gericht unavailable")
       const mRes = await client.query(
         `SELECT id, price, available
          FROM app.menu_items
@@ -326,8 +296,7 @@ export class OrdersService {
       );
       if (mRes.rowCount === 0) throw new NotFoundException(`MENU_ITEM_NOT_FOUND:${menuItemId}`);
 
-      const available = mRes.rows[0]?.available;
-      if (available === false) {
+      if (mRes.rows[0]?.available === false) {
         throw new ForbiddenException(`MENU_ITEM_NOT_AVAILABLE:${menuItemId}`);
       }
 

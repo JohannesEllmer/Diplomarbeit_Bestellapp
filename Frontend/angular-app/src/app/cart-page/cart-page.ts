@@ -39,16 +39,18 @@ export class CartPageComponent implements OnInit {
   profileLoading = false;
   userId = '';
   balance = 0;
-  reserved = 0;
-  available = 0;
 
   submitting = false;
 
-  // ✅ NEW: Ordering enabled (default true)
+  // ✅ Ordering enabled (default true)
   orderingEnabled = true;
 
   // ✅ optional UI Hint
   infoMsg = '';
+
+  // ✅ Geschäftszeiten
+  private readonly ORDER_START = { h: 6, m: 0 };   // 06:00
+  private readonly ORDER_END   = { h: 11, m: 35 }; // 11:35
 
   constructor(
     private router: Router,
@@ -57,10 +59,8 @@ export class CartPageComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // ✅ 1) Cart zuerst laden
     this.cartItems = this.cartService.getCartItems();
 
-    // ✅ 2) Dann sofort validieren (Menüwechsel/availability)
     this.cartService.validateCartAgainstActiveMenu().subscribe(res => {
       this.cartItems = this.cartService.getCartItems();
 
@@ -76,10 +76,23 @@ export class CartPageComponent implements OnInit {
     this.loadProfile();
   }
 
-  // ✅ NEW: zentrale “Button darf klicken?” Logik
+  private isWithinBusinessHours(date: Date = new Date()): boolean {
+    const weekday = date.getDay(); // 0=So, 6=Sa
+    if (weekday === 0 || weekday === 6) return false;
+
+    const start = new Date(date);
+    start.setHours(this.ORDER_START.h, this.ORDER_START.m, 0, 0);
+
+    const end = new Date(date);
+    end.setHours(this.ORDER_END.h, this.ORDER_END.m, 0, 0);
+
+    return date >= start && date <= end;
+  }
+
   get canOrder(): boolean {
     return (
       this.orderingEnabled &&
+      this.isWithinBusinessHours() &&
       !this.submitting &&
       !this.profileLoading &&
       this.cartItems.length > 0
@@ -93,22 +106,14 @@ export class CartPageComponent implements OnInit {
       next: (p) => {
         this.userId = String(p?.user?.id ?? '');
         this.balance = Number(p?.balance ?? 0);
-        this.reserved = Number(p?.reserved ?? 0);
-        this.available = Number(p?.available ?? (this.balance - this.reserved));
 
-        // ✅ NEW: orderingEnabled aus Profile/Settings lesen (falls vorhanden)
         const oe =
           (p as any)?.orderingEnabled ??
           (p as any)?.settings?.orderingEnabled ??
           (p as any)?.settings?.ordering_enabled ??
           undefined;
 
-        if (typeof oe === 'boolean') {
-          this.orderingEnabled = oe;
-        } else {
-          // fallback: nichts ändern (default true)
-          this.orderingEnabled = true;
-        }
+        this.orderingEnabled = (typeof oe === 'boolean') ? oe : true;
 
         this.profileLoading = false;
 
@@ -119,12 +124,8 @@ export class CartPageComponent implements OnInit {
       error: () => {
         this.userId = '';
         this.balance = 0;
-        this.reserved = 0;
-        this.available = 0;
 
-        // wenn Profil nicht ladbar → bestellbar lieber false
         this.orderingEnabled = false;
-
         this.profileLoading = false;
       }
     });
@@ -196,13 +197,16 @@ export class CartPageComponent implements OnInit {
   onOrder(): void {
     if (this.submitting) return;
 
-    // ✅ NEW: wenn Ordering disabled -> sofort blocken
     if (!this.orderingEnabled) {
       this.timeError = 'Bestellungen sind aktuell deaktiviert.';
       return;
     }
 
-    // ✅ direkt vor Submit nochmals validieren (Menüwechsel/availability)
+    if (!this.isWithinBusinessHours()) {
+      this.timeError = 'Außerhalb der Geschäftszeiten';
+      return;
+    }
+
     this.cartService.validateCartAgainstActiveMenu().subscribe(res => {
       this.cartItems = this.cartService.getCartItems();
 
@@ -230,18 +234,8 @@ export class CartPageComponent implements OnInit {
         return;
       }
 
-      const now = new Date();
-      const cutoff = new Date();
-      cutoff.setHours(13, 20, 0, 0);
-
-      const weekday = now.getDay();
-      if (weekday === 0 || weekday === 6) {
-        this.timeError = 'Bestellungen sind nur von Montag bis Freitag möglich.';
-        return;
-      }
-
-      if (now > cutoff) {
-        this.timeError = 'Bestellungen können nur bis 11:20 Uhr am selben Tag aufgegeben werden.';
+      if (!this.isWithinBusinessHours()) {
+        this.timeError = 'Außerhalb der Geschäftszeiten';
         return;
       }
 
@@ -252,8 +246,10 @@ export class CartPageComponent implements OnInit {
       }
 
       const totalPrice = this.getTotal();
-      if (totalPrice > this.available) {
-        this.timeError = 'Nicht genug verfügbares Guthaben.';
+
+      // ✅ ohne reserved/available: nur gegen balance prüfen
+      if (totalPrice > this.balance) {
+        this.timeError = 'Nicht genug Guthaben.';
         return;
       }
 
