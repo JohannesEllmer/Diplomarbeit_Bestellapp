@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, map, catchError } from 'rxjs';
-import { environment } from '../env';
+import { environment } from '../../env';
 
 export type StatOrderItem = {
   quantity: number;

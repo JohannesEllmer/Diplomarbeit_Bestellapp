@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { environment } from '../env';
+import { environment } from '../../env';
 
 export type OrderingState = { orderingEnabled: boolean };
 export type SetOrderingResponse = { ok: boolean; orderingEnabled: boolean };

@@ -1,72 +1,61 @@
 import {
+  BadRequestException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
-  ForbiddenException,
-  BadRequestException,
 } from '@nestjs/common';
-import { Pool, PoolClient } from 'pg';
+import type { Pool, PoolClient } from 'pg';
 import { PG_POOL } from '../db';
+import { AppSettingsService } from '../app-settings/app-settings.service';
+import { OrdersRepo } from './orders.repo';
 
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { CreateOrderItemDto } from './dto/create-order-item.dto';
+import { OrderResponseDto, OrderItemResponseDto } from './dto/order-response.dto';
 import { UserRefDto } from './dto/user-ref.dto';
-import { OrderItemResponseDto, OrderResponseDto } from './dto/order-response.dto';
-import { AppSettingsService } from '../app-settings/app-settings.service';
 
 @Injectable()
 export class OrdersService {
   constructor(
     @Inject(PG_POOL) private readonly db: Pool,
     private readonly settings: AppSettingsService,
+    private readonly repo: OrdersRepo,
   ) {}
 
-  async getMyOrders(userId: string): Promise<OrderResponseDto[]> {
-    const ids = await this.db.query(
-      `SELECT id
-       FROM app.orders
-       WHERE user_id = $1
-       ORDER BY created_at DESC`,
-      [userId],
-    );
-
+  async getMyOrders(userId: string) {
+    const ids = await this.repo.listIdsByUser(this.db, String(userId));
     const out: OrderResponseDto[] = [];
-    for (const r of ids.rows ?? []) {
-      out.push(await this.buildOrderResponse(String(r.id)));
-    }
+    for (const id of ids) out.push(await this.buildOrderResponse(id));
     return out;
   }
 
-  /**
-   * ✅ NEU: Beim Erstellen der Order wird sofort abgebucht (ohne reserved).
-   * - lock user row
-   * - total berechnen
-   * - balance check
-   * - balance -= total
-   * - order bleibt status 'open' bis QR Capture (oder Admin close)
-   */
-  async createForUser(jwtUserId: string, dto: CreateOrderDto): Promise<OrderResponseDto> {
+  async findAll() {
+    const ids = await this.repo.listIdsAll(this.db);
+    const out: OrderResponseDto[] = [];
+    for (const id of ids) out.push(await this.buildOrderResponse(id));
+    return out;
+  }
+
+  async findOne(id: string) {
+    return this.buildOrderResponse(String(id));
+  }
+
+  async createForUser(jwtUserId: string, dto: CreateOrderDto) {
     const userId = String(jwtUserId ?? '').trim();
     if (!userId) throw new BadRequestException('MISSING_USER_ID');
 
-    const enabled = await this.settings.getOrderingEnabled();
-    if (!enabled) throw new ForbiddenException('ORDERING_DISABLED');
-
+    if (!(await this.settings.getOrderingEnabled())) {
+      throw new ForbiddenException('ORDERING_DISABLED');
+    }
     if (!dto?.items?.length) throw new BadRequestException('EMPTY_ORDER');
 
     const client = await this.db.connect();
     try {
       await client.query('BEGIN');
 
-      // user exists + lock
-      const uRes = await client.query(
-        `SELECT id, balance
-         FROM app.users
-         WHERE id = $1
-         FOR UPDATE`,
-        [userId],
-      );
+      const uRes = await this.repo.lockUserBalance(client, userId);
       if (uRes.rowCount === 0) throw new NotFoundException('USER_NOT_FOUND');
 
       const balance = Number(uRes.rows?.[0]?.balance ?? 0);
@@ -74,38 +63,22 @@ export class OrdersService {
         throw new BadRequestException('INVALID_USER_BALANCE');
       }
 
-      // order create (open)
-      const orderRes = await client.query(
-        `INSERT INTO app.orders (user_id, total_price, created_at, status)
-         VALUES ($1, 0, NOW(), 'open')
-         RETURNING id`,
-        [userId],
-      );
-      const orderId = String(orderRes.rows[0].id);
+      const orderId = await this.repo.insertOpenOrder(client, userId);
 
-      // items + total
-      const total = await this.insertItemsAndComputeTotal(client, orderId, userId, dto.items);
-
-      // update total on order
-      await client.query(
-        `UPDATE app.orders SET total_price = $2 WHERE id = $1`,
-        [orderId, total],
+      const total = await this.insertItemsAndComputeTotal(
+        client,
+        orderId,
+        userId,
+        dto.items,
       );
 
-      // ✅ SOFORT abbuchen (ohne reserved)
-      if (balance < total) {
-        throw new ForbiddenException('INSUFFICIENT_FUNDS');
-      }
+      await this.repo.updateOrderTotal(client, orderId, total);
 
-      await client.query(
-        `UPDATE app.users
-         SET balance = balance - $2
-         WHERE id = $1`,
-        [userId, total],
-      );
+      if (balance < total) throw new ForbiddenException('INSUFFICIENT_FUNDS');
+      await this.repo.debitUser(client, userId, total);
 
       await client.query('COMMIT');
-      return await this.buildOrderResponse(orderId);
+      return this.buildOrderResponse(orderId);
     } catch (e) {
       await client.query('ROLLBACK');
       throw e;
@@ -114,51 +87,37 @@ export class OrdersService {
     }
   }
 
-  async findAll(): Promise<OrderResponseDto[]> {
-    const ids = await this.db.query(`SELECT id FROM app.orders ORDER BY created_at DESC`);
-    const out: OrderResponseDto[] = [];
-    for (const r of ids.rows ?? []) out.push(await this.buildOrderResponse(String(r.id)));
-    return out;
-  }
-
-  async findOne(id: string): Promise<OrderResponseDto> {
-    return this.buildOrderResponse(String(id));
-  }
-
-  async update(id: string, dto: UpdateOrderDto): Promise<OrderResponseDto> {
+  async update(id: string, dto: UpdateOrderDto) {
     const orderId = String(id ?? '').trim();
     if (!orderId) throw new BadRequestException('MISSING_ORDER_ID');
 
-    // status update
     if (dto.status) {
-      await this.db.query(`UPDATE app.orders SET status = $2 WHERE id = $1`, [orderId, dto.status]);
+      await this.db.query(`UPDATE app.orders SET status=$2 WHERE id=$1`, [orderId, dto.status]);
     }
 
-    // replace items (WICHTIG: das ist tricky, weil du schon abgebucht hast)
-    // -> ich lass dir das behavior wie es ist (nur Items/Total ersetzen)
-    // -> ABER: Wenn du Items nachträglich änderst, passt die Abbuchung nicht mehr.
-    //    Falls du Updates wirklich nutzt, sag kurz Bescheid, dann bauen wir Diff-Logik (Refund/Charge).
     if (dto.items) {
       const client = await this.db.connect();
       try {
         await client.query('BEGIN');
 
-        const orderRes = await client.query(
-          `SELECT id, user_id
-           FROM app.orders
-           WHERE id = $1
-           LIMIT 1`,
+        const ord = await client.query(
+          `SELECT id,user_id FROM app.orders WHERE id=$1 LIMIT 1`,
           [orderId],
         );
-        if (orderRes.rowCount === 0) throw new NotFoundException('ORDER_NOT_FOUND');
+        if (ord.rowCount === 0) throw new NotFoundException('ORDER_NOT_FOUND');
 
-        const ownerUserId = String(orderRes.rows[0].user_id);
+        const ownerUserId = String(ord.rows[0].user_id);
 
-        await client.query(`DELETE FROM app.order_items WHERE order_id = $1`, [orderId]);
+        await this.repo.deleteOrderItems(client, orderId);
 
-        const total = await this.insertItemsAndComputeTotal(client, orderId, ownerUserId, dto.items);
+        const total = await this.insertItemsAndComputeTotal(
+          client,
+          orderId,
+          ownerUserId,
+          dto.items,
+        );
 
-        await client.query(`UPDATE app.orders SET total_price = $2 WHERE id = $1`, [orderId, total]);
+        await this.repo.updateOrderTotal(client, orderId, total);
 
         await client.query('COMMIT');
       } catch (e) {
@@ -172,52 +131,34 @@ export class OrdersService {
     return this.buildOrderResponse(orderId);
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string) {
     const orderId = String(id ?? '').trim();
     if (!orderId) return;
-
-    await this.db.query(`DELETE FROM app.order_items WHERE order_id = $1`, [orderId]);
-    await this.db.query(`DELETE FROM app.orders WHERE id = $1`, [orderId]);
+    await this.repo.deleteOrderItems(this.db, orderId);
+    await this.repo.deleteOrder(this.db, orderId);
   }
 
-  /**
-   * ✅ NEU: QR-Capture bucht NICHT mehr ab (wurde schon bei Order abgebucht).
-   * -> nur schließen + delivered setzen
-   */
-  async completeByQrCode(code: string): Promise<{ ok: boolean; orderId?: string }> {
-    const c = String(code || '').trim();
-    const m = /^Order-([0-9a-fA-F-]{36})$/.exec(c);
+  async completeByQrCode(code: string) {
+    const m = /^Order-([0-9a-fA-F-]{36})$/.exec(String(code || '').trim());
     if (!m) return { ok: false };
 
     const orderId = String(m[1]);
-
     const client = await this.db.connect();
+
     try {
       await client.query('BEGIN');
 
-      const orderRes = await client.query(
-        `SELECT id, status
-         FROM app.orders
-         WHERE id = $1
-         FOR UPDATE`,
-        [orderId],
-      );
-      if (orderRes.rowCount === 0) throw new NotFoundException('ORDER_NOT_FOUND');
+      const oRes = await this.repo.lockOrder(client, orderId);
+      if (oRes.rowCount === 0) throw new NotFoundException('ORDER_NOT_FOUND');
 
-      const order = orderRes.rows[0];
-      if (String(order.status) === 'closed') {
+      const status = String(oRes.rows[0]?.status ?? '');
+      if (status === 'closed') {
         await client.query('COMMIT');
         return { ok: true, orderId };
       }
 
-      await client.query(`UPDATE app.orders SET status = 'closed' WHERE id = $1`, [orderId]);
-
-      await client.query(
-        `UPDATE app.order_items
-         SET delivered = true
-         WHERE order_id = $1`,
-        [orderId],
-      );
+      await this.repo.closeOrder(client, orderId);
+      await this.repo.markDelivered(client, orderId);
 
       await client.query('COMMIT');
       return { ok: true, orderId };
@@ -229,52 +170,15 @@ export class OrdersService {
     }
   }
 
-  // -------------------------
-  // internals
-  // -------------------------
-
-  private async getActiveMealPlanId(client: PoolClient): Promise<string | null> {
-    try {
-      const res = await client.query(
-        `SELECT selected_meal_plan_id AS id
-         FROM app.app_settings
-         LIMIT 1`,
-      );
-      const id = String(res.rows?.[0]?.id ?? '').trim();
-      return id || null;
-    } catch {
-      return null;
-    }
-  }
-
-  private async assertItemInActiveMenu(
-    client: PoolClient,
-    activeMealPlanId: string,
-    menuItemId: string,
-  ): Promise<void> {
-    const res = await client.query(
-      `SELECT 1
-       FROM app.meal_plan_items mpi
-       WHERE mpi.meal_plan_id = $1
-         AND mpi.menu_item_id = $2
-       LIMIT 1`,
-      [activeMealPlanId, menuItemId],
-    );
-
-    if (res.rowCount === 0) {
-      throw new ForbiddenException(`MENU_ITEM_NOT_IN_ACTIVE_MENU:${menuItemId}`);
-    }
-  }
-
+//internals
   private async insertItemsAndComputeTotal(
     client: PoolClient,
     orderId: string,
     userId: string,
     items: CreateOrderItemDto[],
-  ): Promise<number> {
+  ) {
     let total = 0;
-
-    const activeMealPlanId = await this.getActiveMealPlanId(client);
+    const activeMealPlanId = await this.repo.getActiveMealPlanId(client);
 
     for (const it of items ?? []) {
       const menuItemId = String(it.menuItemId ?? '').trim();
@@ -284,34 +188,29 @@ export class OrdersService {
       if (!Number.isFinite(qty) || qty <= 0) throw new BadRequestException('INVALID_QUANTITY');
 
       if (activeMealPlanId) {
-        await this.assertItemInActiveMenu(client, activeMealPlanId, menuItemId);
+        const ok = await this.repo.assertItemInActiveMenu(client, activeMealPlanId, menuItemId);
+        if (!ok) throw new ForbiddenException(`MENU_ITEM_NOT_IN_ACTIVE_MENU:${menuItemId}`);
       }
 
-      const mRes = await client.query(
-        `SELECT id, price, available
-         FROM app.menu_items
-         WHERE id = $1
-         LIMIT 1`,
-        [menuItemId],
-      );
+      const mRes = await this.repo.getMenuItemForOrder(client, menuItemId);
       if (mRes.rowCount === 0) throw new NotFoundException(`MENU_ITEM_NOT_FOUND:${menuItemId}`);
-
       if (mRes.rows[0]?.available === false) {
         throw new ForbiddenException(`MENU_ITEM_NOT_AVAILABLE:${menuItemId}`);
       }
 
-      const price = Number(mRes.rows[0].price ?? 0);
+      const price = Number(mRes.rows[0]?.price ?? 0);
       if (!Number.isFinite(price) || price < 0) throw new BadRequestException('INVALID_PRICE');
 
       total += price * qty;
 
-      const deliveryTime = it.deliveryTime ? new Date(it.deliveryTime) : null;
-
-      await client.query(
-        `INSERT INTO app.order_items
-          (order_id, menu_item_id, user_id, note, quantity, delivery_time)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [orderId, menuItemId, userId, it.note ?? null, qty, deliveryTime],
+      await this.repo.insertOrderItem(
+        client,
+        orderId,
+        userId,
+        menuItemId,
+        qty,
+        it.note ?? null,
+        it.deliveryTime ? new Date(it.deliveryTime) : null,
       );
     }
 
@@ -319,26 +218,12 @@ export class OrdersService {
   }
 
   private async buildOrderResponse(orderId: string): Promise<OrderResponseDto> {
-    const orderRes = await this.db.query(
-      `SELECT o.id, o.user_id, o.total_price, o.created_at, o.status, o.qr_code_url,
-              u.id as u_id, u.name as u_name, u.email as u_email, u.class as u_class,
-              u.balance as u_balance, u.blocked as u_blocked
-       FROM app.orders o
-       JOIN app.users u ON u.id = o.user_id
-       WHERE o.id = $1
-       LIMIT 1`,
-      [orderId],
-    );
+    const orderRes = await this.repo.loadOrderHeader(this.db, orderId);
     if (orderRes.rowCount === 0) throw new NotFoundException('ORDER_NOT_FOUND');
 
     const o = orderRes.rows[0];
 
-    const countRes = await this.db.query(
-      `SELECT COUNT(*)::int AS count
-       FROM app.orders
-       WHERE user_id = $1`,
-      [String(o.user_id)],
-    );
+    const countRes = await this.repo.loadOrderCount(this.db, String(o.user_id));
     const orderCount = Number(countRes.rows?.[0]?.count ?? 0);
 
     const userDto: UserRefDto = {
@@ -351,38 +236,32 @@ export class OrdersService {
       blocked: !!o.u_blocked,
     };
 
-    const itemsRes = await this.db.query(
-      `SELECT oi.quantity, oi.note, oi.delivered, oi.delivery_time,
-              m.id as m_id, m.name as m_name, m.description as m_description,
-              m.price as m_price, m.category as m_category, m.available as m_available,
-              m.vegetarian as m_vegetarian, m.allergens as m_allergens,
-              m.drink as m_drink, m.dessert as m_dessert
-       FROM app.order_items oi
-       JOIN app.menu_items m ON m.id = oi.menu_item_id
-       WHERE oi.order_id = $1
-       ORDER BY oi.id ASC`,
-      [orderId],
-    );
+    const itemsRes = await this.repo.loadOrderItems(this.db, orderId);
+    const items: OrderItemResponseDto[] = (itemsRes.rows ?? []).map((r: any) => {
+    const dessert = r?.m_dessert ?? r?.dessert ?? undefined;
+    const drink = r?.m_drink ?? r?.drink ?? undefined;
 
-    const items: OrderItemResponseDto[] = (itemsRes.rows ?? []).map((r: any) => ({
+    return {
       menuItem: {
-        id: String(r.m_id),
-        name: r.m_name ?? '',
-        description: r.m_description ?? '',
-        price: Number(r.m_price ?? 0),
-        category: r.m_category ?? '',
-        available: !!r.m_available,
-        vegetarian: !!r.m_vegetarian,
-        allergens: Array.isArray(r.m_allergens) ? r.m_allergens : [],
-        drink: r.m_drink ?? undefined,
-        dessert: r.m_dessert ?? undefined,
+        id: String(r?.m_id),
+        name: r?.m_name ?? '',
+        description: r?.m_description ?? '',
+        price: Number(r?.m_price ?? 0),
+        category: r?.m_category ?? '',
+        available: !!r?.m_available,
+        vegetarian: !!r?.m_vegetarian,
+        allergens: Array.isArray(r?.m_allergens) ? r.m_allergens : [],
+        drink,
+        dessert,
       },
       user: userDto,
-      note: r.note ?? '',
-      quantity: Number(r.quantity ?? 0),
-      delivered: !!r.delivered,
-      deliveryTime: r.delivery_time ? new Date(r.delivery_time).toISOString() : undefined,
-    }));
+      note: r?.note ?? '',
+      quantity: Number(r?.quantity ?? 0),
+      delivered: !!r?.delivered,
+      deliveryTime: r?.delivery_time ? new Date(r.delivery_time).toISOString() : undefined,
+    };
+  });
+
 
     return {
       id: String(o.id),

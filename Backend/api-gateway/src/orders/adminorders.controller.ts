@@ -1,40 +1,38 @@
-import { Body, Controller, Delete, Get, Param, Patch, UseGuards, Req, ForbiddenException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth.guards';
-import { AdminOrdersService } from './adminorders-service';
+import { RolesGuard } from '../roles.guard';
+import { Roles } from '../roles.decorator';
+import { OrdersService } from './orders.service';
 import { UpdateOrderDto } from './dto/update-order.dto';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN', 'INHABER')
 @Controller('admin/orders')
 export class AdminOrdersController {
-  constructor(private readonly svc: AdminOrdersService) {}
+  constructor(private readonly orders: OrdersService) {}
 
   @Get()
   findAll() {
-    return this.svc.findAll();
+    return this.orders.findAll();
   }
 
-  // ✅ WICHTIG: complete VOR :id
   @Patch('complete')
-  completeByQr(@Req() req: any, @Body() body: { code?: string }) {
-    const role = req.user?.role as string | undefined;
-    if (!role || !['ADMIN', 'INHABER'].includes(role)) {
-      throw new ForbiddenException('FORBIDDEN');
-    }
-    return this.svc.completeOrderByQr(body.code ?? '');
+  completeByQr(@Body() body: { code?: string }) {
+    return this.orders.completeByQrCode(body.code ?? '');
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.svc.findOne(id);
+    return this.orders.findOne(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateOrderDto) {
-    return this.svc.update(id, dto);
+    return this.orders.update(id, dto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.svc.remove(id);
+    return this.orders.remove(id);
   }
 }

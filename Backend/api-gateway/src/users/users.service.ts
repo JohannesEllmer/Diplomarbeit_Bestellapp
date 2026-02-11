@@ -1,81 +1,51 @@
-import { Inject, Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { Pool } from 'pg';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import type { Pool } from 'pg';
 import { PG_POOL } from '../db';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UsersRepo } from './users.repo';
 import { isClassExpired } from './class-expirey';
-
-type DbUserPolicyRow = {
-  id: string;
-  blocked: boolean;
-  class: string | null;
-  class_updated_at: any;
-};
 
 @Injectable()
 export class UsersService {
-  constructor(@Inject(PG_POOL) private readonly db: Pool) {}
+  constructor(
+    @Inject(PG_POOL) private readonly db: Pool,
+    private readonly repo: UsersRepo,
+  ) {}
 
-  // --------------------------------------------
-  // ✅ 400 Tage Policy erzwingen
-  // --------------------------------------------
-  async enforceClassPolicy(userId: string): Promise<{ id: string; blocked: boolean; class: string | null } | null> {
+  // 400 Tage Policy erzwingen
+  async enforceClassPolicy(userId: string) {
     const id = String(userId ?? '').trim();
     if (!id) return null;
 
-    const res = await this.db.query<DbUserPolicyRow>(
-      `SELECT id, blocked, "class", class_updated_at
-       FROM app.users
-       WHERE id = $1
-       LIMIT 1`,
-      [id],
-    );
-    if (res.rowCount === 0) return null;
+    const u = await this.repo.getPolicyRow(this.db, id);
+    if (!u) return null;
 
-    const u = res.rows[0];
-
-    // wenn schon blocked, lassen wir es so (blocked bleibt blocked)
-    // aber wir können trotzdem class löschen, falls expired
-    const expired = isClassExpired(u.class_updated_at);
-
-    if (!expired) {
+    if (!isClassExpired(u.class_updated_at)) {
       return { id: String(u.id), blocked: !!u.blocked, class: u.class ?? null };
     }
 
-    // abgelaufen: class entfernen + blocken
-    const upd = await this.db.query<DbUserPolicyRow>(
-      `UPDATE app.users
-       SET "class" = NULL,
-           class_updated_at = NULL,
-           blocked = true
-       WHERE id = $1
-       RETURNING id, blocked, "class", class_updated_at`,
-      [id],
-    );
+    const upd = await this.repo.expireClassAndBlock(this.db, id);
+    if (!upd) return null;
 
-    const uu = upd.rows[0];
-    return { id: String(uu.id), blocked: !!uu.blocked, class: uu.class ?? null };
+    return { id: String(upd.id), blocked: !!upd.blocked, class: upd.class ?? null };
   }
 
   async updateMyClass(userId: string, newClass: string) {
     const id = String(userId ?? '').trim();
     const cls = String(newClass ?? '').trim();
-
     if (!id) throw new NotFoundException('USER_NOT_FOUND');
     if (!cls) throw new ForbiddenException('CLASS_REQUIRED');
 
-    const res = await this.db.query(
-      `UPDATE app.users
-       SET "class" = $2,
-           class_updated_at = NOW(),
-           blocked = false
-       WHERE id = $1
-       RETURNING id, name, email, "class", class_updated_at, balance, blocked, role`,
-      [id, cls],
-    );
-
+    const res = await this.repo.updateMyClass(this.db, id, cls);
     if (res.rowCount === 0) throw new NotFoundException('USER_NOT_FOUND');
-    const u = res.rows[0];
 
+    const u = res.rows[0];
     return {
       ok: true,
       user: {
@@ -89,94 +59,53 @@ export class UsersService {
     };
   }
 
-  // ---------------------------
-  // ✅ QR-Request: Add
-  // ---------------------------
+  // QR-Request: Add
   async createBalanceAddRequest(userId: string, delta: number) {
-    // policy vor jeder action erzwingen
     await this.enforceClassPolicy(userId);
 
     const d = Number(delta);
     if (!isFinite(d) || d <= 0) throw new ForbiddenException('DELTA_MUST_BE_POSITIVE');
 
-    const uRes = await this.db.query(`SELECT id, blocked FROM app.users WHERE id = $1 LIMIT 1`, [userId]);
-    if (uRes.rowCount === 0) throw new NotFoundException('USER_NOT_FOUND');
-    if (uRes.rows[0]?.blocked) throw new ForbiddenException('USER_BLOCKED');
+    const u = await this.repo.getUserForBalanceRequests(this.db, userId);
+    if (!u) throw new NotFoundException('USER_NOT_FOUND');
+    if (u.blocked) throw new ForbiddenException('USER_BLOCKED');
 
-    const res = await this.db.query(
-      `INSERT INTO app.balance_change_requests (user_id, kind, delta)
-       VALUES ($1, 'add', $2)
-       RETURNING id`,
-      [userId, d],
-    );
-
-    const id = String(res.rows[0].id);
+    const id = await this.repo.insertBalanceAddRequest(this.db, userId, d);
     const code = `BalanceReq-${id}`;
-    const qrCodeUrl = this.generateQrCode(code);
-
-    return { id, code, qrCodeUrl };
+    return { id, code, qrCodeUrl: this.generateQrCode(code) };
   }
 
-  // ---------------------------
-  // ✅ QR-Request: Flush
-  // ---------------------------
+  // QR-Request: Flush
   async createBalanceFlushRequest(userId: string) {
     await this.enforceClassPolicy(userId);
 
-    const uRes = await this.db.query(
-      `SELECT id, balance, blocked FROM app.users WHERE id = $1 LIMIT 1`,
-      [userId],
-    );
-    if (uRes.rowCount === 0) throw new NotFoundException('USER_NOT_FOUND');
-    if (uRes.rows[0]?.blocked) throw new ForbiddenException('USER_BLOCKED');
+    const u = await this.repo.getUserForBalanceRequests(this.db, userId);
+    if (!u) throw new NotFoundException('USER_NOT_FOUND');
+    if (u.blocked) throw new ForbiddenException('USER_BLOCKED');
 
-    const balance = Number(uRes.rows[0]?.balance ?? 0);
+    const balance = Number(u.balance ?? 0);
     if (balance <= 0) throw new ForbiddenException('BALANCE_ALREADY_ZERO');
 
-    const reservedRes = await this.db.query(
-      `SELECT COALESCE(SUM(total_price), 0) AS reserved
-       FROM app.orders
-       WHERE user_id = $1 AND status = 'open'`,
-      [userId],
-    );
-    const reserved = Number(reservedRes.rows?.[0]?.reserved ?? 0);
+    const reserved = await this.repo.sumOpenOrdersTotal(this.db, userId);
     if (reserved > 0) throw new ForbiddenException('CANNOT_FLUSH_WITH_OPEN_ORDERS');
 
-    const res = await this.db.query(
-      `INSERT INTO app.balance_change_requests (user_id, kind, delta)
-       VALUES ($1, 'flush', NULL)
-       RETURNING id`,
-      [userId],
-    );
-
-    const id = String(res.rows[0].id);
+    const id = await this.repo.insertBalanceFlushRequest(this.db, userId);
     const code = `BalanceReq-${id}`;
-    const qrCodeUrl = this.generateQrCode(code);
-
-    return { id, code, qrCodeUrl };
+    return { id, code, qrCodeUrl: this.generateQrCode(code) };
   }
 
-  // ---------------------------
-  // ✅ Admin scannt QR → Guthaben ändern + loggen
-  // ---------------------------
+  // Admin scannt QR → Guthaben ändern + loggen
   async confirmBalanceRequestByQr(code: string, actorId: string) {
-    const c = (code || '').trim();
-    const m = /^BalanceReq-([0-9a-fA-F-]{36})$/.exec(c);
+    const m = /^BalanceReq-([0-9a-fA-F-]{36})$/.exec(String(code || '').trim());
     if (!m) return { ok: false, error: 'INVALID_QR' };
 
     const reqId = m[1];
-
     const client = await this.db.connect();
+
     try {
       await client.query('BEGIN');
 
-      const rRes = await client.query(
-        `SELECT id, user_id, kind, delta, is_used
-         FROM app.balance_change_requests
-         WHERE id = $1
-         FOR UPDATE`,
-        [reqId],
-      );
+      const rRes = await this.repo.lockBalanceRequest(client, reqId);
       if (rRes.rowCount === 0) throw new NotFoundException('REQUEST_NOT_FOUND');
 
       const reqRow = rRes.rows[0];
@@ -187,15 +116,7 @@ export class UsersService {
 
       const userId = String(reqRow.user_id);
 
-      // policy auch hier erzwingen (optional)
-      // (Admin kann trotzdem bestätigen, aber blocked soll verhindern)
-      const uRes = await client.query(
-        `SELECT id, balance, blocked
-         FROM app.users
-         WHERE id = $1
-         FOR UPDATE`,
-        [userId],
-      );
+      const uRes = await this.repo.lockUserForBalanceUpdate(client, userId);
       if (uRes.rowCount === 0) throw new NotFoundException('USER_NOT_FOUND');
       if (uRes.rows[0]?.blocked) throw new ForbiddenException('USER_BLOCKED');
 
@@ -211,33 +132,26 @@ export class UsersService {
 
         newBalance = oldBalance + deltaToApply;
         reason = 'BALANCE_ADD_CONFIRMED';
-
-        await client.query(
-          `UPDATE app.users SET balance = $2 WHERE id = $1`,
-          [userId, newBalance],
-        );
+        await this.repo.setUserBalance(client, userId, newBalance);
       } else if (reqRow.kind === 'flush') {
         newBalance = 0;
         deltaToApply = oldBalance > 0 ? -oldBalance : 0;
         reason = 'BALANCE_FLUSH_CONFIRMED';
-
-        await client.query(`UPDATE app.users SET balance = 0 WHERE id = $1`, [userId]);
+        await this.repo.setUserBalance(client, userId, 0);
       } else {
         throw new ForbiddenException('INVALID_KIND');
       }
 
-      await client.query(
-        `INSERT INTO app.balance_logs (user_id, delta, balance_after, reason, ref_type, ref_id, actor)
-         VALUES ($1, $2, $3, $4, 'balance_request', $5, $6)`,
-        [userId, deltaToApply, newBalance, reason, String(reqId), `admin:${actorId}`],
-      );
+      await this.repo.insertBalanceLog(client, {
+        userId,
+        delta: deltaToApply,
+        balanceAfter: newBalance,
+        reason,
+        refId: String(reqId),
+        actor: `admin:${actorId}`,
+      });
 
-      await client.query(
-        `UPDATE app.balance_change_requests
-         SET is_used = true, used_at = now(), used_by = $2
-         WHERE id = $1`,
-        [reqId, String(actorId)],
-      );
+      await this.repo.markRequestUsed(client, reqId, String(actorId));
 
       await client.query('COMMIT');
       return { ok: true, userId, delta: deltaToApply, balanceAfter: newBalance };
@@ -249,71 +163,51 @@ export class UsersService {
     }
   }
 
-  // ---------------------------
-  // ✅ Account löschen: nur wenn balance=0 UND reserved=0
-  // ---------------------------
-  async deleteAccountIfAllowed(userId: string) {
-    await this.enforceClassPolicy(userId);
+  // Gemeinsame Delete-Checks (für me und admin)
+  private async assertDeletable(userId: string) {
+    const u = await this.repo.getUserForBalanceRequests(this.db, userId);
+    if (!u) throw new NotFoundException('USER_NOT_FOUND');
 
-    const uRes = await this.db.query(
-      `SELECT id, balance FROM app.users WHERE id = $1 LIMIT 1`,
-      [userId],
-    );
-    if (uRes.rowCount === 0) throw new NotFoundException('USER_NOT_FOUND');
-
-    const balance = Number(uRes.rows[0]?.balance ?? 0);
+    const balance = Number(u.balance ?? 0);
     if (balance !== 0) throw new ForbiddenException('BALANCE_NOT_ZERO');
 
-    const reservedRes = await this.db.query(
-      `SELECT COALESCE(SUM(total_price), 0) AS reserved
-       FROM app.orders
-       WHERE user_id = $1 AND status = 'open'`,
-      [userId],
-    );
-    const reserved = Number(reservedRes.rows?.[0]?.reserved ?? 0);
+    const reserved = await this.repo.sumOpenOrdersTotal(this.db, userId);
     if (reserved > 0) throw new ForbiddenException('HAS_OPEN_ORDERS');
+  }
 
-    await this.db.query(`DELETE FROM app.balance_change_requests WHERE user_id = $1`, [userId]);
-    await this.db.query(`DELETE FROM app.balance_logs WHERE user_id = $1`, [userId]);
-    await this.db.query(`DELETE FROM app.order_items WHERE user_id = $1`, [userId]);
-    await this.db.query(`DELETE FROM app.orders WHERE user_id = $1`, [userId]);
-    await this.db.query(`DELETE FROM app.users WHERE id = $1`, [userId]);
-
+  // Account löschen: nur wenn balance=0 UND reserved=0
+  async deleteAccountIfAllowed(userId: string) {
+    await this.enforceClassPolicy(userId);
+    await this.assertDeletable(userId);
+    await this.repo.deleteByUserId(this.db, userId);
     return { ok: true };
   }
 
-  // ---------------------------
-  // Utility: QR URL
-  // ---------------------------
-  private generateQrCode(data: string): string {
-    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data)}`;
+  // Admin: User löschen (nutzt gleiche Checks)
+  async remove(id: string) {
+    await this.assertDeletable(id);
+    await this.repo.deleteByUserId(this.db, id);
   }
 
-  // ---------------------------
-  // ✅ updateBalanceDelta (dein Code)
-  // ---------------------------
+  // updateBalanceDelta (Admin/Debug)
   async updateBalanceDelta(id: string, delta: number) {
+    const userId = String(id ?? '').trim();
     const d = Number(delta);
+    if (!userId) throw new BadRequestException('USER_NOT_FOUND');
+    if (!Number.isFinite(d)) throw new BadRequestException('INVALID_DELTA');
+
     const client = await this.db.connect();
     try {
       await client.query('BEGIN');
 
-      const uRes = await client.query(
-        `SELECT id, balance FROM app.users WHERE id = $1 FOR UPDATE`,
-        [id],
-      );
+      const uRes = await this.repo.lockUserBalanceOnly(client, userId);
       if (uRes.rowCount === 0) throw new NotFoundException('USER_NOT_FOUND');
 
       const oldBal = Number(uRes.rows[0]?.balance ?? 0);
       const newBal = oldBal + d;
 
-      await client.query(`UPDATE app.users SET balance = $2 WHERE id = $1`, [id, newBal]);
-
-      await client.query(
-        `INSERT INTO app.balance_logs (user_id, delta, balance_after, reason, actor)
-         VALUES ($1, $2, $3, 'BALANCE_DELTA_DIRECT', 'system')`,
-        [id, d, newBal],
-      );
+      await client.query(`UPDATE app.users SET balance = $2 WHERE id = $1`, [userId, newBal]);
+      await this.repo.insertDirectBalanceLog(client, { userId, delta: d, balanceAfter: newBal });
 
       await client.query('COMMIT');
       return { ok: true, balance: newBal };
@@ -325,25 +219,14 @@ export class UsersService {
     }
   }
 
-  // ----------------------------------------------------
   // Header
-  // ----------------------------------------------------
   async getMyHeader(jwtUser: any) {
     const userId = String(jwtUser?.id ?? jwtUser?.sub);
-
-    // ✅ Policy erzwingen bevor Header zurückgegeben wird
     await this.enforceClassPolicy(userId);
 
-    const res = await this.db.query(
-      `SELECT id, name, email, "class", balance, blocked, role
-       FROM app.users
-       WHERE id = $1
-       LIMIT 1`,
-      [userId],
-    );
-    if (res.rowCount === 0) throw new NotFoundException('USER_NOT_FOUND');
+    const u = await this.repo.getUserBasic(this.db, userId);
+    if (!u) throw new NotFoundException('USER_NOT_FOUND');
 
-    const u = res.rows[0];
     return {
       id: String(u.id),
       name: u.name,
@@ -355,85 +238,46 @@ export class UsersService {
     };
   }
 
-  // ---------------------------
-  // ✅ User-Page: Profil + Guthaben + reserved + available
-  // ---------------------------
+  // Profil + Guthaben + reserved + available
   async getMyProfile(userId: string) {
     await this.enforceClassPolicy(userId);
 
-    const uRes = await this.db.query(
-      `SELECT id, name, email, "class", balance, blocked
-       FROM app.users
-       WHERE id = $1
-       LIMIT 1`,
-      [userId],
-    );
-    if (uRes.rowCount === 0) throw new NotFoundException('USER_NOT_FOUND');
+    const u = await this.repo.getUserBasic(this.db, userId);
+    if (!u) throw new NotFoundException('USER_NOT_FOUND');
 
-    const user = uRes.rows[0];
-
-    const reservedRes = await this.db.query(
-      `SELECT COALESCE(SUM(total_price), 0) AS reserved
-       FROM app.orders
-       WHERE user_id = $1 AND status = 'open'`,
-      [userId],
-    );
-    const reserved = Number(reservedRes.rows?.[0]?.reserved ?? 0);
-    const balance = Number(user.balance ?? 0);
-    const available = balance - reserved;
-
-    const countRes = await this.db.query(
-      `SELECT COUNT(*)::int AS count FROM app.orders WHERE user_id = $1`,
-      [userId],
-    );
+    const reserved = await this.repo.sumOpenOrdersTotal(this.db, userId);
+    const balance = Number(u.balance ?? 0);
 
     return {
       user: {
-        id: String(user.id),
-        name: user.name,
-        email: user.email,
-        class: user.class ?? '',
-        blocked: !!user.blocked,
+        id: String(u.id),
+        name: u.name,
+        email: u.email,
+        class: u.class ?? '',
+        blocked: !!u.blocked,
       },
       balance,
       reserved,
-      available,
-      orderCount: countRes.rows?.[0]?.count ?? 0,
+      available: balance - reserved,
+      orderCount: await this.repo.countOrders(this.db, userId),
     };
   }
 
-  // ---------------------------
-  // ✅ User-Page: Activity/Logs
-  // ---------------------------
+  // User-Page: Activity/Logs
   async getMyActivity(userId: string) {
     await this.enforceClassPolicy(userId);
 
-    const ordersRes = await this.db.query(
-      `SELECT id, total_price, created_at, status
-       FROM app.orders
-       WHERE user_id = $1
-       ORDER BY created_at DESC
-       LIMIT 50`,
-      [userId],
-    );
-
-    const logsRes = await this.db.query(
-      `SELECT id, delta, balance_after, reason, ref_type, ref_id, actor, created_at
-       FROM app.balance_logs
-       WHERE user_id = $1
-       ORDER BY created_at DESC
-       LIMIT 100`,
-      [userId],
-    );
+    const ordersRes = await this.repo.listMyOrdersForActivity(this.db, userId);
+    const logsRes = await this.repo.listMyBalanceLogs(this.db, userId);
 
     return {
-      orders: ordersRes.rows.map(r => ({
+      orders: (ordersRes.rows ?? []).map((r: any) => ({
         id: String(r.id),
         totalPrice: Number(r.total_price ?? 0),
         createdAt: new Date(r.created_at).toISOString(),
         status: String(r.status),
       })),
-      balanceLogs: logsRes.rows.map(r => ({
+      balanceLogs: (logsRes.rows ?? []).map((r: any) => ({
         id: Number(r.id),
         delta: Number(r.delta ?? 0),
         balanceAfter: Number(r.balance_after ?? 0),
@@ -446,24 +290,10 @@ export class UsersService {
     };
   }
 
-  // ---------------------------
-  // ✅ ADMIN: Alle User
-  // ---------------------------
+  // ADMIN: Alle User
   async findAll() {
-    const res = await this.db.query(
-      `SELECT
-         u.id, u.name, u.email, u."class", u.balance, u.blocked, u.role,
-         COALESCE(o.cnt, 0)::int AS order_count
-       FROM app.users u
-       LEFT JOIN (
-         SELECT user_id, COUNT(*)::int AS cnt
-         FROM app.orders
-         GROUP BY user_id
-       ) o ON o.user_id = u.id
-       ORDER BY u.name ASC`,
-    );
-
-    return res.rows.map(r => ({
+    const res = await this.repo.listUsersAdmin(this.db);
+    return (res.rows ?? []).map((r: any) => ({
       id: String(r.id),
       name: r.name,
       email: r.email,
@@ -476,20 +306,7 @@ export class UsersService {
   }
 
   async findOne(id: string) {
-    const res = await this.db.query(
-      `SELECT
-         u.id, u.name, u.email, u."class", u.balance, u.blocked, u.role,
-         COALESCE(o.cnt, 0)::int AS order_count
-       FROM app.users u
-       LEFT JOIN (
-         SELECT user_id, COUNT(*)::int AS cnt
-         FROM app.orders
-         GROUP BY user_id
-       ) o ON o.user_id = u.id
-       WHERE u.id = $1
-       LIMIT 1`,
-      [id],
-    );
+    const res = await this.repo.getUserAdmin(this.db, String(id));
     if (res.rowCount === 0) throw new NotFoundException('USER_NOT_FOUND');
 
     const r = res.rows[0];
@@ -505,11 +322,11 @@ export class UsersService {
     };
   }
 
-  // ---------------------------
-  // ✅ ADMIN: User updaten
-  //  - wenn class geändert wird -> class_updated_at=NOW() und blocked=false
-  // ---------------------------
+  // ADMIN: User updaten (dynamic SET bleibt im Service, SQL-Ausführung im Repo)
   async update(id: string, dto: Partial<CreateUserDto>) {
+    const userId = String(id ?? '').trim();
+    if (!userId) throw new NotFoundException('USER_NOT_FOUND');
+
     const fields: string[] = [];
     const values: any[] = [];
     let idx = 1;
@@ -523,10 +340,8 @@ export class UsersService {
     setIf('name', dto.name);
     setIf('email', dto.email);
 
-    // class ist keyword -> quoted
     if ((dto as any).class !== undefined) {
       setIf(`"class"`, (dto as any).class);
-      // ✅ sobald admin class setzt: timestamp + unblock
       fields.push(`class_updated_at = NOW()`);
       fields.push(`blocked = false`);
     }
@@ -534,58 +349,27 @@ export class UsersService {
     setIf('blocked', (dto as any).blocked);
     setIf('role', (dto as any).role);
 
-    if (!fields.length) return this.findOne(id);
+    if (!fields.length) return this.findOne(userId);
 
-    values.push(id);
-    await this.db.query(`UPDATE app.users SET ${fields.join(', ')} WHERE id = $${idx}`, values);
+    values.push(userId);
+    await this.repo.updateAdminDynamic(this.db, fields.join(', '), values);
 
+    return this.findOne(userId);
+  }
+
+  async create(dto: CreateUserDto) {
+    const cls = String((dto as any).class ?? '').trim();
+    const id = await this.repo.insertUser(this.db, {
+      name: dto.name,
+      email: dto.email,
+      cls: cls ? cls : null,
+      role: String((dto as any).role ?? 'USER'),
+    });
     return this.findOne(id);
   }
 
-  // ---------------------------
-  // ✅ ADMIN: User löschen
-  // ---------------------------
-  async remove(id: string) {
-    const uRes = await this.db.query(
-      `SELECT id, balance FROM app.users WHERE id = $1 LIMIT 1`,
-      [id],
-    );
-    if (uRes.rowCount === 0) throw new NotFoundException('USER_NOT_FOUND');
-
-    const balance = Number(uRes.rows[0]?.balance ?? 0);
-    if (balance !== 0) throw new ForbiddenException('NON_ZERO_BALANCE');
-
-    const reservedRes = await this.db.query(
-      `SELECT COALESCE(SUM(total_price), 0) AS reserved
-       FROM app.orders
-       WHERE user_id = $1 AND status = 'open'`,
-      [id],
-    );
-    const reserved = Number(reservedRes.rows?.[0]?.reserved ?? 0);
-    if (reserved > 0) throw new ForbiddenException('HAS_OPEN_ORDERS');
-
-    await this.db.query(`DELETE FROM app.balance_change_requests WHERE user_id = $1`, [id]);
-    await this.db.query(`DELETE FROM app.balance_logs WHERE user_id = $1`, [id]);
-    await this.db.query(`DELETE FROM app.order_items WHERE user_id = $1`, [id]);
-    await this.db.query(`DELETE FROM app.orders WHERE user_id = $1`, [id]);
-    await this.db.query(`DELETE FROM app.users WHERE id = $1`, [id]);
-  }
-
-  // ---------------------------
-  // (optional) Create
-  //  - wenn class gesetzt -> class_updated_at=NOW()
-  // ---------------------------
-  async create(dto: CreateUserDto) {
-    const cls = String((dto as any).class ?? '').trim();
-    const hasClass = !!cls;
-
-    const res = await this.db.query(
-      `INSERT INTO app.users (name, email, "class", class_updated_at, blocked, balance, role)
-       VALUES ($1, $2, $3, ${hasClass ? 'NOW()' : 'NULL'}, false, 0, COALESCE($4, 'USER'))
-       RETURNING id`,
-      [dto.name, dto.email, hasClass ? cls : null, (dto as any).role ?? 'USER'],
-    );
-
-    return this.findOne(String(res.rows[0].id));
+  // Utility: QR URL
+  private generateQrCode(data: string) {
+    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data)}`;
   }
 }

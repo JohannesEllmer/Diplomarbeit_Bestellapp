@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-import { environment } from '../env';
+import { environment } from '../../env';
 import { MenuService } from '../../services/menu/menu-service';
 import { AuthService } from '../AuthService';
 

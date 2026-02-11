@@ -3,9 +3,10 @@ import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { AdminUsersController } from './admin-users';
 import { RolesGuard } from '../roles.guard';
+import { UsersRepo } from './users.repo';
 
 @Module({
   controllers: [UsersController, AdminUsersController],
-  providers: [UsersService, RolesGuard],
+  providers: [UsersService, RolesGuard, UsersRepo],
 })
 export class UsersModule {}

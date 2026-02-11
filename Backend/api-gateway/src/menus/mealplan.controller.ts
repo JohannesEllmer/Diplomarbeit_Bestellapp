@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -6,7 +7,6 @@ import {
   Param,
   Patch,
   Post,
-  BadRequestException,
 } from '@nestjs/common';
 import { MealPlansService } from './mealplan.services';
 import { CreateMealPlanDto } from './dto/create-mealplan.dto';
@@ -35,83 +35,74 @@ export class MealPlansController {
     return this.mealPlans.getSelected();
   }
 
-  // -------------------------
-  // ✅ /:id/select (PARAM) — getrennt registrieren
-  // -------------------------
   @Post(':id/select')
-  setSelectedPost(@Param('id', ParseUuidAllPipe) id: string) {
-    return this.mealPlans.setSelected(id);
+  setSelectedPost(@Param('id') id: string) {
+    return this.mealPlans.setSelected(this.mustUuid(id, 'MISSING_MEAL_PLAN_ID'));
   }
 
   @Patch(':id/select')
-  setSelectedPatch(@Param('id', ParseUuidAllPipe) id: string) {
-    return this.mealPlans.setSelected(id);
+  setSelectedPatch(@Param('id') id: string) {
+    return this.mealPlans.setSelected(this.mustUuid(id, 'MISSING_MEAL_PLAN_ID'));
   }
 
-  // -------------------------
-  // ✅ /select (BODY) — getrennt registrieren
-  // -------------------------
   @Post('select')
   setSelectedByBodyPost(@Body('id') id: string) {
-    return this.setSelectedByBodyImpl(id);
+    return this.mealPlans.setSelected(this.mustUuid(id, 'MISSING_MEAL_PLAN_ID'));
   }
 
   @Patch('select')
   setSelectedByBodyPatch(@Body('id') id: string) {
-    return this.setSelectedByBodyImpl(id);
+    return this.mealPlans.setSelected(this.mustUuid(id, 'MISSING_MEAL_PLAN_ID'));
   }
 
-private setSelectedByBodyImpl(id: string) {
-  const raw = String(id ?? '').trim();
-  if (!raw) throw new BadRequestException('MISSING_MEAL_PLAN_ID');
-
-  // ✅ Pipe nur mit 1 Argument (passt zu deiner Signatur)
-  const validated = this.uuidAll.transform(raw) as any;
-
-  return this.mealPlans.setSelected(String(validated));
-}
-
-
   @Get(':id')
-  findOne(@Param('id', ParseUuidAllPipe) id: string) {
-    return this.mealPlans.findOne(id);
+  findOne(@Param('id') id: string) {
+    return this.mealPlans.findOne(this.mustUuid(id, 'MISSING_MEAL_PLAN_ID'));
   }
 
   @Patch(':id')
-  update(
-    @Param('id', ParseUuidAllPipe) id: string,
-    @Body() dto: UpdateMealPlanDto,
-  ) {
-    return this.mealPlans.update(id, dto);
+  update(@Param('id') id: string, @Body() dto: UpdateMealPlanDto) {
+    return this.mealPlans.update(this.mustUuid(id, 'MISSING_MEAL_PLAN_ID'), dto);
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseUuidAllPipe) id: string) {
-    return this.mealPlans.remove(id);
+  remove(@Param('id') id: string) {
+    return this.mealPlans.remove(this.mustUuid(id, 'MISSING_MEAL_PLAN_ID'));
   }
 
   @Post(':id/items/:menuItemId')
-  addMenuItem(
-    @Param('id', ParseUuidAllPipe) id: string,
-    @Param('menuItemId', ParseUuidAllPipe) menuItemId: string,
-  ) {
-    return this.mealPlans.addMenuItem(id, menuItemId);
+  addMenuItem(@Param('id') id: string, @Param('menuItemId') menuItemId: string) {
+    return this.mealPlans.addMenuItem(
+      this.mustUuid(id, 'MISSING_MEAL_PLAN_ID'),
+      this.mustUuid(menuItemId, 'MISSING_MENU_ITEM_ID'),
+    );
   }
 
   @Delete(':id/items/:menuItemId')
-  removeMenuItem(
-    @Param('id', ParseUuidAllPipe) id: string,
-    @Param('menuItemId', ParseUuidAllPipe) menuItemId: string,
-  ) {
-    return this.mealPlans.removeMenuItem(id, menuItemId);
+  removeMenuItem(@Param('id') id: string, @Param('menuItemId') menuItemId: string) {
+    return this.mealPlans.removeMenuItem(
+      this.mustUuid(id, 'MISSING_MEAL_PLAN_ID'),
+      this.mustUuid(menuItemId, 'MISSING_MENU_ITEM_ID'),
+    );
   }
 
   @Patch(':id/items/:menuItemId/disabled/:disabled')
   setDisabled(
-    @Param('id', ParseUuidAllPipe) id: string,
-    @Param('menuItemId', ParseUuidAllPipe) menuItemId: string,
+    @Param('id') id: string,
+    @Param('menuItemId') menuItemId: string,
     @Param('disabled') disabled: string,
   ) {
-    return this.mealPlans.setMenuItemDisabled(id, menuItemId, disabled === 'true');
+    return this.mealPlans.setMenuItemDisabled(
+      this.mustUuid(id, 'MISSING_MEAL_PLAN_ID'),
+      this.mustUuid(menuItemId, 'MISSING_MENU_ITEM_ID'),
+      disabled === 'true',
+    );
+  }
+
+  private mustUuid(value: string, missingCode: string): string {
+    const raw = String(value ?? '').trim();
+    if (!raw) throw new BadRequestException(missingCode);
+    const validated = this.uuidAll.transform(raw) as any;
+    return String(validated);
   }
 }

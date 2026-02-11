@@ -4,7 +4,6 @@ import { google } from "googleapis";
 const GOOGLE_CLIENT_ID = "546392092664-7mtijf29thd5lln9rf4dnpkd2s43g402.apps.googleusercontent.com";
 const GOOGLE_CLIENT_SECRET = "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";
 
-// ✅ WICHTIG: redirect_uri setzen
 const REDIRECT_URI = "http://localhost:3000/oauth2callback";
 
 const SCOPES = ["https://www.googleapis.com/auth/gmail.send"];

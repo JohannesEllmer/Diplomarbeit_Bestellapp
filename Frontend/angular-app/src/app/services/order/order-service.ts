@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, map, catchError } from 'rxjs';
 import { Order, OrderItem } from '../../../models/menu-item.model';
-import { environment } from '../env';
+import { environment } from '../../env';
 
 @Injectable({
   providedIn: 'root'

@@ -5,7 +5,7 @@ import { catchError } from 'rxjs/operators';
 import { Menu } from '../../../models/menu.model';
 import { MenuItem, OrderItem } from '../../../models/menu-item.model';
 import { MealPlan } from '../../../models/meal-plan.model';
-import { environment } from '../env';
+import { environment } from '../../env';
 
 @Injectable({ providedIn: 'root' })
 export class MenuService {

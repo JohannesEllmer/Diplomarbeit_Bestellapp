@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { User, UserRole } from '../../models/user.model';
-import { environment } from '../services/env';
+import { environment } from '../env';
 
 interface LoginResponse {
   token: string;

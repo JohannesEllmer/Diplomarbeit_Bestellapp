@@ -16,9 +16,6 @@ import { config } from './config';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // ✅ CORS
-  // Wenn CORS_ORIGINS="*" -> Origin spiegeln (damit "alle IPs" gehen)
-  // Wenn CORS_ORIGINS Liste -> nur diese erlauben
   if (config.cors.origins === '*') {
     app.enableCors({
       origin: true,
@@ -68,7 +65,7 @@ async function bootstrap() {
   const pool = app.get<Pool>(PG_POOL);
   app.use('/api/auth', authRouter(pool));
 
-  // ✅ Mailer nur prüfen, wenn Gmail envs vorhanden
+  // Mailer nur prüfen, wenn Gmail envs vorhanden
   try {
     await verifyMailer();
   } catch (e) {
