@@ -1,10 +1,12 @@
+// auth.routes.ts
 import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import type { Pool } from 'pg';
+
 import { JWT_SECRET, JWT_EXPIRES_IN, APP_BASE_URL } from './config.js';
-import { sendMail } from './mailer.js';
+import { sendMail } from './mailer.js'; // ✅ mailer bleibt wie er ist
 import { createRandomToken, hashToken } from './tokenHelper.js';
 import { requireAuth } from './auth.middleware.js';
 
@@ -24,9 +26,64 @@ function createJwt(payload: { userId: string; email: string; role: string; sessi
   );
 }
 
+function buildVerifyEmailHtml(params: { firstName: string; lastName: string; link: string }) {
+  return `
+  <div style="font-family: Arial, sans-serif; line-height: 1.5;">
+    <p>Hallo ${params.firstName} ${params.lastName},</p>
+
+    <p>
+      bitte bestätige deine E-Mail-Adresse, um dein <b>HungerSatt</b>-Konto zu aktivieren.
+    </p>
+
+    <p style="margin: 16px 0;">
+      <a href="${params.link}" style="display:inline-block;padding:10px 14px;border-radius:6px;text-decoration:none;">
+        E-Mail bestätigen
+      </a>
+    </p>
+
+    <p style="font-size: 13px;">
+      Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:<br/>
+      <a href="${params.link}">${params.link}</a>
+    </p>
+
+    <p style="font-size: 13px; color: #666;">
+      Wenn du dich nicht registriert hast, kannst du diese E-Mail ignorieren.
+    </p>
+  </div>
+  `;
+}
+
+function buildResetPasswordHtml(params: { name: string; link: string }) {
+  return `
+  <div style="font-family: Arial, sans-serif; line-height: 1.5;">
+    <p>Hallo ${params.name},</p>
+
+    <p>
+      du hast ein Zurücksetzen deines Passworts angefordert. Über den folgenden Link kannst du ein neues Passwort setzen:
+    </p>
+
+    <p style="margin: 16px 0;">
+      <a href="${params.link}" style="display:inline-block;padding:10px 14px;border-radius:6px;text-decoration:none;">
+        Passwort zurücksetzen
+      </a>
+    </p>
+
+    <p style="font-size: 13px;">
+      Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:<br/>
+      <a href="${params.link}">${params.link}</a>
+    </p>
+
+    <p style="font-size: 13px; color: #666;">
+      Der Link ist 30 Minuten gültig. Wenn du das nicht warst, ignoriere bitte diese E-Mail.
+    </p>
+  </div>
+  `;
+}
+
 export function authRouter(pool: Pool) {
   const router = express.Router();
 
+  // CHECK-EMAIL
   router.get('/check-email', async (req, res) => {
     try {
       const email = ((req.query.email as string) || '').toLowerCase().trim();
@@ -49,6 +106,7 @@ export function authRouter(pool: Pool) {
     }
   });
 
+  // REGISTER (creates pending_registrations + sends verify mail)
   router.post('/register', async (req, res) => {
     try {
       const { email, password, firstName, lastName, class: userClass, schoolType, isTeacher } = req.body;
@@ -97,12 +155,12 @@ export function authRouter(pool: Pool) {
       try {
         await sendMail(
           emailLower,
-          'Bitte bestätige deine E-Mail',
-          `<div>
-            <p>Hi ${payload.firstName} ${payload.lastName},</p>
-            <p><a href="${verifyLink}">E-Mail bestätigen</a></p>
-            <p>Wenn der Link nicht klickbar ist: ${verifyLink}</p>
-          </div>`,
+          'HungerSatt – E-Mail-Adresse bestätigen',
+          buildVerifyEmailHtml({
+            firstName: payload.firstName,
+            lastName: payload.lastName,
+            link: verifyLink,
+          }),
         );
         emailVerificationSent = true;
       } catch (mailErr: any) {
@@ -120,7 +178,7 @@ export function authRouter(pool: Pool) {
     }
   });
 
-  // FORGOT PASSWORD
+  // FORGOT PASSWORD (creates auth_tokens + sends reset mail)
   router.post('/forgot-password', async (req, res) => {
     try {
       const email = String(req.body?.email ?? '').toLowerCase().trim();
@@ -132,9 +190,7 @@ export function authRouter(pool: Pool) {
       );
 
       // Security: immer ok
-      if ((userRes.rowCount ?? 0) === 0) {
-        return res.json({ ok: true });
-      }
+      if ((userRes.rowCount ?? 0) === 0) return res.json({ ok: true });
 
       const user = userRes.rows[0];
 
@@ -152,14 +208,8 @@ export function authRouter(pool: Pool) {
       try {
         await sendMail(
           email,
-          'Passwort zurücksetzen',
-          `<div>
-            <p>Hallo ${user.name ?? ''},</p>
-            <p>Klicke hier, um dein Passwort zurückzusetzen:</p>
-            <p><a href="${link}">Passwort zurücksetzen</a></p>
-            <p>Wenn der Link nicht klickbar ist: ${link}</p>
-            <p>Der Link ist 30 Minuten gültig.</p>
-          </div>`,
+          'HungerSatt – Passwort zurücksetzen',
+          buildResetPasswordHtml({ name: user.name ?? '', link }),
         );
       } catch (mailErr: any) {
         console.error('FORGOT_PASSWORD_MAIL_FAILED:', mailErr?.message ?? mailErr);
@@ -172,6 +222,7 @@ export function authRouter(pool: Pool) {
     }
   });
 
+  // RESET PASSWORD (uses auth_tokens)
   router.post('/reset-password', async (req, res) => {
     const token = String(req.body?.token ?? '').trim();
     const newPassword = String(req.body?.newPassword ?? '');
@@ -224,6 +275,7 @@ export function authRouter(pool: Pool) {
     }
   });
 
+  // CHANGE PASSWORD (requires auth)
   router.post('/change-password', requireAuth, async (req, res) => {
     try {
       const userId = req.auth!.sub;
@@ -233,10 +285,7 @@ export function authRouter(pool: Pool) {
       if (!currentPassword || !newPassword) return res.status(400).json({ error: 'MISSING_FIELDS' });
       if (newPassword.length < 6) return res.status(400).json({ error: 'WEAK_PASSWORD' });
 
-      const cred = await pool.query(
-        `SELECT password_hash FROM app.auth_credentials WHERE user_id=$1 LIMIT 1`,
-        [userId],
-      );
+      const cred = await pool.query(`SELECT password_hash FROM app.auth_credentials WHERE user_id=$1 LIMIT 1`, [userId]);
       if ((cred.rowCount ?? 0) === 0) return res.status(404).json({ error: 'USER_NOT_FOUND' });
 
       const ok = await bcrypt.compare(currentPassword, cred.rows[0].password_hash);
@@ -258,6 +307,7 @@ export function authRouter(pool: Pool) {
     }
   });
 
+  // VERIFY EMAIL (finalize pending_registrations -> users + auth_credentials)
   router.post('/verify-email', async (req, res) => {
     const { token } = req.body as { token?: string };
     if (!token) return res.status(400).json({ error: 'TOKEN_REQUIRED' });
@@ -284,10 +334,9 @@ export function authRouter(pool: Pool) {
       const row = pr.rows[0];
       const payload = row.payload as any;
 
-      const already = await client.query(
-        `SELECT 1 FROM app.users WHERE LOWER(email)=$1 LIMIT 1`,
-        [String(row.email).toLowerCase()],
-      );
+      const already = await client.query(`SELECT 1 FROM app.users WHERE LOWER(email)=$1 LIMIT 1`, [
+        String(row.email).toLowerCase(),
+      ]);
 
       if ((already.rowCount ?? 0) > 0) {
         await client.query(`UPDATE app.pending_registrations SET used_at=now() WHERE id=$1`, [row.id]);
@@ -324,6 +373,7 @@ export function authRouter(pool: Pool) {
     }
   });
 
+  // LOGIN
   router.post('/login', async (req, res) => {
     try {
       const { email, password } = req.body;
@@ -350,10 +400,10 @@ export function authRouter(pool: Pool) {
       if (!ok) return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
 
       const newSessionId = uuidv4();
-      await pool.query(
-        `UPDATE app.auth_credentials SET auth_token=$1, last_used_at=now() WHERE user_id=$2`,
-        [newSessionId, row.id],
-      );
+      await pool.query(`UPDATE app.auth_credentials SET auth_token=$1, last_used_at=now() WHERE user_id=$2`, [
+        newSessionId,
+        row.id,
+      ]);
 
       const tokenJwt = createJwt({ userId: row.id, email: row.email, role: row.role, sessionId: newSessionId });
 
