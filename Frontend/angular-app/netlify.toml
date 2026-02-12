@@ -1,7 +1,7 @@
 [build]
   base = "Frontend/angular-app"
   command = "npm ci && npm run build"
-  publish = "dist/angular-app"
+  publish = "dist/angular-app/browser"
 
 [[redirects]]
   from = "/*"
