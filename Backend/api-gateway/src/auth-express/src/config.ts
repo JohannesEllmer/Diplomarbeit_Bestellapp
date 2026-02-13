@@ -18,7 +18,6 @@ export const APP_BASE_URL = required('APP_BASE_URL');
 /**
  * CORS:
  * - "*"  → alle Origins erlaubt
- * - "http://localhost:4200,http://10.10.0.174:4200"
  */
 export const CORS_ORIGINS_RAW = optional('CORS_ORIGINS', '*');
 export const CORS_ORIGINS =

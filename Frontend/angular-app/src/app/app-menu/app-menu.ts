@@ -125,13 +125,10 @@ export class AppMenuComponent implements OnInit, OnDestroy {
   get currentRole(): string | null {
     return this.currentUser?.role ?? null;
   }
-
-  // ✅ WICHTIG: echte Admin-Rechte prüfen (nicht effectiveRole)
   get isAdmin(): boolean {
     return this.currentRole === 'ADMIN';
   }
 
-  // ✅ Effektive Rolle nur fürs Menü (Admin kann so tun als User/Management)
   get effectiveRole(): string | null {
     const role = this.currentRole;
     if (role !== 'ADMIN') return role;
@@ -193,7 +190,7 @@ export class AppMenuComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ---------- Admin View ----------
+  //Admin View 
   setAdminView(view: AdminView): void {
     this.adminView = view;
     localStorage.setItem('admin_view', view);
@@ -206,7 +203,7 @@ export class AppMenuComponent implements OnInit, OnDestroy {
     return this.adminView === 'USER' ? 'Admin – User' : 'Admin – Management';
   }
 
-  // ---------- Rollenprüfung für Navigation ----------
+  //Rollenprüfung für Navigation 
   hasAnyRole(roles: string[]): boolean {
     const role = this.effectiveRole;
     return role ? roles.includes(role) : false;

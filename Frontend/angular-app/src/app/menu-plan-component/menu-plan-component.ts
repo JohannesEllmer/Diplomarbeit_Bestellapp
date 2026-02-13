@@ -99,7 +99,6 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
           this.selectedMenuTitle = plan.title ?? '';
           this.hasActiveMenu = true;
 
-          // ✅ WICHTIG: aktive Menü-ID im Cart merken
           const menuId = String((plan as any)?.id ?? '').trim();
           if (menuId) this.cartService.setCartMenuId(menuId);
 
@@ -109,7 +108,6 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
           const raw = (plan as any).menuItems ?? [];
           const items = Array.isArray(raw) ? raw : [];
 
-          // ✅ Keine Model-Änderung nötig: wir füllen nur die vorhandenen Felder
           this.menuItems = items.map((m: any): MenuItem => ({
             id: String(m.id),
             name: m.name ?? '',
@@ -214,7 +212,6 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
     if (!user) return;
     if (menuItem.available === false) return;
 
-    // ✅ sicherstellen, dass Menü-ID gesetzt ist (falls fetch timing)
     const menuId = String((this.selectedMenu as any)?.id ?? '').trim();
     if (menuId) this.cartService.setCartMenuId(menuId);
 

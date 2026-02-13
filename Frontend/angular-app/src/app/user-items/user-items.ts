@@ -2,11 +2,12 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { User } from '../../models/user.model';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-user-items',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './user-items.html',
   styleUrls: ['./user-items.css']
 })
@@ -16,7 +17,6 @@ export class UserItemsComponent {
   @Output() block = new EventEmitter<User>();
   @Output() resetPassword = new EventEmitter<User>();
 
-  // ✅ template-sicherer Zustand (statt user.showDetails / casting)
   showDetails = false;
 
   constructor(private router: Router) {}
@@ -35,6 +35,15 @@ export class UserItemsComponent {
     event.stopPropagation();
     this.block.emit(this.user);
   }
+
+  @Output() roleChange = new EventEmitter<{ user: User; role: string }>();
+
+  onRoleChange(newRole: string): void {
+    const role = String(newRole ?? '').trim();
+    if (!role || role === this.user.role) return;
+    this.roleChange.emit({ user: this.user, role });
+  }
+
 
   navigateToUser(event: Event): void {
     event.stopPropagation();

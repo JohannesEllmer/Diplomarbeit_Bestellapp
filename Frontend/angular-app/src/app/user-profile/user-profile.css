@@ -1,4 +1,3 @@
-/* --- DEIN CSS (unverändert) --- */
 :root {
   --primary: #0ea5e9;
   --primary-dark: #0369a1;
@@ -457,68 +456,56 @@
 /* optional */
 img[alt="QR Code"] { max-width: 220px; height: auto; }
 
-/* --- Platz besser ausnutzen / kein Page-Scroll --- */
-
-/* Wrapper bleibt wie gehabt, aber etwas weniger Padding auf kleinen Screens */
 .auth-wrapper {
   padding: clamp(0.75rem, 2vw, 1.5rem);
 }
 
-/* Card soll in den Viewport passen:
-   - kein margin-top (drückt sonst nach unten)
-   - max-height, damit sie nie höher als der Bildschirm wird
-   - overflow hidden, damit nur innerer Bereich scrollt */
 .auth-card {
-  margin-top: 0;                     /* vorher: 2rem */
-  max-height: 90vh;                  /* passt in den Bildschirm */
-  overflow: hidden;                  /* verhindert outer-scroll */
-  gap: 1rem;                         /* etwas kompakter */
-  padding: 1.2rem;                   /* kompakter als 1.5rem */
+  margin-top: 0;                    
+  max-height: 90vh;                  
+  overflow: hidden;                  
+  gap: 1rem;                         
+  padding: 1.2rem;                   
 }
 
-/* Header fix, Body nimmt den restlichen Platz und darf scrollen */
 .auth-header {
   flex: 0 0 auto;
   padding-bottom: 0.75rem;
 }
 
 .auth-body {
-  flex: 1 1 auto;                    /* nimmt restlichen Platz */
-  min-height: 0;                     /* WICHTIG für flex-scroll */
-  overflow: auto;                    /* nur Body scrollt */
-  padding-right: 0.25rem;            /* Platz für Scrollbar */
+  flex: 1 1 auto;                    
+  min-height: 0;                     
+  overflow: auto;                    
+  padding-right: 0.25rem;            
   gap: 1rem;
 }
 
-/* Sections etwas kompakter, damit mehr Inhalt ohne scroll sichtbar ist */
+
 .form-section {
-  margin-bottom: 0.75rem;            /* vorher 1.2rem */
-  padding: 0.75rem 0.85rem;          /* vorher 0.9rem 1rem */
+  margin-bottom: 0.75rem;           
+  padding: 0.75rem 0.85rem;        
 }
 
-/* Inputs minimal kompakter */
 .form-group {
-  margin-bottom: 0.8rem;             /* vorher 1.05rem */
+  margin-bottom: 0.8rem;             
 }
 
 .form-group input,
 .form-group select {
-  padding: 0.6rem 0.75rem;           /* vorher 0.68rem 0.85rem */
+  padding: 0.6rem 0.75rem;           
 }
 
-/* Footer bleibt unten sichtbar, Body scrollt davor */
 .auth-footer {
   flex: 0 0 auto;
   padding-top: 0.75rem;
 }
 
-/* QR Bilder sollen nicht zu groß werden, aber responsiv */
 img[alt="QR Code"] {
   max-width: min(220px, 70vw);
   height: auto;
 }
 
-/* Mobile: Card noch enger, damit es ohne Scroll eher klappt */
 @media (max-width: 768px) {
   .auth-card {
     max-height: 92vh;

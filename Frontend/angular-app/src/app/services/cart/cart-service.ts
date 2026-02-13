@@ -31,9 +31,6 @@ export class CartService {
     private auth: AuthService,
   ) {}
 
-  // -------------------------
-  // Auth helper
-  // -------------------------
   private isAuthenticated(): boolean {
     try {
       const token = (this.auth as any)?.getToken?.();
@@ -48,9 +45,6 @@ export class CartService {
     }
   }
 
-  // -------------------------
-  // Storage
-  // -------------------------
   getCartItems(): any[] {
     try {
       const raw = localStorage.getItem(this.STORAGE_KEY);
@@ -70,9 +64,6 @@ export class CartService {
     this.clearCartMenuId();
   }
 
-  // -------------------------
-  // Menü-Marker (für Menüwechsel-Erkennung)
-  // -------------------------
   setCartMenuId(menuId: string): void {
     const v = String(menuId ?? '').trim();
     if (!v) return;
@@ -87,9 +78,6 @@ export class CartService {
     localStorage.removeItem(this.STORAGE_MENU_KEY);
   }
 
-  // -------------------------
-  // UI Helpers
-  // -------------------------
   getItemCount(items: any[]): number {
     return (items ?? []).reduce((sum, it) => sum + Number(it?.quantity ?? 0), 0);
   }
@@ -102,9 +90,6 @@ export class CartService {
     }, 0);
   }
 
-  // -------------------------
-  // Cart mutations
-  // -------------------------
   increaseQuantity(items: any[], index: number): any[] {
     const arr = [...(items ?? [])];
     if (!arr[index]) return arr;
@@ -144,18 +129,12 @@ export class CartService {
     return arr;
   }
 
-  // -------------------------
   // Time validation
-  // -------------------------
   isValidTimeFormat(hhmm: string): boolean {
     return /^([01]\d|2[0-3]):([0-5]\d)$/.test(String(hhmm ?? '').trim());
   }
 
-  // -------------------------
   // Cart validieren gegen aktives Menü
-  // - Wenn Menü gewechselt -> Cart leeren
-  // - Wenn Gericht nicht mehr im Menü oder available=false -> entfernen
-  // -------------------------
   validateCartAgainstActiveMenu(): Observable<{
     clearedBecauseMenuChanged: boolean;
     removedItemsCount: number;
@@ -178,7 +157,6 @@ export class CartService {
         const activeMenuId = String(plan?.id ?? '').trim();
         const storedMenuId = this.getCartMenuId();
 
-        // Menüwechsel -> kompletten Cart leeren (wenn wir schon mal ein Menü gespeichert hatten)
         if (storedMenuId && activeMenuId && storedMenuId !== activeMenuId) {
           const removed = before.length;
           this.clearCart();            // löscht auch MenuId
@@ -186,12 +164,10 @@ export class CartService {
           return { clearedBecauseMenuChanged: true, removedItemsCount: removed };
         }
 
-        // Falls noch kein storedMenuId vorhanden -> merken
         if (!storedMenuId && activeMenuId) {
           this.setCartMenuId(activeMenuId);
         }
 
-        // Items des aktiven Menüs + availability
         const raw = (plan as any)?.menuItems ?? [];
         const menuItems = Array.isArray(raw) ? raw : [];
 
@@ -205,7 +181,7 @@ export class CartService {
         const filtered = (before ?? []).filter(ci => {
           const id = String(ci?.menuItem?.id ?? '').trim();
           if (!id) return false;
-          if (!allowed.has(id)) return false;           // nicht mehr im Menü
+          if (!allowed.has(id)) return false;           
           if (allowed.get(id) === false) return false;  // nicht verfügbar
           return true;
         });
@@ -219,9 +195,6 @@ export class CartService {
     );
   }
 
-  // -------------------------
-  // Submit order
-  // -------------------------
   submitOrder(dto: CreateOrderDto): Observable<any> {
     if (environment.useMockData) return of({ ok: true });
 

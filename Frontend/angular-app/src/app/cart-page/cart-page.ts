@@ -42,13 +42,10 @@ export class CartPageComponent implements OnInit {
 
   submitting = false;
 
-  // ✅ Ordering enabled (default true)
   orderingEnabled = true;
 
-  // ✅ optional UI Hint
   infoMsg = '';
 
-  // ✅ Geschäftszeiten
   private readonly ORDER_START = { h: 6, m: 0 };   // 06:00
   private readonly ORDER_END   = { h: 11, m: 35 }; // 11:35
 
@@ -247,7 +244,6 @@ export class CartPageComponent implements OnInit {
 
       const totalPrice = this.getTotal();
 
-      // ✅ ohne reserved/available: nur gegen balance prüfen
       if (totalPrice > this.balance) {
         this.timeError = 'Nicht genug Guthaben.';
         return;

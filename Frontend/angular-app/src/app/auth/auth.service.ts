@@ -52,7 +52,6 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
-  // ✅ praktisch für Interceptor: nicht nochmal navigieren, wenn du schon auf /login bist
   logoutIfNeeded(): void {
     if (!this.isLoggedIn()) return;
     this.clearAuth();

@@ -1,8 +1,8 @@
 import readline from "node:readline";
 import { google } from "googleapis";
 
-const GOOGLE_CLIENT_ID = "546392092664-7mtijf29thd5lln9rf4dnpkd2s43g402.apps.googleusercontent.com";
-const GOOGLE_CLIENT_SECRET = "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";
+const GOOGLE_CLIENT_ID = env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET;
 
 const REDIRECT_URI = "http://localhost:3000/oauth2callback";
 
@@ -30,16 +30,16 @@ rl.question("3) Code hier einfügen: ", async (code) => {
   rl.close();
   try {
     const { tokens } = await oauth2.getToken(code.trim());
-    console.log("\n✅ REFRESH TOKEN:\n", tokens.refresh_token);
-    console.log("\n✅ ACCESS TOKEN:\n", tokens.access_token);
+    console.log("\nREFRESH TOKEN:\n", tokens.refresh_token);
+    console.log("\nACCESS TOKEN:\n", tokens.access_token);
 
     if (!tokens.refresh_token) {
       console.log(
-        "\n⚠️ Kein refresh_token erhalten.\n" +
+        "\nKein refresh_token erhalten.\n" +
         "→ Entferne im Google Account den Zugriff der App (Security → Third-party access) und versuche es nochmal.\n"
       );
     }
   } catch (e) {
-    console.error("\n❌ Fehler:", e?.message ?? e);
+    console.error("\nFehler:", e?.message ?? e);
   }
 });

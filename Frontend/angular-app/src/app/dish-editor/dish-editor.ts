@@ -15,7 +15,6 @@ import { MenuItemsApiService } from '../services/menu/menu-item-service';
   styleUrl: './dish-editor.css',
 })
 export class DishEditor implements OnInit {
-  // ✅ Kategorien müssen exakt so heißen, damit der Filter passt
   readonly categoryOptions = ['Hauptgericht', 'Menü', 'Dessert', 'Getränk'] as const;
 
 
@@ -50,7 +49,6 @@ export class DishEditor implements OnInit {
   ngOnInit(): void {
     const st = history.state ?? {};
 
-    // ✅ Falls vom MenuPlanner "Bearbeiten" gedrückt wurde:
     const prefill = st.dish as MenuItem | undefined;
     if (prefill?.id) {
       this.dish = {
@@ -71,7 +69,6 @@ export class DishEditor implements OnInit {
     this.returnTo = String(st.returnTo ?? this.returnTo);
     this.returnState = st.returnState ?? null;
 
-    // ✅ optional: frisch laden (empfohlen)
     if (this.dish?.id && this.dish.id !== '0' && this.dish.id !== 'new') {
       this.menuItemsApi.getById(this.dish.id).subscribe((full) => {
         if (!full) return;
@@ -88,7 +85,6 @@ export class DishEditor implements OnInit {
           dessert: String((full as any).dessert ?? ''),
         };
 
-        // falls Kategorie nicht Menü ist, drink/dessert im UI optional leeren
         this.clearMenuFieldsIfNotMenu();
       });
     } else {
@@ -96,14 +92,11 @@ export class DishEditor implements OnInit {
     }
   }
 
-  // -------------------------
-  // Kategorie (Filter-safe)
-  // -------------------------
+  
   private normalizeCategory(value: any): string {
     const s = String(value ?? '').trim();
     if (!s) return '';
 
-    // toleriert alte/abweichende Werte
     const map: Record<string, (typeof this.categoryOptions)[number]> = {
       hauptgericht: 'Hauptgericht',
       hauptspeise: 'Hauptgericht',
@@ -144,9 +137,6 @@ export class DishEditor implements OnInit {
     return this.normalizeCategory(this.dish.category) === 'Menü';
   }
 
-  // -------------------------
-  // Validation / UI
-  // -------------------------
   private validateDish(): string[] {
     const errors: string[] = [];
 
@@ -218,13 +208,12 @@ export class DishEditor implements OnInit {
       ...this.dish,
       name: (this.dish.name ?? '').trim(),
       description: (this.dish.description ?? '').trim(),
-      category, // ✅ garantiert filter-kompatibel
+      category, 
       price: Number(this.dish.price ?? 0),
       allergens: Array.isArray(this.dish.allergens) ? this.dish.allergens : [],
       available: this.dish.available !== false,
       vegetarian: !!this.dish.vegetarian,
 
-      // ✅ nur bei Kategorie Menü speichern, sonst entfernen
       drink: category === 'Menü' ? (this.dish.drink ?? '').trim() || undefined : undefined,
       dessert: category === 'Menü' ? (this.dish.dessert ?? '').trim() || undefined : undefined,
     };
@@ -239,7 +228,6 @@ export class DishEditor implements OnInit {
           dessert: String((saved as any).dessert ?? ''),
         };
 
-        // ✅ zurück + updated dish mitgeben
         this.router.navigate([this.returnTo], {
           state: { ...(this.returnState ?? {}), menuItem: saved },
         });

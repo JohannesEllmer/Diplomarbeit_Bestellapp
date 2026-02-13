@@ -38,8 +38,6 @@ export class OrderListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadOrders(true);
-
-    // ✅ alle 2 Minuten automatisch aktualisieren
     interval(2 * 60 * 1000)
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.loadOrders(false));
@@ -68,8 +66,6 @@ export class OrderListComponent implements OnInit, OnDestroy {
         1,
         Math.ceil(this.openOrders.length / this.itemsPerPage)
       );
-
-      // ✅ Seite beibehalten, wenn möglich
       if (resetPage) {
         this.currentPage = 1;
       } else if (prevPage > newTotalPages) {
@@ -115,9 +111,6 @@ export class OrderListComponent implements OnInit, OnDestroy {
     return this.openOrders.reduce((sum, o) => sum + Number(o.totalPrice ?? 0), 0);
   }
 
-  // -------------------------
-  // UI helpers
-  // -------------------------
   userName(order: Order): string {
     return String((order as any)?.user?.name ?? '').trim() || 'Unbekannter Nutzer';
   }

@@ -12,7 +12,6 @@ export class AdminOrderService {
 
   constructor(private http: HttpClient) {}
 
-  // ✅ NEU: holt Bestellungen als Bestellungen (1 Eintrag = 1 Bestellung)
   getOrders(): Observable<Order[]> {
     if (environment.useMockData) return of([]);
 

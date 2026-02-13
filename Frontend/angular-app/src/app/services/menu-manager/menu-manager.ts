@@ -69,7 +69,6 @@ export class MenuManagerService {
   getSelectedMealPlan(): Observable<MealPlan | null> {
     if (environment.useMockData) return of(null);
 
-    // ✅ nur /selected (kein /active mehr!)
     return this.http.get<any>(`${this.mealPlansEndpoint}/selected`).pipe(
       map(plan => (plan ? this.mapMealPlan(plan) : null)),
       catchError(err => {
@@ -85,13 +84,11 @@ export class MenuManagerService {
     const id = String(menuId ?? '').trim();
     if (!id) return of({ ok: false });
 
-    // ✅ bevorzugt: /:id/select (das passt zu deinem Controller)
     const byParam$ = this.http.patch<{ ok: boolean; id?: string }>(
       `${this.mealPlansEndpoint}/${encodeURIComponent(id)}/select`,
       {},
     );
 
-    // ✅ fallback: /select (body)
     const byBody$ = this.http.patch<{ ok: boolean; id?: string }>(
       `${this.mealPlansEndpoint}/select`,
       { id },

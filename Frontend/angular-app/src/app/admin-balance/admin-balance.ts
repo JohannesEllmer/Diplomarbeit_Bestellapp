@@ -15,7 +15,6 @@ type ScanResult = {
   alreadyUsed?: boolean;
 };
 
-// ✅ für Order-Scan Ergebnis (minimal, weil Backend-Response bei dir { ok, order? } ist)
 type OrderScanResult = {
   ok: boolean;
   order?: any;
@@ -49,7 +48,6 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
   message = '';
   lastResult: ScanResult | null = null;
 
-  // ✅ optional: letztes Order-Ergebnis
   lastOrderResult: OrderScanResult | null = null;
 
   // UI / Features
@@ -160,9 +158,6 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
     );
   }
 
-  // -----------------------------
-  // Camera / Scanner setup
-  // -----------------------------
   private async loadCamerasSafe(force = false): Promise<void> {
     if (!force && this.cameras.length) return;
     try {
@@ -239,24 +234,21 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
     this.html5 = undefined;
   }
 
-  // -----------------------------
+
   // Scan type detection
-  // -----------------------------
   private detectType(code: string): ScanType {
     const c = (code || '').trim();
 
-    // ✅ Guthaben: BalanceReq-UUID
+    //Guthaben: BalanceReq-UUID
     if (/^BalanceReq-[0-9a-fA-F-]{36}$/.test(c)) return 'balance';
 
-    // ✅ Order: Order-<irgendwas>
+    //Order: Order-<irgendwas>
     if (/^Order-.+$/i.test(c)) return 'order';
 
     return 'unknown';
   }
 
-  // -----------------------------
   // Scan handling
-  // -----------------------------
   private onScanSuccess(decodedText: string, fromManual: boolean): void {
     const code = (decodedText || '').trim();
     if (!code) return;
@@ -278,7 +270,6 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Debounce: gleiche Codes nicht dauernd bestätigen (gilt für beide Typen)
     const now = Date.now();
     if (this.confirmInFlight) return;
 
@@ -290,7 +281,7 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
     this.lastConfirmedCode = code;
     this.lastConfirmedAt = now;
 
-    // optional: Scanner "pausieren", damit es nicht mehrfach feuert
+    //Scanner "pausieren", damit es nicht mehrfach feuert
     const h: any = this.html5 as any;
     h?.pause?.(true);
 
@@ -372,8 +363,6 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
 
   private handleOrder(code: string, h: any): void {
     this.message = 'Order-QR erkannt. Bestellung wird abgeschlossen …';
-
-    // ✅ sendet GENAU das gleiche wie vorher an dein Backend: { code }
     this.adminOrders
       .completeByQrCode(code)
       .pipe(finalize(() => (this.confirmInFlight = false)))
@@ -395,7 +384,6 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
 
             this.onSuccessFeedback();
 
-            // analog zu Guthaben: bei Erfolg ggf. stoppen
             if (this.autoStopOnSuccess) {
               this.stop().catch(() => {});
               return;
@@ -462,9 +450,6 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
     this.history = [item, ...this.history].slice(0, 12);
   }
 
-  // -----------------------------
-  // Formatting
-  // -----------------------------
   money(n: any): string {
     const v = Number(n ?? 0);
     const fixed = Number.isFinite(v) ? v.toFixed(2) : '0.00';

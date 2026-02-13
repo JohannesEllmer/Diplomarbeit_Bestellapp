@@ -15,7 +15,9 @@
           <div class="order-header" (click)="toggleDetails(order)">
             <div class="order-info">
               <h3>{{ getOrderTitle(order) }}</h3>
-              <span class="order-date">{{ order.createdAt | date: 'dd.MM.yyyy HH:mm' }}</span>
+              <span class="order-date">
+                {{ order.createdAt | date: 'dd.MM.yyyy HH:mm' }}
+              </span>
             </div>
             <div class="order-price">
               {{ order.totalPrice | currency: 'EUR' }}
@@ -25,11 +27,20 @@
           <div class="order-details" *ngIf="order['showDetails']">
             <ul class="order-items">
               <li *ngFor="let item of order.items">
-                <span class="item-title">{{ item.menuItem.name }}</span>
-                <span class="item-quantity">x{{ item.quantity }}</span>
-                <span class="item-price">
-                  {{ item.menuItem.price * item.quantity | currency: 'EUR' }}
-                </span>
+                
+                <div class="item-main">
+                  <span class="item-title">{{ item.menuItem.name }}</span>
+                  <span class="item-quantity">x{{ item.quantity }}</span>
+                  <span class="item-price">
+                    {{ item.menuItem.price * item.quantity | currency: 'EUR' }}
+                  </span>
+                </div>
+
+                <div class="item-note" *ngIf="(item.note ?? '').trim()">
+                  <span class="note-label">Notiz:</span>
+                  <span class="note-text">{{ item.note }}</span>
+                </div>
+
               </li>
             </ul>
 
@@ -52,7 +63,9 @@
           <div class="order-header" (click)="toggleDetails(order)">
             <div class="order-info">
               <h3>{{ getOrderTitle(order) }}</h3>
-              <span class="order-date">{{ order.createdAt | date: 'dd.MM.yyyy HH:mm' }}</span>
+              <span class="order-date">
+                {{ order.createdAt | date: 'dd.MM.yyyy HH:mm' }}
+              </span>
             </div>
             <div class="order-price">
               {{ order.totalPrice | currency: 'EUR' }}
@@ -62,11 +75,20 @@
           <div class="order-details" *ngIf="order['showDetails']">
             <ul class="order-items">
               <li *ngFor="let item of order.items">
-                <span class="item-title">{{ item.menuItem.name }}</span>
-                <span class="item-quantity">x{{ item.quantity }}</span>
-                <span class="item-price">
-                  {{ item.menuItem.price * item.quantity | currency: 'EUR' }}
-                </span>
+
+                <div class="item-main">
+                  <span class="item-title">{{ item.menuItem.name }}</span>
+                  <span class="item-quantity">x{{ item.quantity }}</span>
+                  <span class="item-price">
+                    {{ item.menuItem.price * item.quantity | currency: 'EUR' }}
+                  </span>
+                </div>
+
+                <div class="item-note" *ngIf="(item.note ?? '').trim()">
+                  <span class="note-label">Notiz:</span>
+                  <span class="note-text">{{ item.note }}</span>
+                </div>
+
               </li>
             </ul>
 

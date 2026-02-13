@@ -80,7 +80,7 @@ export async function sendMail(to: string, subject: string, html: string) {
       requestBody: { raw },
     });
 
-    console.log('📧 Mail gesendet (Gmail API):', res.data?.id);
+    console.log('Mail gesendet (Gmail API):', res.data?.id);
     return res.data;
   } catch (e: any) {
     // für deine Logs:

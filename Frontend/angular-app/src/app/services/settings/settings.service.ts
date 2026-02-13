@@ -18,7 +18,7 @@ export class SettingsService {
     return this.http.get<OrderingState>(this.orderingUrl).pipe(
       catchError((err: unknown) => {
         console.error('SettingsService.getOrderingEnabled failed:', err);
-        // fallback: wenn API nicht erreichbar -> true (App offen)
+        // fallback: wenn API nicht erreichbar 
         return of({ orderingEnabled: true });
       })
     );

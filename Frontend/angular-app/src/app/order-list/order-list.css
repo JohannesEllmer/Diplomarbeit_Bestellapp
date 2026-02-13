@@ -582,7 +582,6 @@
   color: #e5e7eb;
 }
 
-/* Mobile: untereinander, sauber zentriert */
 @media (max-width: 720px){
   .order-footer-row{
     flex-direction: column;

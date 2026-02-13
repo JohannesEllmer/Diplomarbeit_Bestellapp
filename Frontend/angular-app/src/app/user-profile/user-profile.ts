@@ -84,7 +84,6 @@ export class UserPageComponent implements OnInit {
     });
   }
 
-  // ------- UI helpers -------
   money(n: any): string {
     const v = Number(n ?? 0);
     return v.toFixed(2).replace('.', ',') + ' €';
@@ -96,7 +95,6 @@ export class UserPageComponent implements OnInit {
     return balance === 0 && reserved === 0;
   }
 
-  // ✅ robust: "5,00" / "5.00" / "1.234,56" / "1234.56"
   private parseMoneyToNumber(input: any): number {
     const raw = String(input ?? '').trim();
     if (!raw) return NaN;
@@ -106,20 +104,16 @@ export class UserPageComponent implements OnInit {
     const hasDot = normalized.includes('.');
     const hasComma = normalized.includes(',');
 
-    // both present -> '.' thousands, ',' decimal
     if (hasDot && hasComma) {
       normalized = normalized.replace(/\./g, '').replace(',', '.');
     } else if (hasComma) {
-      // only comma -> comma decimal
       normalized = normalized.replace(',', '.');
     }
-    // only dot -> dot decimal (leave as is)
 
     const n = Number(normalized);
     return Number.isFinite(n) ? n : NaN;
   }
 
-  // ------- Add Balance flow -------
   startEdit(): void {
     this.editMode = true;
     this.addAmount = '';
@@ -138,9 +132,6 @@ export class UserPageComponent implements OnInit {
     this.clearStatus();
 
     const delta = this.parseMoneyToNumber(this.addAmount);
-
-    // Debug (kannst du später entfernen)
-    console.log('[UserProfile] addAmount=', this.addAmount, 'delta=', delta);
 
     if (!Number.isFinite(delta) || delta <= 0) {
       this.setStatus('warning', 'Ungültiger Betrag', 'Bitte einen positiven Betrag eingeben.');
@@ -164,8 +155,7 @@ export class UserPageComponent implements OnInit {
       }
     });
   }
-
-  // ------- Flush Balance flow -------
+//ausleeren
   requestFlush(): void {
     this.clearStatus();
     this.pendingQr = null;
@@ -189,7 +179,7 @@ export class UserPageComponent implements OnInit {
     });
   }
 
-  // ------- Delete account -------
+  //Delete
   deleteAccount(): void {
     this.clearStatus();
     if (!this.canDeleteAccount()) {
@@ -217,9 +207,6 @@ export class UserPageComponent implements OnInit {
     });
   }
 
-  // ----------------------------
-  // ✅ Klasse edit / update
-  // ----------------------------
   startClassEdit(): void {
     this.classEditMode = true;
     this.classValue = String(this.profile?.user?.class ?? '').trim();
@@ -245,11 +232,9 @@ export class UserPageComponent implements OnInit {
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: () => {
-          // ✅ UI updaten
           this.profile.user.class = cls;
           this.profile.user.blocked = false;
 
-          // ✅ local storage user updaten, damit Guard/Header stimmt
           const current = this.auth.getCurrentUser();
           if (current) {
             this.auth.setCurrentUser({ ...(current as any), class: cls, blocked: false } as any);
@@ -269,9 +254,6 @@ export class UserPageComponent implements OnInit {
       });
   }
 
-  // ----------------------------
-  // ✅ Passwort ändern (Modal)
-  // ----------------------------
   openPasswordModal(): void {
     this.pwModalOpen = true;
     this.pwOld = '';
@@ -326,7 +308,6 @@ export class UserPageComponent implements OnInit {
       });
   }
 
-  // ------- Status card -------
   clearStatus(): void {
     this.statusType = '';
     this.statusTitle = '';

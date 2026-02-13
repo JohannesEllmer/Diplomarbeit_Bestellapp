@@ -8,7 +8,6 @@ export class ClassPolicyGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
 
-    // ✅ Preflight immer erlauben
     if (req.method === 'OPTIONS') return true;
 
     // wenn kein JWT-User (z.B. Login/Register) -> durchlassen

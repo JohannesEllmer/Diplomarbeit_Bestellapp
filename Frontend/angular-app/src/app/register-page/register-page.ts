@@ -69,13 +69,11 @@ export class RegisterPageComponent implements OnDestroy {
         firstName: ['', [Validators.required]],
         lastName: ['', [Validators.required]],
 
-        // ✅ role ist per Default deaktiviert (nur Admin MANAGEMENT darf es verwenden)
         role: [{ value: 'KUNDE', disabled: true }]
       },
       { validators: [this.schoolEmailValidator()] }
     );
 
-    // ✅ Role-Control passend zum Modus setzen
     this.applyRoleControlState();
 
     const email$ = this.email!.valueChanges.pipe(
@@ -98,7 +96,6 @@ export class RegisterPageComponent implements OnDestroy {
     );
   }
 
-  // ---------- Admin / View ----------
   get currentUser(): any | null {
     return this.auth.getCurrentUser();
   }
@@ -193,9 +190,7 @@ export class RegisterPageComponent implements OnDestroy {
     return value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
   }
 
-  // ---------- Submit ----------
   onSubmit(): void {
-    //falls AdminView währenddessen geändert wurde: state nochmals anwenden
     this.applyRoleControlState();
 
     this.errorMessage = '';
@@ -207,8 +202,6 @@ export class RegisterPageComponent implements OnDestroy {
       this.infoMessage = 'Bitte prüfe deine Eingaben (rot markierte Felder).';
       return;
     }
-
-    // getRawValue beinhaltet disabled Controls -> ok, wir prüfen aber trotzdem isAdminManagementView
     const raw = this.registerForm.getRawValue();
 
     this.isSubmitting = true;
@@ -239,7 +232,6 @@ export class RegisterPageComponent implements OnDestroy {
           isTeacher: raw.isTeacher
         };
 
-        //NUR Admin im MANAGEMENT-View darf role mitsenden (inkl. ADMIN)
         if (this.isAdminManagementView) {
           payload.role = raw.role as RoleType;
         }

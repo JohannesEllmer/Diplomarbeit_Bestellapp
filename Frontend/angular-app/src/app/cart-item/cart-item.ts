@@ -22,15 +22,12 @@ export class CartItemComponent implements OnInit {
   displayNote = '';
 
   ngOnInit(): void {
-    // ✅ Alte/unerwünschte Prefixe entfernen (z.B. "[Menü: Curry]")
     this.displayNote = this.normalizeNote(this.item?.note);
   }
 
   onNoteChange(): void {
-    // ✅ Beim Tippen ebenfalls bereinigen (optional, aber verhindert “Zurückspringen” alter Werte)
     const cleaned = this.normalizeNote(this.displayNote);
 
-    // optional: textarea-Inhalt direkt aktualisieren
     if (cleaned !== this.displayNote) {
       this.displayNote = cleaned;
     }
@@ -38,13 +35,10 @@ export class CartItemComponent implements OnInit {
     this.noteChange.emit(cleaned);
   }
 
-  /** Entfernt Prefixe am Anfang wie "[Menü]" oder "[Menü: irgendwas]" */
   private normalizeNote(value: any): string {
     const s = String(value ?? '');
 
     // Entfernt NUR am Anfang:
-    // [Menü] / [Menu] / [Menü: Curry] / [Menu: Curry]
-    // inkl. nachfolgender Leerzeichen/Zeilen
     return s.replace(/^\s*\[(?:menü|menu)(?::[^\]]*)?\]\s*/i, '').trimStart();
   }
 

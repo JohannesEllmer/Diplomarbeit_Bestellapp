@@ -1,12 +1,10 @@
 <article class="menu-card"
          [class.unavailable]="!canOrder">
 
-  <!-- ✅ Rechts oben: Menü oder Gericht -->
   <span class="type-label">
     {{ typeLabel }}
   </span>
 
-  <!-- ✅ Nicht verfügbar / Im Menü enthalten – nicht mehr kollidierend -->
   <span class="unavailable-label" *ngIf="!canOrder">
     {{ isExtraItem ? 'Im Menü enthalten' : 'Nicht verfügbar' }}
   </span>
@@ -23,7 +21,6 @@
 
     <p class="menu-desc">{{ item.description }}</p>
 
-    <!-- ✅ Extras nur wenn Menü -->
     <ul class="menu-extras" *ngIf="isMenuSet">
       <li *ngIf="menuDrink">Getränk: {{ menuDrink }}</li>
       <li *ngIf="menuDessert">Dessert: {{ menuDessert }}</li>

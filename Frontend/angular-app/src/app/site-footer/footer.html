@@ -1,12 +1,10 @@
 <footer class="menu-footer">
   <div class="footer-inner">
 
-    <!-- optional: Actions (Buttons, Summen, etc.) -->
     <div class="footer-actions-area" *ngIf="true">
       <ng-content select="[footer-actions]"></ng-content>
     </div>
 
-    <!-- Impressum Desktop -->
     <div class="impressum-desktop">
       <span>{{ companyName }}</span>
       <span>{{ inhaber }}</span>
@@ -14,14 +12,12 @@
       <span>{{ uid }}</span>
     </div>
 
-    <!-- Impressum Mobile -->
     <div class="impressum-mobile">
       <button class="impressum-btn" type="button" (click)="openImpressum()">
         Impressum
       </button>
     </div>
 
-    <!-- Popup -->
     <div
       class="impressum-popup-overlay"
       *ngIf="showImpressumPopup"

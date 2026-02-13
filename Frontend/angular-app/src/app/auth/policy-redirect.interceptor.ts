@@ -20,7 +20,7 @@ export class PolicyRedirectInterceptor implements HttpInterceptor {
         const code = (err as any)?.error?.error;
 
         if (err.status === 403 && code === 'USER_PROFILE_UPDATE_REQUIRED') {
-          // ✅ sofort zum Profil leiten
+          //zum Profil leiten
           this.router.navigate(['/user-profile']);
         }
 

@@ -109,7 +109,7 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
   selectedOrder: StatOrder | null = null;
   selectedDay: DayData | null = null;
 
-  // ✅ Top Trending: nur Top 3 (aber Styling wie vorhin "cards")
+  //Top Trending
   topTrending: TrendingRow[] = [];
 
   constructor(private stats: StatisticsService) {}
@@ -238,8 +238,6 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
       });
     }
   }
-
-  // ✅ Trending: Top 3, Sortierung nach Menge (dann Umsatz)
   private recalculateTrending(): void {
     const map = new Map<string, TrendingRow>();
 
@@ -268,9 +266,7 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
     this.topTrending = arr.slice(0, 3);
   }
 
-  // -------------------------
-  // Chart
-  // -------------------------
+  // Chart - chart.js
   toggleChartType(type: ChartType): void {
     if (type === 'line' && this.days.length < 5) return;
     this.selectedChartType = type;
@@ -348,9 +344,6 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // -------------------------
-  // Orders Filtering + View
-  // -------------------------
   get filteredDays(): DayData[] {
     const q = this.orderQuery.trim().toLowerCase();
     const result: DayData[] = [];
@@ -419,7 +412,6 @@ export class StatisticsPageComponent implements OnInit, AfterViewInit {
     return o.id;
   }
 
-  // ✅ Gerichte für Orders-List (kurz)
   orderDishNames(order: StatOrder): string[] {
     const items = this.extractItems(order);
     const names = items

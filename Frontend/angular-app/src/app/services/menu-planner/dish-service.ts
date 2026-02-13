@@ -27,7 +27,7 @@ export class DishService {
       price: Number(dto.price ?? 0),
 
       category: 'Hauptgericht',
-      available: true,       // ✅ default true (global dish verfügbar)
+      available: true,       
       vegetarian: false,
       allergens: Array.isArray(dto.allergenes) ? dto.allergenes : [],
     };

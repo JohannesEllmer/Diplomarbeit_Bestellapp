@@ -56,6 +56,18 @@ export class UserService {
     });
   }
 
+  updateUserRole(userId: string, role: string): Observable<User> {
+  if (environment.useMockData) {
+    const updated = this.mockUsers.find(u => u.id === userId);
+    if (!updated) return throwError(() => new Error('USER_NOT_FOUND'));
+    (updated as any).role = role as any;
+    return of(updated as unknown as User);
+  }
+
+  return this.http.patch<User>(`${this.usersEndpoint}/${userId}`, { role });
+}
+
+
   resetPassword(userId: string): Observable<string> {
     if (environment.useMockData) return of('pw-123456');
 

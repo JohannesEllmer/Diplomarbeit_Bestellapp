@@ -17,7 +17,6 @@ export class OrdersRepo {
     return (r.rows ?? []).map(x => String(x.id));
   }
 
-  // -------- create + lock --------
   async lockUserBalance(db: Db, userId: string) {
     return db.query(
       `SELECT id, balance FROM app.users WHERE id=$1 FOR UPDATE`,

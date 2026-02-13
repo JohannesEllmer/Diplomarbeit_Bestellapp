@@ -31,7 +31,6 @@ export class MenuItemComponent {
     return this.item.available !== false;
   }
 
-  // ✅ Menü-Extras kommen zuverlässig vom Item (vom Parent "eingebacken")
   get menuDrink(): string {
     return String((this.item as any)?.drink ?? '').trim();
   }
@@ -40,7 +39,6 @@ export class MenuItemComponent {
     return String((this.item as any)?.dessert ?? '').trim();
   }
 
-  // ✅ "Menü" wenn Extras vorhanden, sonst "Gericht"
   get isMenuSet(): boolean {
     return !!(this.menuDrink || this.menuDessert);
   }

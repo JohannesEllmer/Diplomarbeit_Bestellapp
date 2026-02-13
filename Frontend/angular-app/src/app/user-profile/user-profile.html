@@ -4,18 +4,11 @@
     <div class="auth-header">
       <div class="auth-title-block">
         <h1>Mein Konto</h1>
-        <p>Deine Daten, Guthaben & Aktivität</p>
-      </div>
-
-      <div class="auth-badge" *ngIf="profile">
-        <div class="badge-main">USER</div>
-        <div class="badge-sub">ID: {{ profile.user?.id }}</div>
       </div>
     </div>
 
     <div class="auth-body" *ngIf="profile">
 
-      <!-- Status Card -->
       <div class="status-card"
            *ngIf="statusType"
            [class.is-success]="statusType==='success'"
@@ -30,12 +23,9 @@
       </div>
 
       <div class="form-grid">
-        <!-- Left column: User data -->
         <div class="form-col">
           <div class="form-section">
             <div class="section-title">Profil</div>
-            <div class="section-subtitle">Deine gespeicherten Daten</div>
-
             <div class="form-group">
               <label>Name</label>
               <input [value]="profile.user?.name" readonly />
@@ -46,7 +36,6 @@
               <input [value]="profile.user?.email" readonly />
             </div>
 
-            <!-- ✅ Klasse editable -->
             <div class="form-group">
               <label>Klasse</label>
 
@@ -99,8 +88,6 @@
 
             <div class="info-box">
               <div><strong>Guthaben:</strong> {{ money(profile.balance) }}</div>
-              <div><strong>Reserviert (offen):</strong> {{ money(profile.reserved) }}</div>
-              <div><strong>Verfügbar:</strong> {{ money(profile.available) }}</div>
             </div>
 
             <div class="hint">Änderungen am Guthaben werden erst nach QR-Scan durch den Inhaber wirksam.</div>
@@ -134,7 +121,6 @@
           </div>
         </div>
 
-        <!-- Right column: edit + QR + logs -->
         <div class="form-col">
           <div class="form-section" *ngIf="editMode">
             <div class="section-title">Guthaben erhöhen</div>

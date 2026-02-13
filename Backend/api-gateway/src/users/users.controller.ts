@@ -19,7 +19,7 @@ import { UpdateClassDto } from './dto/update-class.dto';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  //Header (für App-Header: Name, Balance, Blocked, Role)
+  //App-Header: Name, Balance, Blocked, Role
   @UseGuards(JwtAuthGuard)
   @Get('me/header')
   getMyHeader(@Req() req: any) {

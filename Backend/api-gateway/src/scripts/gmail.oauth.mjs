@@ -27,7 +27,7 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-rl.question('\n🔑 Code von Google hier einfügen: ', async (code) => {
+rl.question('\nCode von Google hier einfügen: ', async (code) => {
   const { tokens } = await oauth2Client.getToken(code.trim());
   console.log('\nREFRESH TOKEN:\n');
   console.log(tokens.refresh_token);

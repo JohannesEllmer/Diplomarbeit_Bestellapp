@@ -22,12 +22,8 @@ export class AutoLogoutInterceptor implements HttpInterceptor {
         const code = (err as any)?.error?.error;
 
         // 401 -> Token ungültig/abgelaufen => logout
-        // optional: nur wenn INVALID_TOKEN / Unauthorized
         if (err.status === 401) {
-          // wenn du es enger machen willst:
-          // if (message === 'INVALID_TOKEN' || code === 'Unauthorized') { ... }
-
-          this.auth.logoutIfNeeded();
+              this.auth.logoutIfNeeded();
         }
 
         return throwError(() => err);

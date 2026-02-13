@@ -26,7 +26,7 @@ export const PG_POOL = Symbol('PG_POOL');
           client.query(`SET search_path TO app, public;`).catch(() => {});
         });
 
-        // ✅ Fail fast, wenn DB nicht erreichbar
+        //Fail fast, wenn DB nicht erreichbar
         await pool.query('SELECT 1');
         return pool;
       },

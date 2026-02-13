@@ -28,7 +28,6 @@ export class MenuManager implements OnInit {
   loadError: string | null = null;
   activating = false;
 
-  // ✅ Ordering toggle
   orderingEnabled = true;
   togglingOrdering = false;
 
@@ -49,7 +48,7 @@ export class MenuManager implements OnInit {
         this.orderingEnabled = !!s?.orderingEnabled;
       },
       error: () => {
-        // Fallback (eigentlich unnötig weil Service bereits fallbackt)
+        // Fallback
         this.orderingEnabled = true;
       }
     });
@@ -65,10 +64,8 @@ export class MenuManager implements OnInit {
       next: (res: SetOrderingResponse) => {
         this.togglingOrdering = false;
 
-        // ✅ Fix für TS2367: kein "=== false" Vergleich
         if (!res?.ok) return;
 
-        // nimm den Wert vom Backend (robuster als "next")
         this.orderingEnabled = !!res.orderingEnabled;
       },
       error: () => {
@@ -85,7 +82,6 @@ export class MenuManager implements OnInit {
       next: (menus: MealPlan[]) => {
         this.Menus = (menus ?? []).map(m => ({
           ...m,
-          // ✅ falls Backend noch nicht sauber typisiert liefert
           menuItems: (m as any).menuItems ?? [],
         }));
 
@@ -172,7 +168,7 @@ export class MenuManager implements OnInit {
       }
     });
   }
-  // --- printMenu: dein Code bleibt wie gehabt ---
+  
   async printMenu(menu: MealPlan): Promise<void> {
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
@@ -202,7 +198,6 @@ export class MenuManager implements OnInit {
     const text = (rgb: { r: number; g: number; b: number }) => doc.setTextColor(rgb.r, rgb.g, rgb.b);
 
     const roundRect = (x: number, y: number, w: number, h: number, r = 4, style: 'S'|'F'|'FD' = 'S') => {
-      // @ts-ignore
       doc.roundedRect(x, y, w, h, r, r, style);
     };
 
@@ -221,8 +216,8 @@ export class MenuManager implements OnInit {
     const menuTitle = (menu?.title ?? 'Speisekarte').trim() || 'Speisekarte';
 
     const companyLines = [
-      'Firma Muster GmbH · Musterstraße 1 · 12345 Musterstadt',
-      'Tel: 01234 / 567890 · E-Mail: info@musterfirma.de'
+      'HungerSatt Schulbistro · Alte Bundestraße 11 - 5600 St. Johann',
+      'Markus Gruber · UID: 68016602'
     ];
 
     const itemsRaw = Array.isArray((menu as any)?.menuItems) ? (menu as any).menuItems : [];

@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, map, delay, catchError } from 'rxjs';
+import { Observable, of, map, delay, catchError, throwError } from 'rxjs';
 import { environment } from '../../env';
 import { Order } from '../../../models/menu-item.model';
 import { AuthService } from '../../auth/auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class MyOrderService {
-  private readonly apiBase = environment.apiBaseUrl ?? 'http://localhost:3000/api';
+  private readonly apiBase = environment.apiBaseUrl;
   private readonly ordersEndpoint = `${this.apiBase}/orders`;
 
   constructor(private http: HttpClient, private auth: AuthService) {}
@@ -18,8 +18,8 @@ export class MyOrderService {
     return this.http.get<Order[]>(`${this.ordersEndpoint}/my`).pipe(
       map((orders) => this.addQrForOpenOrders(orders ?? [])),
       catchError((error) => {
-        console.error('getMyOrders failed:', error);
-        return this.getMyOrdersMock();
+         console.error('Fehler beim Laden der eigenen Bestellungen', error);
+        return throwError(() => error); 
       })
     );
   }

@@ -82,7 +82,6 @@ export class MenuPlanner implements OnInit, OnDestroy {
 
     this.loadAllMenuItemsAndSplit();
 
-    // ✅ Wenn man aus DishEditor zurückkommt (state.menuItem), aktualisieren wir die Listen
     const edited = history.state.menuItem as MenuItem | undefined;
     if (edited?.id && UUID_RE.test(edited.id)) {
       this.applyUpdatedMenuItem(edited);
@@ -122,9 +121,6 @@ export class MenuPlanner implements OnInit, OnDestroy {
       });
   }
 
-  // -------------------------
-  // Dragging
-  // -------------------------
   onDragStarted(): void {
     this.isDragging = true;
   }
@@ -205,9 +201,6 @@ export class MenuPlanner implements OnInit, OnDestroy {
     if (this.menuTitle.trim()) this.titleError = '';
   }
 
-  // -------------------------
-  // Availability (disabled im MealPlan)
-  // -------------------------
   toggleAvailable(item: MenuItem, ev?: Event): void {
     ev?.stopPropagation();
     if (!item?.id) return;
@@ -229,22 +222,14 @@ export class MenuPlanner implements OnInit, OnDestroy {
     }
   }
 
-  // -------------------------
-  // ✅ Edit Button → DishEditor mit Prefill & Update
-  // -------------------------
   editDish(item: MenuItem, ev?: Event): void {
     ev?.stopPropagation();
     if (!item?.id) return;
-
-    // ✅ DishEditor erkennt: id vorhanden → lädt & macht PATCH beim Speichern
     this.router.navigate(['/gericht-verwaltung'], {
       state: { dish: item, returnTo: '/menuplaner', returnState: { menu: this.menu } }
     });
   }
 
-  // -------------------------
-  // Delete dialog
-  // -------------------------
   openDeleteDialog(item: MenuItem, ev?: Event): void {
     ev?.stopPropagation();
     if (!item?.id) return;
@@ -252,8 +237,6 @@ export class MenuPlanner implements OnInit, OnDestroy {
     this.dishToDelete = item;
     this.showDeleteDialog = true;
   }
-
-  
 
   cancelDelete(): void {
     this.showDeleteDialog = false;
@@ -267,7 +250,6 @@ export class MenuPlanner implements OnInit, OnDestroy {
     return;
   }
 
-  // ✅ Debug: Damit du siehst, ob die Funktion überhaupt läuft
   console.log('[MenuPlanner] confirmDelete clicked for id:', item.id);
 
   this.saveError = null;
@@ -276,11 +258,9 @@ export class MenuPlanner implements OnInit, OnDestroy {
   const prevSelected = [...this.selectedDishes];
   const prevUnselected = [...this.unselectedDishes];
 
-  // ✅ UI sofort updaten
   this.selectedDishes = (this.selectedDishes ?? []).filter(x => x.id !== item.id);
   this.unselectedDishes = (this.unselectedDishes ?? []).filter(x => x.id !== item.id);
 
-  // ✅ HTTP Call
   this.menuItems.delete(String(item.id))
     .pipe(finalize(() => {
       this.deletingId = null;

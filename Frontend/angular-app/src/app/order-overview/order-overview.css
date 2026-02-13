@@ -107,6 +107,24 @@
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.6);
 }
 
+.item-main {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.item-note {
+  margin-top: 4px;
+  font-size: 0.9em;
+  opacity: 0.9;
+}
+
+.note-label {
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+
 .impressum-btn {
   background: transparent;
   border: none;

@@ -18,10 +18,10 @@ export interface StatOrder {
   id: string;
   user?: { id?: string; name?: string | null };
   totalPrice: number;
-  delivered?: boolean; // derived from status
+  delivered?: boolean; 
   status?: 'open' | 'closed';
   createdAt?: string;
-  items?: StatOrderItem[]; // ✅ NEU
+  items?: StatOrderItem[];
 }
 
 export interface DayData {
@@ -115,7 +115,7 @@ export class StatisticsService {
         status: o.status,
         delivered: o.status === 'closed',
         createdAt: typeof o.createdAt === 'string' ? o.createdAt : new Date(o.createdAt).toISOString(),
-        items, // ✅ bleibt drin
+        items, 
       });
     }
 

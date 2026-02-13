@@ -141,7 +141,6 @@ export class MealPlansService {
     return { ok: true, id };
   }
 
-  // ✅ FEHLTEN: Single add/remove/disable
   async addMenuItem(mealPlanId: string, menuItemId: string) {
     const mpId = String(mealPlanId ?? '').trim();
     const miId = String(menuItemId ?? '').trim();

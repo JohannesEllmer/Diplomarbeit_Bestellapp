@@ -112,6 +112,26 @@ export class UserManagementComponent implements OnInit {
     });
   }
 
+  onRoleChange(e: { user: User; role: string }): void {
+  const { user, role } = e;
+
+  const confirmed = confirm(`Rolle von "${user.name}" auf "${role}" ändern?`);
+  if (!confirmed) return;
+
+  this.userService.updateUserRole(user.id, role).subscribe({
+    next: (updated) => {
+      const idx = this.users.findIndex(u => u.id === updated.id);
+      if (idx !== -1) this.users[idx] = updated;
+      this.filterUsers();
+    },
+    error: (err) => {
+      console.error(err);
+      alert('Rolle konnte nicht geändert werden.');
+    }
+  });
+}
+
+
   resetPassword(user: User): void {
     const confirmed = confirm(`Passwort für "${user.name}" wirklich zurücksetzen?`);
     if (!confirmed) return;
