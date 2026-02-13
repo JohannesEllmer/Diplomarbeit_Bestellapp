@@ -33,31 +33,37 @@
     </div>
   </div>
 
-  <div *ngIf="showDetails" class="user-details" (click)="$event.stopPropagation()">
-    <div class="detail-row">
-      <label>Guthaben:</label>
-      <span>{{ user.balance | currency:'EUR' }}</span>
-    </div>
-    <div class="detail-row">
-      <label>Klasse:</label>
-      <span>{{ user.class }}</span>
-    </div>
-    <div class="detail-row">
-      <label>Bestellungen:</label>
-      <span>{{ user.orderCount }}</span>
-    </div>
-    <div class="detail-row">
-  <label>Rolle:</label>
-  <select
-    class="role-select"
-    [ngModel]="user.role"
-    (click)="$event.stopPropagation()"
-    (ngModelChange)="onRoleChange($event)"
-  >
-    <option value="USER">USER</option>
-    <option value="INHABER">INHABER</option>
-    <option value="ADMIN">ADMIN</option>
-  </select>
+ <div *ngIf="showDetails" class="user-details" (click)="$event.stopPropagation()">
+  <div class="detail-row">
+    <label>Guthaben:</label>
+    <span>{{ user.balance | currency:'EUR' }}</span>
+  </div>
+
+  <div class="detail-row">
+    <label>Klasse:</label>
+    <span>{{ user.class }}</span>
+  </div>
+
+  <div class="detail-row">
+    <label>Bestellungen:</label>
+    <span>{{ user.orderCount }}</span>
+  </div>
+
+  <div class="detail-row">
+    <label>Rolle:</label>
+    <select
+      class="role-select"
+      [ngModel]="user.role"
+      (click)="$event.stopPropagation()"
+      (ngModelChange)="onRoleChange($event)"
+    >
+      <option value="USER">USER</option>
+      <option value="INHABER">INHABER</option>
+      <option value="ADMIN">ADMIN</option>
+    </select>
+  </div>
+</div>
+
 </div>
 
 </div>
