@@ -45,7 +45,8 @@
       [user]="user"
       (delete)="deleteUser($event)"
       (block)="blockUser($event)"
-      (resetPassword)="resetPassword($event)">
+      (resetPassword)="resetPassword($event)"
+        (roleChange)="onRoleChange($event)">
     </app-user-items>
 
     <div *ngIf="filteredUsers.length === 0" class="no-results">

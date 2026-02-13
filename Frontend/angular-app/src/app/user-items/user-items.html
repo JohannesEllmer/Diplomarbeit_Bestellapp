@@ -51,11 +51,13 @@
   <select
     class="role-select"
     [ngModel]="user.role"
+    (click)="$event.stopPropagation()"
     (ngModelChange)="onRoleChange($event)"
   >
     <option value="USER">USER</option>
     <option value="INHABER">INHABER</option>
     <option value="ADMIN">ADMIN</option>
   </select>
-  </div>
+</div>
+
 </div>
