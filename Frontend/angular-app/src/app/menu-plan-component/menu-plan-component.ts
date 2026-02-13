@@ -216,7 +216,7 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
     if (menuId) this.cartService.setCartMenuId(menuId);
 
     const trimmed = String(note ?? '').trim();
-    const finalNote = (trimmed + this.buildMenuHint()).trim();
+    const finalNote = trimmed;
 
     const items = this.cartService.getCartItems();
     const existing = items.find(
