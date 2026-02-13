@@ -65,6 +65,10 @@ async function bootstrap() {
   const pool = app.get<Pool>(PG_POOL);
   app.use('/api/auth', authRouter(pool));
 
+    app.getHttpAdapter().get('/health-checks', (req, res) => {
+    res.status(200).send('OK');
+  });
+
   // Mailer nur prüfen, wenn Gmail envs vorhanden
   try {
     await verifyMailer();

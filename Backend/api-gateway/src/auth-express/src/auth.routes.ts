@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Pool } from 'pg';
 
 import { JWT_SECRET, JWT_EXPIRES_IN, APP_BASE_URL } from './config.js';
-import { sendMail } from './mailer.js'; // ✅ mailer bleibt wie er ist
+import { sendMail } from './mailer.js'; 
 import { createRandomToken, hashToken } from './tokenHelper.js';
 import { requireAuth } from './auth.middleware.js';
 
