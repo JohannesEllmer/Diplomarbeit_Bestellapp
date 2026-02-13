@@ -502,3 +502,79 @@
     }
   }
 }
+/* --- ORDER ITEM: robust + responsive inkl. Notiz --- */
+.order-items li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto; /* Titel | Preis */
+  grid-template-areas:
+    "main price"
+    "note note";
+  gap: 0.35rem 0.75rem;
+  align-items: start;
+}
+
+.item-main {
+  grid-area: main;
+  display: flex;
+  flex-wrap: wrap;            
+  align-items: baseline;
+  gap: 0.4rem 0.6rem;
+  min-width: 0;               
+}
+
+.item-price {
+  grid-area: price;
+  text-align: right;
+  white-space: nowrap;        
+  min-width: 5rem;
+}
+
+.item-quantity {
+  white-space: nowrap;
+}
+
+.item-title {
+  min-width: 0;
+  overflow-wrap: anywhere;    
+  word-break: break-word;
+}
+
+.item-note {
+  grid-area: note;
+  margin-top: 0.1rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 10px;
+  background: #f1f5f9;        
+  border: 1px solid #e2e8f0;
+  font-size: 0.9rem;
+  line-height: 1.25rem;
+  display: flex;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.note-label {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.note-text {
+  min-width: 0;
+  overflow-wrap: anywhere;    
+  word-break: break-word;
+}
+
+@media (max-width: 480px) {
+  .order-items li {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "main"
+      "price"
+      "note";
+  }
+
+  .item-price {
+    text-align: left;
+    min-width: 0;
+  }
+}
