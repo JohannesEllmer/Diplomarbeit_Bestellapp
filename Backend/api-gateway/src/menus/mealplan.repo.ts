@@ -58,14 +58,17 @@ export class MealPlansRepo {
     return String(r.rows[0].id);
   }
 
-  async updateTitle(db: Db, id: string, title: string | null) {
+    async updateTitle(db: Db, id: string, title: string | null) {
     const r = await db.query(
-      `UPDATE app.meal_plans SET title=COALESCE($2,title)
-       WHERE id=$1 AND ${MP_NOT_DELETED} RETURNING id`,
+      `UPDATE app.meal_plans mp
+      SET title = COALESCE($2, mp.title)
+      WHERE mp.id = $1 AND ${MP_NOT_DELETED}
+      RETURNING mp.id`,
       [id, title],
     );
     return (r.rowCount ?? 0) > 0;
   }
+
 
   async replaceItems(client: PoolClient, mealPlanId: string, menuItemIds: string[]) {
     await client.query(`DELETE FROM app.meal_plan_menu_items WHERE meal_plan_id=$1`, [mealPlanId]);
