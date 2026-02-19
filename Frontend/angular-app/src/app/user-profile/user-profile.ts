@@ -23,12 +23,10 @@ export class UserPageComponent implements OnInit {
   profile: any = null;
   activity: any = { orders: [], balanceLogs: [] };
 
-  // Balance edit flow
   editMode = false;
   addAmount = '';
   pendingQr: { id: string; code: string; qrCodeUrl: string } | null = null;
 
-  // Flush flow
   flushQr: { id: string; code: string; qrCodeUrl: string } | null = null;
 
   classEditMode = false;
@@ -40,7 +38,6 @@ export class UserPageComponent implements OnInit {
   pwNew2 = '';
   pwSaving = false;
 
-  // status card
   statusType: StatusType = '';
   statusTitle = '';
   statusMsg = '';
@@ -62,13 +59,11 @@ export class UserPageComponent implements OnInit {
     this.api.getProfile().subscribe({
       next: (p) => {
         this.profile = p;
-
-        // Klasse Feld fürs UI initialisieren
         this.classValue = String(this.profile?.user?.class ?? '').trim();
 
         this.api.getActivity().subscribe({
           next: (a) => {
-            this.activity = a;
+            this.activity = a ?? { orders: [], balanceLogs: [] };
             this.loading = false;
           },
           error: (err) => {
@@ -143,11 +138,7 @@ export class UserPageComponent implements OnInit {
       next: (res) => {
         this.loading = false;
         this.pendingQr = res;
-        this.setStatus(
-          'success',
-          'QR-Code erstellt',
-          'Der Inhaber muss diesen QR-Code scannen, damit das Guthaben hinzugefügt wird.'
-        );
+        this.setStatus('success', 'QR-Code erstellt', 'Der Inhaber muss diesen QR-Code scannen, damit das Guthaben hinzugefügt wird.');
       },
       error: (err) => {
         this.loading = false;
@@ -155,7 +146,7 @@ export class UserPageComponent implements OnInit {
       }
     });
   }
-//ausleeren
+
   requestFlush(): void {
     this.clearStatus();
     this.pendingQr = null;
@@ -166,11 +157,7 @@ export class UserPageComponent implements OnInit {
       next: (res) => {
         this.loading = false;
         this.flushQr = res;
-        this.setStatus(
-          'success',
-          'QR-Code zum Ausleeren erstellt',
-          'Der Inhaber muss diesen QR-Code scannen, danach wird dein Guthaben auf 0 gesetzt.'
-        );
+        this.setStatus('success', 'QR-Code zum Ausleeren erstellt', 'Der Inhaber muss diesen QR-Code scannen, danach wird dein Guthaben auf 0 gesetzt.');
       },
       error: (err) => {
         this.loading = false;
@@ -179,15 +166,10 @@ export class UserPageComponent implements OnInit {
     });
   }
 
-  //Delete
   deleteAccount(): void {
     this.clearStatus();
     if (!this.canDeleteAccount()) {
-      this.setStatus(
-        'warning',
-        'Löschen nicht möglich',
-        'Guthaben muss 0 sein und es dürfen keine offenen Bestellungen existieren.'
-      );
+      this.setStatus('warning', 'Löschen nicht möglich', 'Guthaben muss 0 sein und es dürfen keine offenen Bestellungen existieren.');
       return;
     }
 
@@ -245,11 +227,7 @@ export class UserPageComponent implements OnInit {
           this.refreshAll();
         },
         error: (err) => {
-          this.setStatus(
-            'error',
-            'Klasse konnte nicht gespeichert werden',
-            err?.error?.message || err?.message || String(err)
-          );
+          this.setStatus('error', 'Klasse konnte nicht gespeichert werden', err?.error?.message || err?.message || String(err));
         }
       });
   }
@@ -322,5 +300,43 @@ export class UserPageComponent implements OnInit {
 
   closeStatus(): void {
     this.clearStatus();
+  }
+
+  formatOrderStatus(s: any): string {
+    const v = String(s ?? '').toLowerCase();
+    if (v === 'open') return 'Offen';
+    if (v === 'closed') return 'Abgeschlossen';
+    return v || '—';
+  }
+
+  formatIso(iso: any): string {
+    const d = new Date(String(iso ?? ''));
+    if (isNaN(d.getTime())) return String(iso ?? '');
+    return d.toLocaleString('de-AT', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  getOrderTitle(o: any): string {
+    const items = Array.isArray(o?.items) ? o.items : [];
+    if (!items.length) return `Bestellung #${o?.id ?? ''}`.trim();
+
+    const parts = items.slice(0, 2).map((it: any) =>
+      `${Number(it?.quantity ?? 0)}× ${it?.menuItem?.name ?? 'Artikel'}`
+    );
+
+    const rest = items.length - parts.length;
+    return rest > 0 ? `${parts.join(', ')} (+${rest} weitere)` : parts.join(', ');
+  }
+
+  formatReason(code: any): string {
+    const c = String(code ?? '').trim();
+    const map: Record<string, string> = {
+      BALANCE_ADD_CONFIRMED: 'Guthaben hinzugefügt (QR bestätigt)',
+      BALANCE_FLUSH_CONFIRMED: 'Guthaben ausgeleert (QR bestätigt)',
+      BALANCE_DELTA_DIRECT: 'Guthaben geändert (System/Admin)',
+    };
+    return map[c] ?? c ?? 'Änderung';
   }
 }

@@ -6,7 +6,8 @@
           [item]="item"
           (increase)="increaseQuantity(i)"
           (decrease)="decreaseQuantity(i)"
-          (remove)="removeItem(i)">
+          (remove)="removeItem(i)"
+          (noteChange)="updateNote(i, $event)">
         </app-cart-item>
       }
     </div>

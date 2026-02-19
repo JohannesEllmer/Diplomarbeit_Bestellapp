@@ -152,12 +152,6 @@ export class CartPageComponent implements OnInit {
     this.showImpressumPopup = false;
   }
 
-  money(n: any): string {
-    const v = Number(n ?? 0);
-    const fixed = Number.isFinite(v) ? v.toFixed(2) : '0.00';
-    return fixed.replace('.', ',') + ' €';
-  }
-
   private parseMoneyToNumber(value: any): number {
     if (typeof value === 'number') return value;
 
@@ -228,11 +222,6 @@ export class CartPageComponent implements OnInit {
 
       if (!this.cartService.isValidTimeFormat(this.selectedTime)) {
         this.timeError = 'Bitte wähle eine gültige Uhrzeit.';
-        return;
-      }
-
-      if (!this.isWithinBusinessHours()) {
-        this.timeError = 'Außerhalb der Geschäftszeiten';
         return;
       }
 

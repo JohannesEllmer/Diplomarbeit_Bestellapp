@@ -37,8 +37,6 @@ export class CartItemComponent implements OnInit {
 
   private normalizeNote(value: any): string {
     const s = String(value ?? '');
-
-    // Entfernt NUR am Anfang:
     return s.replace(/^\s*\[(?:menü|menu)(?::[^\]]*)?\]\s*/i, '').trimStart();
   }
 

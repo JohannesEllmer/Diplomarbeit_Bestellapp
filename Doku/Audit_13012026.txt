@@ -4,13 +4,20 @@ Inhaber Markus Gruber
 Alte Bundestraße 11
 5600 St. Johann
 UID: 68016602
-Regelung für Festlegung von bestellzeiten?
-Benachrichtigungen wann und wie oft
+
+
 Gmail Email Adresse --> mahlzeit.hungersatt@gmail.com
 Budget und Account für WorldForYou
-
-
 
 Bestellung mit Uhrzeit von/bis
 geschlossen Knopf
 
+Besprechung: 17.02.2026
+
+- Abnahme aktuelles System
+
+- Hosting bezahlen --> Domain bei WorldforYou kaufen und bei Render backend Ressourcen für dauerhafte bereitstellung
+
+- HungerSatt logo
+
+- bezügl. Testphase für HTL. 

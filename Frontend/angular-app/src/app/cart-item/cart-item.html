@@ -1,7 +1,6 @@
 <article class="cart-card">
   <div class="cart-content">
 
-    <!-- HEADER -->
     <div class="cart-header">
       <div class="title-area">
         <h3>
@@ -22,7 +21,6 @@
       </div>
     </div>
 
-    <!-- BESCHREIBUNG -->
     <p class="menu-desc" *ngIf="item.menuItem.description">
       {{ item.menuItem.description }}
     </p>
@@ -37,7 +35,6 @@
       </div>
     </div>
 
-    <!-- ALLERGENE -->
     <div class="allergens" *ngIf="item.menuItem.allergens?.length">
       <strong>Allergene:</strong>
       {{ item.menuItem.allergens.join(', ') }}
@@ -52,14 +49,12 @@
       </textarea>
     </div>
 
-    <!-- MENGE -->
     <div class="quantity-control">
       <button type="button" (click)="decrease.emit()">−</button>
       <span>{{ item.quantity }}</span>
       <button type="button" (click)="increase.emit()">+</button>
     </div>
 
-    <!-- FOOTER -->
     <div class="cart-footer">
       <span class="price-each">
         Einzelpreis: {{ item.menuItem.price | currency:'EUR' }}
