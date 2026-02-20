@@ -14,10 +14,10 @@ geschlossen Knopf
 
 Besprechung: 17.02.2026
 
-- Abnahme aktuelles System
+- Abnahme aktuelles System +
 
-- Hosting bezahlen --> Domain bei WorldforYou kaufen und bei Render backend Ressourcen für dauerhafte bereitstellung
+- Hosting bezahlen --> Domain bei WorldforYou kaufen und bei Render backend Ressourcen für dauerhafte Bereitstellung --> wird vor ende der Diplomarbeit durchgeführt
 
-- HungerSatt logo
+- HungerSatt logo --> fehlt noch warten auf entsprechende email
 
-- bezügl. Testphase für HTL. 
+- bezügl. Testphase für HTL --> Planmäßiger Start nächste Woche

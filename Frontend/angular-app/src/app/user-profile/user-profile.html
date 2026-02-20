@@ -207,7 +207,7 @@
 
             <div class="info-box" *ngFor="let l of activity.balanceLogs">
               <div>
-                <strong>{{ Guthabenänderung }}</strong>
+                <strong>{{ l.reason }}</strong>
                 • Delta: {{ money(l.delta) }}
                 • Stand: {{ money(l.balanceAfter) }}
               </div>
