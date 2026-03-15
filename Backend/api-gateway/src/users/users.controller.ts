@@ -1,3 +1,4 @@
+// src/users/users.controller.ts
 import {
   Controller,
   Get,
@@ -19,14 +20,12 @@ import { UpdateClassDto } from './dto/update-class.dto';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  //App-Header: Name, Balance, Blocked, Role
   @UseGuards(JwtAuthGuard)
   @Get('me/header')
   getMyHeader(@Req() req: any) {
     return this.usersService.getMyHeader(req.user);
   }
 
-  //User-Page: Profil + Guthaben + reserved + available
   @UseGuards(JwtAuthGuard)
   @Get('me/profile')
   getMyProfile(@Req() req: any) {
@@ -34,7 +33,6 @@ export class UsersController {
     return this.usersService.getMyProfile(userId);
   }
 
-  //User-Page: Activity/Logs
   @UseGuards(JwtAuthGuard)
   @Get('me/activity')
   getMyActivity(@Req() req: any) {
@@ -42,7 +40,6 @@ export class UsersController {
     return this.usersService.getMyActivity(userId);
   }
 
-  //Klasse updaten (unblock + class_updated_at)
   @UseGuards(JwtAuthGuard)
   @Patch('me/class')
   updateMyClass(@Req() req: any, @Body() dto: UpdateClassDto) {
@@ -50,30 +47,21 @@ export class UsersController {
     return this.usersService.updateMyClass(userId, dto.class);
   }
 
-  //Guthaben-Add Request (User erzeugt QR)
   @UseGuards(JwtAuthGuard)
   @Post('me/balance-requests/add')
   createAddBalanceRequest(@Req() req: any, @Body() dto: CreateBalanceRequestDto) {
     const userId = String(req.user?.id ?? req.user?.sub);
-    console.log(
-      '[UsersController] createAddBalanceRequest dto =',
-      dto,
-      'delta=',
-      (dto as any)?.delta,
-      'type=',
-      typeof (dto as any)?.delta
-    );
-
     const d = Number((dto as any)?.delta);
-
     return this.usersService.createBalanceAddRequest(userId, d);
   }
+
   @UseGuards(JwtAuthGuard)
   @Post('me/balance-requests/flush')
   createFlushBalanceRequest(@Req() req: any) {
     const userId = String(req.user?.id ?? req.user?.sub);
     return this.usersService.createBalanceFlushRequest(userId);
   }
+
   @UseGuards(JwtAuthGuard)
   @Delete('me')
   deleteMe(@Req() req: any) {

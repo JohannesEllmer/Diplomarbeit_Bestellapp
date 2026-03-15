@@ -1,3 +1,4 @@
+// src/users/users.service.ts
 import {
   BadRequestException,
   ForbiddenException,
@@ -10,6 +11,7 @@ import { PG_POOL } from '../db';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UsersRepo } from './users.repo';
 import { isClassExpired } from './class-expirey';
+import { sendUserDataDeletedMail } from '../auth-express/src/mailer';
 
 @Injectable()
 export class UsersService {
@@ -64,7 +66,7 @@ export class UsersService {
     await this.enforceClassPolicy(userId);
 
     const d = Number(delta);
-    if (!isFinite(d) || d <= 0) throw new ForbiddenException('DELTA_MUST_BE_POSITIVE');
+    if (!Number.isFinite(d) || d <= 0) throw new ForbiddenException('DELTA_MUST_BE_POSITIVE');
 
     const u = await this.repo.getUserForBalanceRequests(this.db, userId);
     if (!u) throw new NotFoundException('USER_NOT_FOUND');
@@ -128,7 +130,7 @@ export class UsersService {
 
       if (reqRow.kind === 'add') {
         deltaToApply = Number(reqRow.delta ?? 0);
-        if (!isFinite(deltaToApply) || deltaToApply <= 0) throw new ForbiddenException('INVALID_DELTA');
+        if (!Number.isFinite(deltaToApply) || deltaToApply <= 0) throw new ForbiddenException('INVALID_DELTA');
 
         newBalance = oldBalance + deltaToApply;
         reason = 'BALANCE_ADD_CONFIRMED';
@@ -322,10 +324,13 @@ export class UsersService {
     };
   }
 
-  // ADMIN: User updaten (dynamic SET bleibt im Service, SQL-Ausführung im Repo)
+  // ADMIN: User updaten (blocked_at korrekt pflegen!)
   async update(id: string, dto: Partial<CreateUserDto>) {
     const userId = String(id ?? '').trim();
     if (!userId) throw new NotFoundException('USER_NOT_FOUND');
+
+    const cur = await this.repo.getAdminUpdateBase(this.db, userId);
+    if (!cur) throw new NotFoundException('USER_NOT_FOUND');
 
     const fields: string[] = [];
     const values: any[] = [];
@@ -344,9 +349,24 @@ export class UsersService {
       setIf(`"class"`, (dto as any).class);
       fields.push(`class_updated_at = NOW()`);
       fields.push(`blocked = false`);
+      fields.push(`blocked_at = NULL`);
     }
 
-    setIf('blocked', (dto as any).blocked);
+    if ((dto as any).blocked !== undefined) {
+      const nextBlocked = !!(dto as any).blocked;
+      const prevBlocked = !!cur.blocked;
+
+      if (nextBlocked && !prevBlocked) {
+        fields.push(`blocked = true`);
+        fields.push(`blocked_at = NOW()`);
+      } else if (!nextBlocked && prevBlocked) {
+        fields.push(`blocked = false`);
+        fields.push(`blocked_at = NULL`);
+      } else {
+        setIf('blocked', nextBlocked);
+      }
+    }
+
     setIf('role', (dto as any).role);
 
     if (!fields.length) return this.findOne(userId);
@@ -368,7 +388,79 @@ export class UsersService {
     return this.findOne(id);
   }
 
-  // Utility: QR URL
+  // --------------------------
+  // Datenschutz: pending deletions + purge
+  // --------------------------
+  async listPendingDeletions() {
+    const res = await this.repo.listPendingDeletions(this.db);
+    return (res.rows ?? []).map((r: any) => ({
+      id: String(r.id),
+      userId: String(r.user_id),
+      name: r.user_name ?? null,
+      email: r.user_email,
+      class: r.user_class ?? null,
+      disabledSince: new Date(r.blocked_since).toISOString(),
+      plannedDeletionAt: new Date(r.planned_deletion_at).toISOString(),
+    }));
+  }
+
+  async purgePreview(userId: string) {
+    const u = await this.repo.getUserForPurgePreview(this.db, userId);
+    if (!u) throw new NotFoundException('USER_NOT_FOUND');
+
+    return {
+      ok: true,
+      user: {
+        id: String(u.id),
+        name: u.name ?? '',
+        email: u.email,
+        class: u.class ?? '',
+        blocked: !!u.blocked,
+        blockedAt: u.blocked_at ? new Date(u.blocked_at).toISOString() : null,
+      },
+      warning:
+        'Diese Löschung ist unwiderruflich. Alle personenbezogenen Daten werden dauerhaft entfernt.',
+    };
+  }
+
+  async purgeConfirm(userId: string, confirmText: string, actorId: string) {
+    const id = String(userId ?? '').trim();
+    const txt = String(confirmText ?? '').trim();
+    if (!id) throw new NotFoundException('USER_NOT_FOUND');
+    if (txt !== 'LÖSCHEN') throw new BadRequestException('CONFIRM_TEXT_INVALID');
+
+    const client = await this.db.connect();
+    try {
+      await client.query('BEGIN');
+
+      const u = await this.repo.lockUserForPurge(client, id);
+      if (!u) throw new NotFoundException('USER_NOT_FOUND');
+
+      const bal = Number(u.balance ?? 0);
+      if (bal !== 0) throw new ForbiddenException('BALANCE_NOT_ZERO');
+
+      const reserved = await this.repo.sumOpenOrdersTotal(client, id);
+      if (reserved > 0) throw new ForbiddenException('HAS_OPEN_ORDERS');
+
+      await this.repo.markPendingDeletionConfirmed(client, id, String(actorId));
+      await this.repo.deleteUserAllData(client, id);
+
+      await client.query('COMMIT');
+
+      // Mail an User: Daten gelöscht (Datenschutz)
+      try {
+        await sendUserDataDeletedMail(u.email, u.name ?? '');
+      } catch {}
+
+      return { ok: true };
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
   private generateQrCode(data: string) {
     return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data)}`;
   }

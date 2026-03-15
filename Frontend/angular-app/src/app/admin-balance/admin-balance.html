@@ -50,12 +50,10 @@
       <div class="hint" *ngIf="message">{{ message }}</div>
 
       <div class="grid">
-        <!-- Scanner -->
         <div class="scan-col">
           <div class="scan-shell" [class.off]="!scanning">
             <div id="qr-reader"></div>
 
-            <!-- optische Hilfe -->
             <div class="scan-overlay">
               <div class="frame"></div>
               <div class="scanline"></div>
@@ -67,9 +65,79 @@
               </div>
             </div>
           </div>
+
+          <div class="manual">
+            <div class="manual-row">
+              <input class="input" [(ngModel)]="manualCode" placeholder="Code einfügen oder scannen…" />
+              <button class="btn" (click)="pasteFromClipboard()">Einfügen</button>
+              <button class="btn primary" (click)="submitManual()">Senden</button>
+            </div>
+          </div>
         </div>
 
-       
+        <div class="side-col">
+          <div class="side-card">
+            <div class="side-title">History</div>
 
+            <button class="btn ghost" (click)="clearHistory()">History leeren</button>
+
+            <div class="history" *ngIf="history?.length; else nohist">
+              <div class="h-item" *ngFor="let h of history">
+                <div class="h-top">
+                  <div class="h-time">{{ time(h.at) }}</div>
+                  <div class="h-type">{{ h.type }}</div>
+                  <div class="h-ok" [class.bad]="!h.ok">{{ h.ok ? 'OK' : 'FAIL' }}</div>
+                </div>
+                <div class="h-code">
+                  {{ h.code }}
+                  <button class="btn mini" (click)="copy(h.code)">Copy</button>
+                </div>
+                <div class="h-msg">{{ h.msg }}</div>
+                <div class="h-amt" *ngIf="h.type==='balance' && h.delta != null">
+                  Betrag: {{ money(h.delta) }}
+                </div>
+              </div>
+            </div>
+
+            <ng-template #nohist>
+              <div class="empty">Noch keine Scans.</div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Confirm Modal (nur Guthaben) -->
+  <div class="modal-backdrop" *ngIf="confirmModalOpen" (click)="cancelBalanceConfirm()"></div>
+
+  <div class="modal" *ngIf="confirmModalOpen">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Guthaben bestätigen</div>
+        <button class="modal-close" (click)="cancelBalanceConfirm()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="confirm-amount">
+          {{ money(confirmAmount) }}
+        </div>
+
+        <div class="confirm-text">
+          Dieser Betrag wird dem Guthaben gutgeschrieben.
+          Bitte nur bestätigen, wenn der Betrag korrekt ist.
+        </div>
+
+        <div class="confirm-warn" *ngIf="confirmAlreadyUsed">
+          Hinweis: Dieser Code wurde laut System bereits verwendet.
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn ghost" (click)="cancelBalanceConfirm()">Abbrechen</button>
+        <button class="btn primary" (click)="okBalanceConfirm()">OK</button>
+      </div>
+    </div>
   </div>
 </div>

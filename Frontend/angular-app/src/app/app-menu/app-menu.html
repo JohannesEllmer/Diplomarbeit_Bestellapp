@@ -1,27 +1,33 @@
+<!-- app-menu.html (kompletter Header, Brand = exakt Bildgröße) -->
 <header class="app-header">
   <div class="header-bar">
+    <!-- LEFT -->
     <div class="header-left">
-      <div class="logo-circle">
-        <span>H</span>
-        <div class="brand-logo" *ngIf="!isMobile" aria-label="Logo Platzhalter">
-          <div class="brand-logo-placeholder"></div>
-        </div>
-      </div>
-
+  
+        <img
+          class="brand-logo"
+          src="assets/logo.png"
+          alt="HungerSatt Caféimbiss"
+          draggable="false"
+        />
+      
 
       <div class="mobile-page-title" *ngIf="isMobile">
         {{ getCurrentPageTitle() }}
       </div>
     </div>
 
+    <!-- CENTER -->
     <div class="header-center" *ngIf="!isMobile">
       <h1 class="current-page-title">{{ getCurrentPageTitle() }}</h1>
     </div>
 
+    <!-- RIGHT -->
     <div class="header-right">
       <nav
         class="nav-desktop"
         *ngIf="!isMobile && (getCustomerLinks().length > 0 || getManagementLinks().length > 0)"
+        aria-label="Navigation"
       >
         <div class="nav-stack">
           <!-- Kundenbereich -->
@@ -57,6 +63,7 @@
         </div>
       </nav>
 
+      <!-- USER (Desktop) -->
       <div class="desktop-user-wrapper" *ngIf="!isMobile && hasUser">
         <button
           class="desktop-user-trigger"
@@ -75,7 +82,7 @@
             </span>
           </div>
 
-          <span class="caret">▾</span>
+          <span class="caret" [class.open]="userMenuOpen">▾</span>
         </button>
 
         <div class="user-dropdown" *ngIf="userMenuOpen">
@@ -136,6 +143,7 @@
         </div>
       </div>
 
+      <!-- MOBILE BURGER -->
       <button
         type="button"
         class="mobile-menu-btn"
@@ -150,6 +158,7 @@
     </div>
   </div>
 
+  <!-- Overlay -->
   <div
     class="mobile-overlay"
     [class.open]="mobileOpen"
@@ -157,6 +166,7 @@
     aria-hidden="true"
   ></div>
 
+  <!-- Mobile Nav -->
   <div
     class="mobile-nav"
     [class.open]="mobileOpen"

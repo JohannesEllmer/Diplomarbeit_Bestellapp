@@ -1,15 +1,31 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../env';
 import { Observable } from 'rxjs';
+
+type ScanResult = {
+  ok: boolean;
+  userId?: string;
+  delta?: number;
+  balanceAfter?: number;
+  alreadyUsed?: boolean;
+};
+
+type BalancePreviewResult = {
+  ok: boolean;
+  userId?: string;
+  delta?: number;
+  alreadyUsed?: boolean;
+};
 
 @Injectable({ providedIn: 'root' })
 export class AdminBalanceService {
-  private readonly apiBase = environment.apiBaseUrl ?? 'http://localhost:3000/api';
-
   constructor(private http: HttpClient) {}
 
-  confirm(code: string): Observable<any> {
-    return this.http.patch(`${this.apiBase}/admin/users/balance/confirm`, { code });
+  preview(code: string): Observable<BalancePreviewResult> {
+    return this.http.post<BalancePreviewResult>('/api/admin/balance/preview', { code });
+  }
+
+  confirm(code: string): Observable<ScanResult> {
+    return this.http.post<ScanResult>('/api/admin/balance/confirm', { code });
   }
 }

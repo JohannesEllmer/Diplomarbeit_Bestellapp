@@ -18,6 +18,7 @@ import { ResetPasswordPage } from './login-page/reset-password';
 import { ChangePasswordPage } from './login-page/change-password';
 import { UserPageComponent } from './user-profile/user-profile';
 import { BalanceScanComponent } from './admin-balance/admin-balance';
+import { ImpressumPageComponent } from './impressum-page/impressum-page';
 
 export const routes: Routes = [
   // Public
@@ -31,6 +32,7 @@ export const routes: Routes = [
   { path: 'user-profile', component: UserPageComponent, canActivate: [authGuard()] },
   { path: 'me', redirectTo: 'user-profile', pathMatch: 'full' },
   { path: 'change-password', component: ChangePasswordPage, canActivate: [authGuard()] },
+  { path: 'impressum', component: ImpressumPageComponent, canActivate: [authGuard()] },
   // Admin
   { path: 'admin/balance-scan', component: BalanceScanComponent, canActivate: [authGuard(['ADMIN', 'INHABER'])] },
   { path: '', component: MenuPlanComponent, canActivate: [authGuard()] },

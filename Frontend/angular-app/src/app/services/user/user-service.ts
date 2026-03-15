@@ -4,10 +4,24 @@ import { Observable, of, throwError, map } from 'rxjs';
 import { User } from '../../../models/user.model';
 import { environment } from '../../env';
 
+export type PendingDeletionItem = {
+  id: string;
+  userId: string;
+  name: string | null;
+  email: string;
+  class: string | null;
+  disabledSince: string;     // ISO string
+  plannedDeletionAt: string; // ISO string
+};
+
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private readonly apiBase = environment.apiBaseUrl ?? 'http://localhost:3000/api';
+
   private readonly usersEndpoint = `${this.apiBase}/users`;
+
+  // Datenschutz / Admin Endpoints (wie im Backend-Teil zuvor)
+  private readonly adminUsersEndpoint = `${this.apiBase}/admin/users`;
 
   private mockUsers: (User & { password?: string })[] = [
     {
@@ -21,6 +35,19 @@ export class UserService {
       password: 'anna',
       role: 'ADMIN' as any
     },
+  ];
+
+  // Mock pending deletion list
+  private mockPending: PendingDeletionItem[] = [
+    {
+      id: 'pd-1',
+      userId: '101',
+      name: 'Anna Müller',
+      email: 'anna@example.com',
+      class: '3A',
+      disabledSince: new Date(Date.now() - 1000 * 60 * 60 * 24 * 365 * 3).toISOString(),
+      plannedDeletionAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString(),
+    }
   ];
 
   constructor(private http: HttpClient) {}
@@ -38,6 +65,8 @@ export class UserService {
         return throwError(() => new Error('NON_ZERO_BALANCE'));
       }
       this.mockUsers = this.mockUsers.filter(u => u.id !== userId);
+      // pending ggf. entfernen
+      this.mockPending = this.mockPending.filter(p => p.userId !== userId);
       return of(void 0);
     }
     return this.http.delete<void>(`${this.usersEndpoint}/${userId}`);
@@ -57,16 +86,15 @@ export class UserService {
   }
 
   updateUserRole(userId: string, role: string): Observable<User> {
-  if (environment.useMockData) {
-    const updated = this.mockUsers.find(u => u.id === userId);
-    if (!updated) return throwError(() => new Error('USER_NOT_FOUND'));
-    (updated as any).role = role as any;
-    return of(updated as unknown as User);
+    if (environment.useMockData) {
+      const updated = this.mockUsers.find(u => u.id === userId);
+      if (!updated) return throwError(() => new Error('USER_NOT_FOUND'));
+      (updated as any).role = role as any;
+      return of(updated as unknown as User);
+    }
+
+    return this.http.patch<User>(`${this.usersEndpoint}/${userId}`, { role });
   }
-
-  return this.http.patch<User>(`${this.usersEndpoint}/${userId}`, { role });
-}
-
 
   resetPassword(userId: string): Observable<string> {
     if (environment.useMockData) return of('pw-123456');
@@ -74,5 +102,40 @@ export class UserService {
     return this.http
       .post<{ newPassword: string }>(`${this.usersEndpoint}/${userId}/reset-password`, {})
       .pipe(map(res => res.newPassword));
+  }
+
+  // ==========================================
+  // Datenschutz / Pending Deletions
+  // ==========================================
+  getPendingDeletions(): Observable<PendingDeletionItem[]> {
+    if (environment.useMockData) {
+      return of(this.mockPending.slice());
+    }
+    return this.http.get<PendingDeletionItem[]>(`${this.adminUsersEndpoint}/pending-deletions`);
+  }
+
+  purgePreview(userId: string): Observable<any> {
+    if (environment.useMockData) {
+      return of({
+        ok: true,
+        warning: 'Diese Löschung ist unwiderruflich. Alle personenbezogenen Daten werden dauerhaft entfernt.'
+      });
+    }
+    return this.http.post<any>(`${this.adminUsersEndpoint}/${userId}/purge/preview`, {});
+  }
+
+  purgeConfirm(userId: string, confirmText: string): Observable<{ ok: boolean }> {
+    if (environment.useMockData) {
+      if ((confirmText || '').trim() !== 'LÖSCHEN') {
+        return throwError(() => new Error('CONFIRM_TEXT_INVALID'));
+      }
+      this.mockUsers = this.mockUsers.filter(u => u.id !== userId);
+      this.mockPending = this.mockPending.filter(p => p.userId !== userId);
+      return of({ ok: true });
+    }
+
+    return this.http.request<{ ok: boolean }>('DELETE', `${this.adminUsersEndpoint}/${userId}/purge`, {
+      body: { confirmText }
+    });
   }
 }

@@ -25,12 +25,19 @@ export class UserPageComponent implements OnInit {
 
   editMode = false;
   addAmount = '';
+
   pendingQr: { id: string; code: string; qrCodeUrl: string } | null = null;
+
+  // Betrag lokal merken, damit er immer direkt über dem QR angezeigt wird
+  pendingAmount: number | null = null;
 
   flushQr: { id: string; code: string; qrCodeUrl: string } | null = null;
 
   classEditMode = false;
   classValue = '';
+
+  // Klasse: leer erlaubt ODER 1. Zeichen Zahl, danach max. 4 weitere Zeichen (insg. max 5)
+  private readonly CLASS_REGEX = /^(?:|[0-9][A-Za-z0-9]{0,4})$/;
 
   pwModalOpen = false;
   pwOld = '';
@@ -80,7 +87,8 @@ export class UserPageComponent implements OnInit {
   }
 
   money(n: any): string {
-    const v = Number(n ?? 0);
+    const v = Number(n);
+    if (!Number.isFinite(v)) return '0,00 €';
     return v.toFixed(2).replace('.', ',') + ' €';
   }
 
@@ -113,6 +121,7 @@ export class UserPageComponent implements OnInit {
     this.editMode = true;
     this.addAmount = '';
     this.pendingQr = null;
+    this.pendingAmount = null;
     this.flushQr = null;
     this.clearStatus();
   }
@@ -121,6 +130,7 @@ export class UserPageComponent implements OnInit {
     this.editMode = false;
     this.addAmount = '';
     this.pendingQr = null;
+    this.pendingAmount = null;
   }
 
   saveAddRequest(): void {
@@ -137,8 +147,17 @@ export class UserPageComponent implements OnInit {
     this.api.createAddRequest(delta).subscribe({
       next: (res) => {
         this.loading = false;
+
         this.pendingQr = res;
-        this.setStatus('success', 'QR-Code erstellt', 'Der Inhaber muss diesen QR-Code scannen, damit das Guthaben hinzugefügt wird.');
+        this.pendingAmount = delta; // Betrag direkt über dem QR anzeigen
+
+        this.flushQr = null;
+
+        this.setStatus(
+          'success',
+          'QR-Code erstellt',
+          'Der Inhaber muss diesen QR-Code scannen, damit das Guthaben hinzugefügt wird.'
+        );
       },
       error: (err) => {
         this.loading = false;
@@ -149,7 +168,9 @@ export class UserPageComponent implements OnInit {
 
   requestFlush(): void {
     this.clearStatus();
+
     this.pendingQr = null;
+    this.pendingAmount = null;
     this.editMode = false;
 
     this.loading = true;
@@ -157,7 +178,11 @@ export class UserPageComponent implements OnInit {
       next: (res) => {
         this.loading = false;
         this.flushQr = res;
-        this.setStatus('success', 'QR-Code zum Ausleeren erstellt', 'Der Inhaber muss diesen QR-Code scannen, danach wird dein Guthaben auf 0 gesetzt.');
+        this.setStatus(
+          'success',
+          'QR-Code zum Ausleeren erstellt',
+          'Der Inhaber muss diesen QR-Code scannen, danach wird dein Guthaben auf 0 gesetzt.'
+        );
       },
       error: (err) => {
         this.loading = false;
@@ -189,6 +214,11 @@ export class UserPageComponent implements OnInit {
     });
   }
 
+  isClassValid(value: any): boolean {
+    const v = String(value ?? '').trim();
+    return this.CLASS_REGEX.test(v);
+  }
+
   startClassEdit(): void {
     this.classEditMode = true;
     this.classValue = String(this.profile?.user?.class ?? '').trim();
@@ -202,8 +232,14 @@ export class UserPageComponent implements OnInit {
 
   saveClass(): void {
     const cls = String(this.classValue ?? '').trim();
-    if (!cls) {
-      this.setStatus('warning', 'Klasse fehlt', 'Bitte eine Klasse eingeben.');
+
+    // leer ist erlaubt
+    if (!this.isClassValid(cls)) {
+      this.setStatus(
+        'warning',
+        'Ungültige Klasse',
+        'Erlaubt sind maximal 5 Zeichen. Wenn ausgefüllt, muss das 1. Zeichen eine Zahl sein (z.B. 3A, 1BHIT).'
+      );
       return;
     }
 

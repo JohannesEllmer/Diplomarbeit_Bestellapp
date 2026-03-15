@@ -4,7 +4,7 @@ import {
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
   GOOGLE_REFRESH_TOKEN
-} from './config.js';
+} from './config';
 
 function encodeBase64Url(str: string) {
   return Buffer.from(str, 'utf8')
@@ -86,4 +86,74 @@ export async function sendMail(to: string, subject: string, html: string) {
     console.error(explainOAuthError(e));
     throw e;
   }
+}
+
+export async function sendAdminDeletionWarningMail(params: {
+  name: string;
+  email: string;
+  class: string;
+  plannedDeletionAtIso: string;
+}) {
+  const html = `
+  <div style="font-family: Arial">
+    <h2>DSGVO Löschung angekündigt</h2>
+
+    <p>Ein deaktivierter Nutzer steht zur Löschung an.</p>
+
+    <ul>
+      <li><b>Name:</b> ${params.name}</li>
+      <li><b>Email:</b> ${params.email}</li>
+      <li><b>Klasse:</b> ${params.class}</li>
+    </ul>
+
+    <p>
+      Geplante Löschung: <b>${params.plannedDeletionAtIso}</b>
+    </p>
+
+    <p>
+      Bitte im Adminbereich prüfen und bestätigen.
+    </p>
+  </div>
+  `;
+
+  return sendMail(
+    GMAIL_SENDER,
+    'HungerSatt – Nutzerlöschung angekündigt',
+    html
+  );
+}
+
+export async function sendUserDataDeletedMail(
+  email: string,
+  name: string
+) {
+  const html = `
+  <div style="font-family: Arial">
+    <p>Hallo ${name},</p>
+
+    <p>
+      dein Konto wurde gemäß Datenschutzrichtlinien gelöscht.
+    </p>
+
+    <p>
+      Alle personenbezogenen Daten wurden vollständig entfernt.
+    </p>
+
+    <p>
+      Falls du den Dienst erneut nutzen möchtest,
+      musst du dich neu registrieren.
+    </p>
+
+    <p>
+      Freundliche Grüße<br>
+      HungerSatt
+    </p>
+  </div>
+  `;
+
+  return sendMail(
+    email,
+    'HungerSatt – Konto gelöscht',
+    html
+  );
 }

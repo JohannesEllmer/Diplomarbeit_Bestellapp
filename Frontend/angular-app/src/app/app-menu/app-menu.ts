@@ -57,6 +57,7 @@ export class AppMenuComponent implements OnInit, OnDestroy {
     { label: 'Warenkorb', route: '/warenkorb', roles: ['KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
     { label: 'Meine Bestellungen', route: '/my-orders', roles: ['KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
     { label: 'Mein Profil', route: '/me', roles: ['KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
+     { label: 'Impressum', route: '/impressum', roles: ['KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
 
     { label: 'Bestellübersicht', route: '/orders', roles: ['INHABER', 'ADMIN'], section: 'management', shortLabel: 'Bestellungen' },
     { label: 'Statistiken', route: '/statistics', roles: ['INHABER', 'ADMIN'], section: 'management' },

@@ -718,3 +718,25 @@ body {
     justify-content: space-between;
   }
 }
+
+.confirm-amount {
+  font-size: 44px;
+  font-weight: 800;
+  text-align: center;
+  margin: 8px 0 12px;
+  line-height: 1.1;
+}
+
+.confirm-text {
+  text-align: center;
+  opacity: 0.9;
+  font-size: 14px;
+}
+
+.confirm-warn {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  text-align: center;
+}

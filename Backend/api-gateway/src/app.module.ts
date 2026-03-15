@@ -6,6 +6,7 @@ import { OrdersModule } from './orders/orders.module';
 import { MenusModule } from './menus/menus.module';
 import { DbTokenService } from './auth-express/src/tokenHelper';
 import { AppSettingsModule } from './app-settings/app-settings.module';
+import { CleanupModule } from './dsgvo-cleanup/cleanup.module';
 
 
 @Module({
@@ -15,6 +16,7 @@ import { AppSettingsModule } from './app-settings/app-settings.module';
     OrdersModule,
     MenusModule,
     AppSettingsModule,
+    CleanupModule,
   ],
   providers: [DbTokenService],
 })

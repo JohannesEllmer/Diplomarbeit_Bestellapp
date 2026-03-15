@@ -4,7 +4,6 @@
       <div class="auth-title-block">
         <h1>Konto erstellen</h1>
 
-        <!-- ✅ Text je nach Modus -->
         <p *ngIf="!isAdminManagementView; else adminSubtitle">
           Registriere dich als Kunde mit deiner Schul-E-Mail-Adresse.
         </p>
@@ -17,7 +16,6 @@
       </div>
 
       <div class="auth-badge">
-        <!-- ✅ Badge je nach Modus -->
         <span class="badge-main">
           {{ isAdminManagementView ? 'Admin Registrierung' : 'Registrierung' }}
         </span>

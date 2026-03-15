@@ -1,5 +1,42 @@
 <div class="user-management-container">
 
+  <!-- Status -->
+  <div class="status-card"
+       *ngIf="statusType"
+       [class.is-success]="statusType==='success'"
+       [class.is-warning]="statusType==='warning'"
+       [class.is-error]="statusType==='error'">
+    <div class="status-icon">i</div>
+    <div class="status-content">
+      <div class="status-title">{{ statusTitle }}</div>
+      <div class="status-msg">{{ statusMsg }}</div>
+    </div>
+    <button class="status-close" (click)="clearStatus()">✕</button>
+  </div>
+
+  <!-- Datenschutz Warnungen (sichtbar im User-Management) -->
+  <div class="privacy-section" *ngIf="pendingDeletions?.length">
+    <div class="privacy-title">Datenschutz-Hinweis: Löschwarnungen</div>
+    <div class="privacy-sub">
+      Nutzer, die seit <b>3 Jahren deaktiviert</b> sind, stehen zur Löschung an.
+    </div>
+
+    <div class="privacy-list">
+      <div class="privacy-item" *ngFor="let p of pendingDeletions">
+        <div class="privacy-left">
+          <div class="privacy-name">{{ p.name || '—' }} · {{ p.class || '—' }}</div>
+          <div class="privacy-meta">
+            {{ p.email }} · deaktiviert seit {{ fmtDate(p.disabledSince) }} · geplante Löschung {{ fmtDate(p.plannedDeletionAt) }}
+          </div>
+        </div>
+
+        <button class="btn danger" (click)="openPurgeModal(p)">
+          Unwiderruflich löschen…
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="search-controls">
     <div class="search-field">
       <input
@@ -56,4 +93,52 @@
   </main>
 
   <app-site-footer></app-site-footer>
+
+  <!-- =========================
+       Purge Modal (Datenschutz)
+       ========================= -->
+  <div class="modal-backdrop" *ngIf="purgeModalOpen" (click)="closePurgeModal()"></div>
+
+  <div class="modal" *ngIf="purgeModalOpen">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Nutzer unwiderruflich löschen</div>
+        <button class="modal-close" (click)="closePurgeModal()">✕</button>
+      </div>
+
+      <div class="modal-body" *ngIf="purgeTarget">
+        <div class="purge-user">
+          <div class="purge-name">{{ purgeTarget.name || '—' }}</div>
+          <div class="purge-meta">
+            Klasse: <b>{{ purgeTarget.class || '—' }}</b><br />
+            E-Mail: <b>{{ purgeTarget.email }}</b><br />
+            Deaktiviert seit: <b>{{ fmtDate(purgeTarget.disabledSince) }}</b><br />
+            Geplante Löschung: <b>{{ fmtDate(purgeTarget.plannedDeletionAt) }}</b>
+          </div>
+        </div>
+
+        <div class="purge-warning">
+          {{ purgePreviewText }}
+        </div>
+
+        <div class="purge-confirm">
+          <label class="lbl">Zum Bestätigen tippe: <b>LÖSCHEN</b></label>
+          <input class="input" [(ngModel)]="purgeConfirmText" placeholder="LÖSCHEN" />
+        </div>
+
+        <div class="purge-note">
+          Nach Bestätigung werden alle Daten unwiderruflich gelöscht.
+          Zusätzlich wird eine E-Mail an den Nutzer gesendet, dass die Daten gelöscht wurden.
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn ghost" (click)="closePurgeModal()" [disabled]="purgeSaving">Abbrechen</button>
+        <button class="btn danger" (click)="confirmPurge()" [disabled]="purgeSaving">
+          {{ purgeSaving ? 'Löscht…' : 'Jetzt löschen' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
 </div>

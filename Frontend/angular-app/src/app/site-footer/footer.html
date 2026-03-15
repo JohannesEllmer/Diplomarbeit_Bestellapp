@@ -1,43 +1,15 @@
 <footer class="menu-footer">
   <div class="footer-inner">
-
-    <div class="footer-actions-area" *ngIf="true">
+    <div class="footer-actions-area">
       <ng-content select="[footer-actions]"></ng-content>
     </div>
 
-    <div class="impressum-desktop">
-      <span>{{ companyName }}</span>
-      <span>{{ inhaber }}</span>
-      <span>{{ address }}</span>
-      <span>{{ uid }}</span>
-    </div>
+    <div class="footer-content">
+     
 
-    <div class="impressum-mobile">
-      <button class="impressum-btn" type="button" (click)="openImpressum()">
-        Impressum
-      </button>
-    </div>
-
-    <div
-      class="impressum-popup-overlay"
-      *ngIf="showImpressumPopup"
-      (click)="closeImpressum()"
-    >
-      <div class="impressum-popup" (click)="$event.stopPropagation()">
-        <h2>Impressum</h2>
-        <div class="impressum-details">
-          <p><strong>{{ companyName }}</strong></p>
-          <p>{{ inhaber }}</p>
-          <p>{{ address }}</p>
-          <p>{{ uid }}</p>
-         
-        </div>
-
-        <button class="close-btn" type="button" (click)="closeImpressum()">
-          Schließen
-        </button>
+      <div class="footer-links">
+        <a routerLink="/impressum" class="footer-link">Impressum</a>
       </div>
     </div>
-
   </div>
 </footer>

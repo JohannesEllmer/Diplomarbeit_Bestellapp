@@ -3,8 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserItemsComponent } from '../user-items/user-items';
 import { User } from '../../models/user.model';
-import { UserService } from '../services/user/user-service';
+import { UserService, PendingDeletionItem } from '../services/user/user-service';
 import { SiteFooterComponent } from '../site-footer/footer';
+
+type StatusType = 'success' | 'warning' | 'error' | '';
 
 @Component({
   selector: 'app-user-management',
@@ -23,12 +25,29 @@ export class UserManagementComponent implements OnInit {
   searchTerm = '';
   showImpressumPopup = false;
 
+  // ---- Datenschutz / Pending deletion UI ----
+  pendingDeletions: PendingDeletionItem[] = [];
+
+  purgeModalOpen = false;
+  purgeTarget: PendingDeletionItem | null = null;
+  purgeConfirmText = '';
+  purgePreviewText = '';
+  purgeSaving = false;
+
+  statusType: StatusType = '';
+  statusTitle = '';
+  statusMsg = '';
+
   constructor(private userService: UserService) {}
 
   ngOnInit(): void {
     this.loadUsers();
+    this.loadPendingDeletions();
   }
 
+  // ---------------------------
+  // Users
+  // ---------------------------
   loadUsers(): void {
     this.userService.getUsers().subscribe(users => {
       this.users = users ?? [];
@@ -113,24 +132,23 @@ export class UserManagementComponent implements OnInit {
   }
 
   onRoleChange(e: { user: User; role: string }): void {
-  const { user, role } = e;
+    const { user, role } = e;
 
-  const confirmed = confirm(`Rolle von "${user.name}" auf "${role}" ändern?`);
-  if (!confirmed) return;
+    const confirmed = confirm(`Rolle von "${user.name}" auf "${role}" ändern?`);
+    if (!confirmed) return;
 
-  this.userService.updateUserRole(user.id, role).subscribe({
-    next: (updated) => {
-      const idx = this.users.findIndex(u => u.id === updated.id);
-      if (idx !== -1) this.users[idx] = updated;
-      this.filterUsers();
-    },
-    error: (err) => {
-      console.error(err);
-      alert('Rolle konnte nicht geändert werden.');
-    }
-  });
-}
-
+    this.userService.updateUserRole(user.id, role).subscribe({
+      next: (updated) => {
+        const idx = this.users.findIndex(u => u.id === updated.id);
+        if (idx !== -1) this.users[idx] = updated;
+        this.filterUsers();
+      },
+      error: (err) => {
+        console.error(err);
+        alert('Rolle konnte nicht geändert werden.');
+      }
+    });
+  }
 
   resetPassword(user: User): void {
     const confirmed = confirm(`Passwort für "${user.name}" wirklich zurücksetzen?`);
@@ -152,6 +170,108 @@ export class UserManagementComponent implements OnInit {
       const index = this.users.findIndex(u => u.id === updated.id);
       if (index !== -1) this.users[index] = updated;
       this.filterUsers();
+
+      // optional: nach Block/Unblock neu laden, falls disabledAt/Policy relevant
+      this.loadPendingDeletions();
     });
+  }
+
+  // ---------------------------
+  // Datenschutz: 3 Jahre deaktiviert → Löschpopup
+  // ---------------------------
+  loadPendingDeletions(): void {
+    this.userService.getPendingDeletions().subscribe({
+      next: (rows) => {
+        this.pendingDeletions = (rows ?? []).slice();
+
+        // automatisch Popup öffnen (ältester Eintrag), wenn vorhanden und kein Popup offen
+        if (this.pendingDeletions.length && !this.purgeModalOpen) {
+          this.openPurgeModal(this.pendingDeletions[0]);
+        }
+      },
+      error: (err) => {
+        console.error(err);
+        // nicht hart nerven – nur dezent in status (optional)
+        this.setStatus('warning', 'Hinweis', 'Löschwarnungen konnten nicht geladen werden.');
+      }
+    });
+  }
+
+  openPurgeModal(item: PendingDeletionItem): void {
+    this.clearStatus();
+    this.purgeModalOpen = true;
+    this.purgeTarget = item;
+    this.purgeConfirmText = '';
+    this.purgePreviewText = 'Lade Details…';
+
+    this.userService.purgePreview(item.userId).subscribe({
+      next: (res) => {
+        this.purgePreviewText =
+          res?.warning ||
+          'Diese Löschung ist unwiderruflich. Alle personenbezogenen Daten werden dauerhaft entfernt.';
+      },
+      error: () => {
+        this.purgePreviewText =
+          'Diese Löschung ist unwiderruflich. Alle personenbezogenen Daten werden dauerhaft entfernt.';
+      }
+    });
+  }
+
+  closePurgeModal(): void {
+    this.purgeModalOpen = false;
+    this.purgeTarget = null;
+    this.purgeConfirmText = '';
+    this.purgePreviewText = '';
+  }
+
+  confirmPurge(): void {
+    if (!this.purgeTarget) return;
+
+    const txt = (this.purgeConfirmText || '').trim();
+    if (txt !== 'LÖSCHEN') {
+      this.setStatus('warning', 'Bestätigung fehlt', 'Bitte tippe exakt "LÖSCHEN" ein, um fortzufahren.');
+      return;
+    }
+
+    this.purgeSaving = true;
+    this.clearStatus();
+
+    this.userService.purgeConfirm(this.purgeTarget.userId, txt).subscribe({
+      next: () => {
+        this.purgeSaving = false;
+        this.setStatus('success', 'Gelöscht', 'Der Nutzer wurde unwiderruflich gelöscht (inkl. E-Mail an den Nutzer).');
+        this.closePurgeModal();
+
+        // Refresh: Userliste + Pending
+        this.loadUsers();
+        this.loadPendingDeletions();
+      },
+      error: (err) => {
+        this.purgeSaving = false;
+        console.error(err);
+        this.setStatus('error', 'Löschen fehlgeschlagen', err?.error?.message || err?.message || 'Unbekannter Fehler');
+      }
+    });
+  }
+
+  fmtDate(s: any): string {
+    const d = new Date(String(s ?? ''));
+    if (isNaN(d.getTime())) return String(s ?? '');
+    return d.toLocaleString('de-AT', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  clearStatus(): void {
+    this.statusType = '';
+    this.statusTitle = '';
+    this.statusMsg = '';
+  }
+
+  setStatus(type: StatusType, title: string, msg: string): void {
+    this.statusType = type;
+    this.statusTitle = title;
+    this.statusMsg = msg;
   }
 }

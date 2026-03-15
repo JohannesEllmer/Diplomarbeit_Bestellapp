@@ -31,7 +31,12 @@
     </label>
 
     <div class="paginator" *ngIf="pages.length">
-      <button type="button" (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1">‹</button>
+      <button
+        type="button"
+        (click)="changePage(currentPage - 1)"
+        [disabled]="currentPage === 1">
+        ‹
+      </button>
 
       <button
         *ngFor="let page of pages"
@@ -41,7 +46,12 @@
         {{ page }}
       </button>
 
-      <button type="button" (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages">›</button>
+      <button
+        type="button"
+        (click)="changePage(currentPage + 1)"
+        [disabled]="currentPage === totalPages">
+        ›
+      </button>
     </div>
   </div>
 
@@ -54,7 +64,6 @@
 
   <main class="order-list">
     <section class="open-orders">
-
       <div *ngIf="!openOrders.length" class="no-results global-no-open">
         <p>Aktuell keine offenen Bestellungen.</p>
       </div>
@@ -70,7 +79,6 @@
           <div *ngFor="let order of group.value" class="order-card">
             <div class="order-summary">
               <div class="order-info">
-
                 <div class="order-title-row">
                   <h2 class="order-title">
                     <a role="button" tabindex="0" (click)="navigateToUser(order.user.id)">
@@ -114,11 +122,9 @@
                     </div>
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
-
         </div>
       </ng-container>
     </section>
@@ -135,7 +141,6 @@
         <div class="order-card delivered" *ngFor="let order of completedOrders">
           <div class="order-summary">
             <div class="order-info">
-
               <div class="order-title-row">
                 <h2 class="order-title">
                   <a role="button" tabindex="0" (click)="navigateToUser(order.user.id)">
@@ -179,7 +184,6 @@
                   </div>
                 </div>
               </div>
-
             </div>
 
             <div class="order-status">
@@ -191,17 +195,16 @@
     </section>
   </main>
 
- <app-site-footer [(showImpressumPopup)]="showImpressumPopup">
-  <div footer-actions class="order-footer-row">
-    <div class="order-footer-left">
-      <span>Offene Summe gesamt:</span>
-      <strong>{{ totalSum | currency:'EUR' }}</strong>
+  <app-site-footer>
+    <div footer-actions class="order-footer-row">
+      <div class="order-footer-left">
+        <span>Offene Summe gesamt:</span>
+        <strong>{{ totalSum | currency:'EUR' }}</strong>
+      </div>
+
+      <button type="button" class="finance-btn" (click)="goToFinance()">
+        Alle anzeigen / Finanzseite
+      </button>
     </div>
-
-    <button type="button" class="finance-btn" (click)="goToFinance()">
-      Alle anzeigen / Finanzseite
-    </button>
-  </div>
-</app-site-footer>
-
-
+  </app-site-footer>
+</div>

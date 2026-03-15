@@ -1,4 +1,5 @@
-import { Body, Controller, Patch, Req, UseGuards } from '@nestjs/common';
+// src/admin/admin-users.controller.ts
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth.guards';
 import { UsersService } from '../users/users.service';
 import { ConfirmBalanceRequestDto } from './dto/confirm-balance.dto';
@@ -15,5 +16,24 @@ export class AdminUsersController {
   confirmBalance(@Req() req: any, @Body() dto: ConfirmBalanceRequestDto) {
     const actor = String(req.user?.id ?? req.user?.sub ?? 'admin');
     return this.usersService.confirmBalanceRequestByQr(dto.code, actor);
+  }
+
+  @Get('pending-deletions')
+  @Roles('ADMIN', 'INHABER')
+  listPendingDeletions() {
+    return this.usersService.listPendingDeletions();
+  }
+
+  @Post(':id/purge/preview')
+  @Roles('ADMIN', 'INHABER')
+  purgePreview(@Param('id') id: string) {
+    return this.usersService.purgePreview(String(id));
+  }
+
+  @Delete(':id/purge')
+  @Roles('ADMIN', 'INHABER')
+  purgeConfirm(@Req() req: any, @Param('id') id: string, @Body() body: { confirmText: string }) {
+    const actor = String(req.user?.id ?? req.user?.sub ?? 'admin');
+    return this.usersService.purgeConfirm(String(id), String(body?.confirmText ?? ''), actor);
   }
 }
