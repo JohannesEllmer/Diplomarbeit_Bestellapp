@@ -536,3 +536,25 @@
     justify-content: center;
   }
 }
+.menu-dish-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.dish-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dish-price {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-weight: 700;
+  text-align: right;
+}

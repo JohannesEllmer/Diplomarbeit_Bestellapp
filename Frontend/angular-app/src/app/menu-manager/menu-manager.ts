@@ -300,7 +300,6 @@ export class MenuManager implements OnInit {
   try {
     logoDataUrl = await loadImageDataUrl('../../assets/logo.png');
   } catch {
-    // Logo ist optional – PDF funktioniert auch ohne
     logoDataUrl = null;
   }
 

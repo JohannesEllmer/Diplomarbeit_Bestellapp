@@ -60,7 +60,10 @@
             @for (item of (menu.menuItems ?? []); track item.id) {
               <div class="menu-dish">
                 <div class="menu-dish-main">
-                  <span class="dish-name">{{ item.name }}</span>
+                  <span class="dish-name" [title]="item.name">
+                    {{ item.name }}
+                  </span>
+
                   <span class="dish-price">
                     {{ item.price }} €
                   </span>
@@ -92,19 +95,20 @@
       <span class="material-icons">add</span>
       Neues Menü hinzufügen
     </button>
-      <button
-    class="add-menu-button"
-    type="button"
-    style="margin-left: 12px;"
-    [class.danger]="orderingEnabled"
-    (click)="toggleOrdering()"
-    [disabled]="togglingOrdering"
-    title="Bestellen global aktivieren/deaktivieren"
-  >
-    <span class="material-icons">
-      {{ orderingEnabled ? 'lock_open' : 'lock' }}
-    </span>
-    {{ orderingEnabled ? 'Bestellen deaktivieren' : 'Bestellen aktivieren' }}
-  </button>
+
+    <button
+      class="add-menu-button"
+      type="button"
+      style="margin-left: 12px;"
+      [class.danger]="orderingEnabled"
+      (click)="toggleOrdering()"
+      [disabled]="togglingOrdering"
+      title="Bestellen global aktivieren/deaktivieren"
+    >
+      <span class="material-icons">
+        {{ orderingEnabled ? 'lock_open' : 'lock' }}
+      </span>
+      {{ orderingEnabled ? 'Bestellen deaktivieren' : 'Bestellen aktivieren' }}
+    </button>
   </div>
 </div>
