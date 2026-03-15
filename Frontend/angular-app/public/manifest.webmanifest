@@ -1,0 +1,16 @@
+{
+  "name": "Bestellsystem",
+  "short_name": "Bestellapp",
+  "theme_color": "#0284c7",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "assets/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
