@@ -1,8 +1,10 @@
-export const CLASS_TTL_DAYS = 400;
+export const LOGIN_TTL_DAYS = 400;
 
-export function isClassExpired(classUpdatedAt: Date | null | undefined): boolean {
-  if (!classUpdatedAt) return true; // wenn nie gesetzt -> muss gesetzt werden
-  const ms = Date.now() - new Date(classUpdatedAt).getTime();
+export function isLoginExpired(lastLoginAt: Date | null | undefined): boolean {
+  if (!lastLoginAt) return false;
+
+  const ms = Date.now() - new Date(lastLoginAt).getTime();
   const days = ms / (1000 * 60 * 60 * 24);
-  return days > CLASS_TTL_DAYS;
+
+  return days > LOGIN_TTL_DAYS;
 }

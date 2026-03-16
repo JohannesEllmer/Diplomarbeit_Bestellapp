@@ -1,4 +1,3 @@
-// src/users/users.repo.ts
 import type { Pool, PoolClient } from 'pg';
 
 type Db = Pool | PoolClient;
@@ -7,7 +6,7 @@ export class UsersRepo {
   async getPolicyRow(db: Pool, userId: string) {
     const res = await db.query(
       `
-      SELECT id, "class", blocked, class_updated_at
+      SELECT id, "class", blocked, last_login_at
       FROM app.users
       WHERE id = $1
       LIMIT 1
@@ -17,12 +16,11 @@ export class UsersRepo {
     return res.rows?.[0] ?? null;
   }
 
-  async expireClassAndBlock(db: Pool, userId: string) {
+  async blockUserByInactivity(db: Pool, userId: string) {
     const res = await db.query(
       `
       UPDATE app.users
-      SET "class" = NULL,
-          blocked = TRUE,
+      SET blocked = TRUE,
           blocked_at = COALESCE(blocked_at, NOW())
       WHERE id = $1
       RETURNING id, "class", blocked
@@ -36,10 +34,7 @@ export class UsersRepo {
     return db.query(
       `
       UPDATE app.users
-      SET "class" = $2,
-          class_updated_at = NOW(),
-          blocked = FALSE,
-          blocked_at = NULL
+      SET "class" = $2
       WHERE id = $1
       RETURNING id, name, email, "class", blocked, role
       `,
@@ -362,9 +357,10 @@ export class UsersRepo {
         blocked,
         blocked_at,
         balance,
-        class_updated_at
+        class_updated_at,
+        last_login_at
       )
-      VALUES ($1, $2, $3, $4, FALSE, NULL, 0, NOW())
+      VALUES ($1, $2, $3, $4, FALSE, NULL, 0, NOW(), NOW())
       RETURNING id
       `,
       [p.name, String(p.email).toLowerCase().trim(), p.cls, p.role],
@@ -473,5 +469,16 @@ export class UsersRepo {
     );
 
     await client.query(`DELETE FROM app.users WHERE id = $1`, [userId]);
+  }
+
+  async touchLastLogin(db: Pool | PoolClient, userId: string) {
+    await db.query(
+      `
+      UPDATE app.users
+      SET last_login_at = NOW()
+      WHERE id = $1
+      `,
+      [userId],
+    );
   }
 }

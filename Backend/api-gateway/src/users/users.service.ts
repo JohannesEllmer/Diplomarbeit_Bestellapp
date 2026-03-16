@@ -1,4 +1,3 @@
-// src/users/users.service.ts
 import {
   BadRequestException,
   ForbiddenException,
@@ -10,7 +9,7 @@ import type { Pool } from 'pg';
 import { PG_POOL } from '../db';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UsersRepo } from './users.repo';
-import { isClassExpired } from './class-expirey';
+import { isLoginExpired } from './class-expirey';
 import { sendUserDataDeletedMail } from '../auth-express/src/mailer';
 
 @Injectable()
@@ -20,27 +19,36 @@ export class UsersService {
     private readonly repo: UsersRepo,
   ) {}
 
-  // 400 Tage Policy erzwingen
-  async enforceClassPolicy(userId: string) {
+  // 400-Tage-Inaktivitäts-Policy erzwingen
+  async enforceLoginPolicy(userId: string) {
     const id = String(userId ?? '').trim();
     if (!id) return null;
 
     const u = await this.repo.getPolicyRow(this.db, id);
     if (!u) return null;
 
-    if (!isClassExpired(u.class_updated_at)) {
-      return { id: String(u.id), blocked: !!u.blocked, class: u.class ?? null };
+    if (!isLoginExpired(u.last_login_at)) {
+      return {
+        id: String(u.id),
+        blocked: !!u.blocked,
+        class: u.class ?? null,
+      };
     }
 
-    const upd = await this.repo.expireClassAndBlock(this.db, id);
+    const upd = await this.repo.blockUserByInactivity(this.db, id);
     if (!upd) return null;
 
-    return { id: String(upd.id), blocked: !!upd.blocked, class: upd.class ?? null };
+    return {
+      id: String(upd.id),
+      blocked: !!upd.blocked,
+      class: upd.class ?? null,
+    };
   }
 
   async updateMyClass(userId: string, newClass: string) {
     const id = String(userId ?? '').trim();
     const cls = String(newClass ?? '').trim();
+
     if (!id) throw new NotFoundException('USER_NOT_FOUND');
     if (!cls) throw new ForbiddenException('CLASS_REQUIRED');
 
@@ -61,12 +69,13 @@ export class UsersService {
     };
   }
 
-  // QR-Request: Add
   async createBalanceAddRequest(userId: string, delta: number) {
-    await this.enforceClassPolicy(userId);
+    await this.enforceLoginPolicy(userId);
 
     const d = Number(delta);
-    if (!Number.isFinite(d) || d <= 0) throw new ForbiddenException('DELTA_MUST_BE_POSITIVE');
+    if (!Number.isFinite(d) || d <= 0) {
+      throw new ForbiddenException('DELTA_MUST_BE_POSITIVE');
+    }
 
     const u = await this.repo.getUserForBalanceRequests(this.db, userId);
     if (!u) throw new NotFoundException('USER_NOT_FOUND');
@@ -77,9 +86,8 @@ export class UsersService {
     return { id, code, qrCodeUrl: this.generateQrCode(code) };
   }
 
-  // QR-Request: Flush
   async createBalanceFlushRequest(userId: string) {
-    await this.enforceClassPolicy(userId);
+    await this.enforceLoginPolicy(userId);
 
     const u = await this.repo.getUserForBalanceRequests(this.db, userId);
     if (!u) throw new NotFoundException('USER_NOT_FOUND');
@@ -96,7 +104,6 @@ export class UsersService {
     return { id, code, qrCodeUrl: this.generateQrCode(code) };
   }
 
-  // Admin scannt QR → Guthaben ändern + loggen
   async confirmBalanceRequestByQr(code: string, actorId: string) {
     const m = /^BalanceReq-([0-9a-fA-F-]{36})$/.exec(String(code || '').trim());
     if (!m) return { ok: false, error: 'INVALID_QR' };
@@ -130,7 +137,9 @@ export class UsersService {
 
       if (reqRow.kind === 'add') {
         deltaToApply = Number(reqRow.delta ?? 0);
-        if (!Number.isFinite(deltaToApply) || deltaToApply <= 0) throw new ForbiddenException('INVALID_DELTA');
+        if (!Number.isFinite(deltaToApply) || deltaToApply <= 0) {
+          throw new ForbiddenException('INVALID_DELTA');
+        }
 
         newBalance = oldBalance + deltaToApply;
         reason = 'BALANCE_ADD_CONFIRMED';
@@ -165,7 +174,6 @@ export class UsersService {
     }
   }
 
-  // Gemeinsame Delete-Checks (für me und admin)
   private async assertDeletable(userId: string) {
     const u = await this.repo.getUserForBalanceRequests(this.db, userId);
     if (!u) throw new NotFoundException('USER_NOT_FOUND');
@@ -177,24 +185,22 @@ export class UsersService {
     if (reserved > 0) throw new ForbiddenException('HAS_OPEN_ORDERS');
   }
 
-  // Account löschen: nur wenn balance=0 UND reserved=0
   async deleteAccountIfAllowed(userId: string) {
-    await this.enforceClassPolicy(userId);
+    await this.enforceLoginPolicy(userId);
     await this.assertDeletable(userId);
     await this.repo.deleteByUserId(this.db, userId);
     return { ok: true };
   }
 
-  // Admin: User löschen (nutzt gleiche Checks)
   async remove(id: string) {
     await this.assertDeletable(id);
     await this.repo.deleteByUserId(this.db, id);
   }
 
-  // updateBalanceDelta (Admin/Debug)
   async updateBalanceDelta(id: string, delta: number) {
     const userId = String(id ?? '').trim();
     const d = Number(delta);
+
     if (!userId) throw new BadRequestException('USER_NOT_FOUND');
     if (!Number.isFinite(d)) throw new BadRequestException('INVALID_DELTA');
 
@@ -209,7 +215,11 @@ export class UsersService {
       const newBal = oldBal + d;
 
       await client.query(`UPDATE app.users SET balance = $2 WHERE id = $1`, [userId, newBal]);
-      await this.repo.insertDirectBalanceLog(client, { userId, delta: d, balanceAfter: newBal });
+      await this.repo.insertDirectBalanceLog(client, {
+        userId,
+        delta: d,
+        balanceAfter: newBal,
+      });
 
       await client.query('COMMIT');
       return { ok: true, balance: newBal };
@@ -221,10 +231,12 @@ export class UsersService {
     }
   }
 
-  // Header
+  // Header laden + Aktivität aktualisieren
   async getMyHeader(jwtUser: any) {
     const userId = String(jwtUser?.id ?? jwtUser?.sub);
-    await this.enforceClassPolicy(userId);
+
+    await this.enforceLoginPolicy(userId);
+    await this.repo.touchLastLogin(this.db, userId);
 
     const u = await this.repo.getUserBasic(this.db, userId);
     if (!u) throw new NotFoundException('USER_NOT_FOUND');
@@ -240,9 +252,10 @@ export class UsersService {
     };
   }
 
-  // Profil + Guthaben + reserved + available
+  // Profil laden + Aktivität aktualisieren
   async getMyProfile(userId: string) {
-    await this.enforceClassPolicy(userId);
+    await this.enforceLoginPolicy(userId);
+    await this.repo.touchLastLogin(this.db, userId);
 
     const u = await this.repo.getUserBasic(this.db, userId);
     if (!u) throw new NotFoundException('USER_NOT_FOUND');
@@ -265,9 +278,10 @@ export class UsersService {
     };
   }
 
-  // User-Page: Activity/Logs
+  // Aktivität laden + Aktivität aktualisieren
   async getMyActivity(userId: string) {
-    await this.enforceClassPolicy(userId);
+    await this.enforceLoginPolicy(userId);
+    await this.repo.touchLastLogin(this.db, userId);
 
     const ordersRes = await this.repo.listMyOrdersForActivity(this.db, userId);
     const logsRes = await this.repo.listMyBalanceLogs(this.db, userId);
@@ -292,7 +306,6 @@ export class UsersService {
     };
   }
 
-  // ADMIN: Alle User
   async findAll() {
     const res = await this.repo.listUsersAdmin(this.db);
     return (res.rows ?? []).map((r: any) => ({
@@ -324,7 +337,6 @@ export class UsersService {
     };
   }
 
-  // ADMIN: User updaten (blocked_at korrekt pflegen!)
   async update(id: string, dto: Partial<CreateUserDto>) {
     const userId = String(id ?? '').trim();
     if (!userId) throw new NotFoundException('USER_NOT_FOUND');
@@ -347,9 +359,6 @@ export class UsersService {
 
     if ((dto as any).class !== undefined) {
       setIf(`"class"`, (dto as any).class);
-      fields.push(`class_updated_at = NOW()`);
-      fields.push(`blocked = false`);
-      fields.push(`blocked_at = NULL`);
     }
 
     if ((dto as any).blocked !== undefined) {
@@ -379,18 +388,17 @@ export class UsersService {
 
   async create(dto: CreateUserDto) {
     const cls = String((dto as any).class ?? '').trim();
+
     const id = await this.repo.insertUser(this.db, {
       name: dto.name,
       email: dto.email,
       cls: cls ? cls : null,
       role: String((dto as any).role ?? 'USER'),
     });
+
     return this.findOne(id);
   }
 
-  // --------------------------
-  // Datenschutz: pending deletions + purge
-  // --------------------------
   async listPendingDeletions() {
     const res = await this.repo.listPendingDeletions(this.db);
     return (res.rows ?? []).map((r: any) => ({
@@ -426,6 +434,7 @@ export class UsersService {
   async purgeConfirm(userId: string, confirmText: string, actorId: string) {
     const id = String(userId ?? '').trim();
     const txt = String(confirmText ?? '').trim();
+
     if (!id) throw new NotFoundException('USER_NOT_FOUND');
     if (txt !== 'LÖSCHEN') throw new BadRequestException('CONFIRM_TEXT_INVALID');
 
@@ -447,7 +456,6 @@ export class UsersService {
 
       await client.query('COMMIT');
 
-      // Mail an User: Daten gelöscht (Datenschutz)
       try {
         await sendUserDataDeletedMail(u.email, u.name ?? '');
       } catch {}
