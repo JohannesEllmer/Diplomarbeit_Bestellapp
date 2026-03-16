@@ -16,8 +16,8 @@ export class ClassPolicyGuard implements CanActivate {
 
     const userId = String(jwtUser?.id ?? jwtUser?.sub);
 
-    const dbUser = await this.users.enforceClassPolicy(userId);
-
+    const dbUser = await this.users.enforceLoginPolicy(userId);
+    
     if (!dbUser) return true;
     if (!dbUser.blocked) return true;
 
