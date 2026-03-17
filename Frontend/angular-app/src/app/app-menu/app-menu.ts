@@ -49,15 +49,16 @@ export class AppMenuComponent implements OnInit, OnDestroy {
   readonly ROLES: { [key: string]: UserRoleConfig } = {
     ADMIN: { name: 'ADMIN', label: 'Administrator', color: '#ef4444' },
     INHABER: { name: 'INHABER', label: 'Verwaltung', color: '#3b82f6' },
-    KUNDE: { name: 'KUNDE', label: 'Kunde', color: '#10b981' }
+    KUNDE: { name: 'Kunde', label: 'Kunde', color: '#10b981' },
+    USER: { name: 'User', label: 'User', color: '#10b981' }
   };
 
   readonly NAV_CONFIG: NavLink[] = [
-    { label: 'Menüplan', route: '/', roles: ['KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
-    { label: 'Warenkorb', route: '/warenkorb', roles: ['KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
-    { label: 'Meine Bestellungen', route: '/my-orders', roles: ['KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
-    { label: 'Mein Profil', route: '/me', roles: ['KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
-     { label: 'Impressum', route: '/impressum', roles: ['KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
+    { label: 'Menüplan', route: '/', roles: ['USER', "KUNDE", 'INHABER', 'ADMIN'], section: 'customer' },
+    { label: 'Warenkorb', route: '/warenkorb', roles: ['USER', 'KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
+    { label: 'Meine Bestellungen', route: '/my-orders', roles: ['USER', 'KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
+    { label: 'Mein Profil', route: '/me', roles: ['USER', 'KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
+     { label: 'Impressum', route: '/impressum', roles: ['USER', 'KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
 
     { label: 'Bestellübersicht', route: '/orders', roles: ['INHABER', 'ADMIN'], section: 'management', shortLabel: 'Bestellungen' },
     { label: 'Statistiken', route: '/statistics', roles: ['INHABER', 'ADMIN'], section: 'management' },
