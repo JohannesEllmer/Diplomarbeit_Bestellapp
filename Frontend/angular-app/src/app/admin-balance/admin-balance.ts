@@ -301,60 +301,61 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
   }
 
   private handleBalance(code: string, h: any): void {
-    this.message = 'Guthaben-QR erkannt. Betrag wird geladen …';
+  this.message = 'Guthaben-QR erkannt…';
+  h?.pause?.(true);
 
-    this.api
-      .preview(code)
-      .pipe(finalize(() => (this.confirmInFlight = false)))
-      .subscribe({
-        next: (preview: BalancePreviewResult) => {
-          if (!preview?.ok) {
-            this.message = preview?.error || 'Ungültiger Guthaben-Code.';
-            this.pushHistory({
-              at: Date.now(),
-              code,
-              type: 'balance',
-              ok: false,
-              msg: preview?.error || 'Preview: ok=false',
-            });
-            h?.resume?.();
-            return;
-          }
-
-          this.confirmCode = code;
-          this.confirmAmount = Number(preview.delta ?? 0);
-          this.confirmAlreadyUsed = !!preview.alreadyUsed;
-          this.confirmCurrentBalance =
-            preview.currentBalance != null ? Number(preview.currentBalance) : null;
-          this.confirmPreviewBalanceAfter =
-            preview.previewBalanceAfter != null
-              ? Number(preview.previewBalanceAfter)
-              : null;
-          this.confirmKind = preview.kind ?? null;
-
-          this.pendingResumeHandle = h;
-          this.confirmModalOpen = true;
-          this.message = 'Bitte bestätige den Betrag.';
-        },
-        error: (err) => {
-          const msg =
-            err?.error?.message ||
-            err?.error?.error ||
-            err?.message ||
-            String(err);
-
-          this.message = 'Fehler: ' + msg;
+  this.api
+    .preview(code)
+    .pipe(finalize(() => (this.confirmInFlight = false)))
+    .subscribe({
+      next: (preview: BalancePreviewResult) => {
+        if (!preview?.ok) {
+          this.message = preview?.error || 'Ungültiger Guthaben-Code.';
           this.pushHistory({
             at: Date.now(),
             code,
             type: 'balance',
             ok: false,
-            msg: 'Preview Fehler: ' + msg,
+            msg: preview?.error || 'Preview: ok=false',
           });
           h?.resume?.();
-        },
-      });
-  }
+          return;
+        }
+
+        this.confirmCode = code;
+        this.confirmAmount = Number(preview.delta ?? 0);
+        this.confirmAlreadyUsed = !!preview.alreadyUsed;
+        this.confirmCurrentBalance =
+          preview.currentBalance != null ? Number(preview.currentBalance) : null;
+        this.confirmPreviewBalanceAfter =
+          preview.previewBalanceAfter != null
+            ? Number(preview.previewBalanceAfter)
+            : null;
+        this.confirmKind = preview.kind ?? null;
+
+        this.pendingResumeHandle = h;
+        this.confirmModalOpen = true;
+        this.message = '';
+      },
+      error: (err) => {
+        const msg =
+          err?.error?.message ||
+          err?.error?.error ||
+          err?.message ||
+          String(err);
+
+        this.message = 'Fehler: ' + msg;
+        this.pushHistory({
+          at: Date.now(),
+          code,
+          type: 'balance',
+          ok: false,
+          msg: 'Preview Fehler: ' + msg,
+        });
+        h?.resume?.();
+      },
+    });
+}
 
   cancelBalanceConfirm(): void {
     this.confirmModalOpen = false;
