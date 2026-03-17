@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../env';
 
 export type ScanResult = {
   ok: boolean;
@@ -26,20 +27,20 @@ export type BalancePreviewResult = {
   providedIn: 'root',
 })
 export class AdminBalanceService {
-  private readonly baseUrl = '/api/admin/users';
+  //private readonly baseUrl = environment.apiBaseUrl;
 
   constructor(private http: HttpClient) {}
 
   preview(code: string): Observable<BalancePreviewResult> {
     return this.http.post<BalancePreviewResult>(
-      `${this.baseUrl}/balance/preview`,
+      `${environment.apiBaseUrl}/admin/users/balance/preview`,
       { code }
     );
   }
 
   confirm(code: string): Observable<ScanResult> {
     return this.http.post<ScanResult>(
-      `${this.baseUrl}/balance/confirm`,
+      `${environment.apiBaseUrl}/admin/users/balance/confirm`,
       { code }
     );
   }
