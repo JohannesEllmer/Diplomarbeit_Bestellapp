@@ -4,6 +4,12 @@
   publish = "dist/angular-app/browser"
 
 [[redirects]]
+  from = "/api/*"
+  to = "https://diplomarbeit-bestellapp.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
