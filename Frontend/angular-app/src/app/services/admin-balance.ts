@@ -2,30 +2,27 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-type ScanResult = {
+export type ScanResult = {
   ok: boolean;
   userId?: string;
   delta?: number;
   balanceAfter?: number;
   alreadyUsed?: boolean;
+  error?: string;
 };
 
-type BalancePreviewResult = {
-  ok: boolean;
-  userId?: string;
-  delta?: number;
-  alreadyUsed?: boolean;
-};
-
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root',
+})
 export class AdminBalanceService {
+  private readonly baseUrl = '/api/admin/users';
+
   constructor(private http: HttpClient) {}
 
-  preview(code: string): Observable<BalancePreviewResult> {
-    return this.http.post<BalancePreviewResult>('/api/admin/balance/preview', { code });
-  }
-
   confirm(code: string): Observable<ScanResult> {
-    return this.http.post<ScanResult>('/api/admin/balance/confirm', { code });
+    return this.http.patch<ScanResult>(
+      `${this.baseUrl}/balance/confirm`,
+      { code }
+    );
   }
 }
