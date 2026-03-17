@@ -1,11 +1,12 @@
 <div class="page">
   <div class="card">
+
     <div class="header">
       <div class="title">
         <div class="badge">ADMIN</div>
         <div>
           <h1>Guthaben · QR Scan</h1>
-          <p>BalanceReq- und Order-Codes scannen und verarbeiten</p>
+          <p>BalanceReq Codes bestätigen</p>
         </div>
       </div>
 
@@ -14,24 +15,16 @@
           <span class="dot" [class.on]="scanning"></span>
           Start
         </button>
-        <button class="btn ghost" (click)="stop()" [disabled]="!scanning">
-          Stop
-        </button>
+        <button class="btn ghost" (click)="stop()" [disabled]="!scanning">Stop</button>
       </div>
     </div>
 
     <div class="toolbar">
       <div class="row">
         <label class="lbl">Kamera</label>
-        <select
-          class="select"
-          [ngModel]="selectedCameraId"
-          (ngModelChange)="changeCamera($event)"
-        >
+        <select class="select" [ngModel]="selectedCameraId" (ngModelChange)="changeCamera($event)">
           <option [ngValue]="null">— auswählen —</option>
-          <option *ngFor="let c of cameras" [ngValue]="c.id">
-            {{ c.label }}
-          </option>
+          <option *ngFor="let c of cameras" [ngValue]="c.id">{{ c.label }}</option>
         </select>
       </div>
 
@@ -75,59 +68,9 @@
 
           <div class="manual">
             <div class="manual-row">
-              <input
-                class="input"
-                [(ngModel)]="manualCode"
-                placeholder="Code einfügen oder scannen…"
-              />
+              <input class="input" [(ngModel)]="manualCode" placeholder="Code einfügen oder scannen…" />
               <button class="btn" (click)="pasteFromClipboard()">Einfügen</button>
               <button class="btn primary" (click)="submitManual()">Senden</button>
-            </div>
-          </div>
-
-          <div class="side-card" *ngIf="lastResult">
-            <div class="side-title">Letztes Guthaben-Ergebnis</div>
-
-            <div class="h-item">
-              <div class="h-top">
-                <div class="h-type">balance</div>
-                <div class="h-ok" [class.bad]="!lastResult.ok">
-                  {{ lastResult.ok ? 'OK' : 'FAIL' }}
-                </div>
-              </div>
-
-              <div class="h-msg" *ngIf="lastResult.userId">
-                User: {{ lastResult.userId }}
-              </div>
-
-              <div class="h-amt" *ngIf="lastResult.delta != null">
-                Betrag: {{ money(lastResult.delta) }}
-              </div>
-
-              <div class="h-amt" *ngIf="lastResult.balanceAfter != null">
-                Neuer Kontostand: {{ money(lastResult.balanceAfter) }}
-              </div>
-
-              <div class="h-msg" *ngIf="lastResult.alreadyUsed">
-                Hinweis: Dieser Code wurde bereits verwendet.
-              </div>
-            </div>
-          </div>
-
-          <div class="side-card" *ngIf="lastOrderResult">
-            <div class="side-title">Letztes Order-Ergebnis</div>
-
-            <div class="h-item">
-              <div class="h-top">
-                <div class="h-type">order</div>
-                <div class="h-ok" [class.bad]="!lastOrderResult.ok">
-                  {{ lastOrderResult.ok ? 'OK' : 'FAIL' }}
-                </div>
-              </div>
-
-              <div class="h-msg">
-                {{ lastOrderResult.ok ? 'Bestellung erfolgreich abgeschlossen.' : 'Bestellung konnte nicht abgeschlossen werden.' }}
-              </div>
             </div>
           </div>
         </div>
@@ -136,35 +79,24 @@
           <div class="side-card">
             <div class="side-title">History</div>
 
-            <button class="btn ghost" (click)="clearHistory()">
-              History leeren
-            </button>
+            <button class="btn ghost" (click)="clearHistory()">History leeren</button>
 
             <div class="history" *ngIf="history?.length; else nohist">
               <div class="h-item" *ngFor="let h of history">
                 <div class="h-top">
                   <div class="h-time">{{ time(h.at) }}</div>
                   <div class="h-type">{{ h.type }}</div>
-                  <div class="h-ok" [class.bad]="!h.ok">
-                    {{ h.ok ? 'OK' : 'FAIL' }}
-                  </div>
+                  <div class="h-ok" [class.bad]="!h.ok">{{ h.ok ? 'OK' : 'FAIL' }}</div>
                 </div>
-
                 <div class="h-code">
                   {{ h.code }}
                   <button class="btn mini" (click)="copy(h.code)">Copy</button>
                 </div>
-
                 <div class="h-msg">{{ h.msg }}</div>
-
-                <div class="h-amt" *ngIf="h.type === 'balance' && h.delta != null">
+                <div class="h-amt" *ngIf="h.type==='balance' && h.delta != null">
                   Betrag: {{ money(h.delta) }}
                 </div>
-
-                <div
-                  class="h-amt"
-                  *ngIf="h.type === 'balance' && h.balanceAfter != null"
-                >
+                <div class="h-amt" *ngIf="h.type==='balance' && h.balanceAfter != null">
                   Kontostand: {{ money(h.balanceAfter) }}
                 </div>
               </div>
@@ -175,6 +107,51 @@
             </ng-template>
           </div>
         </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="modal-backdrop" *ngIf="confirmModalOpen" (click)="cancelBalanceConfirm()"></div>
+
+  <div class="modal" *ngIf="confirmModalOpen">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Guthaben bestätigen</div>
+        <button class="modal-close" (click)="cancelBalanceConfirm()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="confirm-amount">
+          {{ money(confirmAmount) }}
+        </div>
+
+        <div class="confirm-text" *ngIf="confirmKind === 'add'">
+          Dieser Betrag wird dem Guthaben gutgeschrieben.
+          Bitte nur bestätigen, wenn der Betrag korrekt ist.
+        </div>
+
+        <div class="confirm-text" *ngIf="confirmKind === 'flush'">
+          Dieser Betrag wird vom Guthaben abgezogen und das Guthaben auf 0 gesetzt.
+          Bitte nur bestätigen, wenn die Auszahlung korrekt ist.
+        </div>
+
+        <div class="confirm-text" *ngIf="confirmCurrentBalance != null">
+          Aktuelles Guthaben: {{ money(confirmCurrentBalance) }}
+        </div>
+
+        <div class="confirm-text" *ngIf="confirmPreviewBalanceAfter != null">
+          Neuer Kontostand: {{ money(confirmPreviewBalanceAfter) }}
+        </div>
+
+        <div class="confirm-warn" *ngIf="confirmAlreadyUsed">
+          Hinweis: Dieser Code wurde laut System bereits verwendet.
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn ghost" (click)="cancelBalanceConfirm()">Abbrechen</button>
+        <button class="btn primary" (click)="okBalanceConfirm()">OK</button>
       </div>
     </div>
   </div>

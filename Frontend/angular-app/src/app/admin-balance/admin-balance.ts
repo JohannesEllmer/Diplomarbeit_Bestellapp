@@ -4,7 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { finalize } from 'rxjs/operators';
 
-import { AdminBalanceService, ScanResult } from '../services/admin-balance';
+import {
+  AdminBalanceService,
+  BalancePreviewResult,
+  ScanResult,
+} from '../services/admin-balance';
 import { AdminOrderService } from '../services/order/admin-order.service';
 
 type OrderScanResult = {
@@ -49,6 +53,16 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
 
   manualCode = '';
   history: HistoryItem[] = [];
+
+  confirmModalOpen = false;
+  confirmAmount: number | null = null;
+  confirmCode = '';
+  confirmAlreadyUsed = false;
+  confirmCurrentBalance: number | null = null;
+  confirmPreviewBalanceAfter: number | null = null;
+  confirmKind: string | null = null;
+
+  private pendingResumeHandle: any = null;
 
   private html5?: Html5Qrcode;
   private scanningInProgress = false;
@@ -101,7 +115,6 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
 
   async changeCamera(id: string): Promise<void> {
     this.selectedCameraId = id || null;
-
     if (this.selectedCameraId) {
       localStorage.setItem(this.STORAGE_CAM, this.selectedCameraId);
     }
@@ -141,10 +154,10 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
   }
 
   copy(text: string): void {
-    const value = (text || '').trim();
-    if (!value) return;
+    const v = (text || '').trim();
+    if (!v) return;
 
-    navigator.clipboard?.writeText(value).then(
+    navigator.clipboard?.writeText(v).then(
       () => (this.message = 'Kopiert.'),
       () => (this.message = 'Kopieren nicht möglich.')
     );
@@ -179,11 +192,11 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
 
     if (!this.cameras.length) return;
 
-    const backCamera = this.cameras.find((c) =>
+    const back = this.cameras.find((c) =>
       (c.label || '').toLowerCase().includes('back')
     );
 
-    this.selectedCameraId = (backCamera || this.cameras[0]).id;
+    this.selectedCameraId = (back || this.cameras[0]).id;
     localStorage.setItem(this.STORAGE_CAM, this.selectedCameraId);
   }
 
@@ -227,13 +240,10 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
 
   private async stopScanner(): Promise<void> {
     this.scanningInProgress = false;
-
     if (!this.html5) return;
 
     try {
-      if (this.html5.isScanning) {
-        await this.html5.stop();
-      }
+      if (this.html5.isScanning) await this.html5.stop();
       await this.html5.clear();
     } catch {}
 
@@ -253,9 +263,7 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
     const code = (decodedText || '').trim();
     if (!code) return;
 
-    if (!fromManual) {
-      this.manualCode = code;
-    }
+    if (!fromManual) this.manualCode = code;
 
     const type = this.detectType(code);
 
@@ -273,7 +281,6 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
 
     const now = Date.now();
     if (this.confirmInFlight) return;
-
     if (code === this.lastConfirmedCode && now - this.lastConfirmedAt < 2000) {
       return;
     }
@@ -294,7 +301,91 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
   }
 
   private handleBalance(code: string, h: any): void {
-    this.message = 'Guthaben-QR erkannt. Bestätigung läuft …';
+    this.message = 'Guthaben-QR erkannt. Betrag wird geladen …';
+
+    this.api
+      .preview(code)
+      .pipe(finalize(() => (this.confirmInFlight = false)))
+      .subscribe({
+        next: (preview: BalancePreviewResult) => {
+          if (!preview?.ok) {
+            this.message = preview?.error || 'Ungültiger Guthaben-Code.';
+            this.pushHistory({
+              at: Date.now(),
+              code,
+              type: 'balance',
+              ok: false,
+              msg: preview?.error || 'Preview: ok=false',
+            });
+            h?.resume?.();
+            return;
+          }
+
+          this.confirmCode = code;
+          this.confirmAmount = Number(preview?.delta ?? 0);
+          this.confirmAlreadyUsed = !!preview?.alreadyUsed;
+          this.confirmCurrentBalance = Number(preview?.currentBalance ?? 0);
+          this.confirmPreviewBalanceAfter = Number(preview?.previewBalanceAfter ?? 0);
+          this.confirmKind = preview?.kind ?? null;
+
+          this.pendingResumeHandle = h;
+          this.confirmModalOpen = true;
+          this.message = 'Bitte bestätige den Betrag.';
+        },
+        error: (err) => {
+          const msg = err?.error?.message || err?.message || String(err);
+          this.message = 'Fehler: ' + msg;
+          this.pushHistory({
+            at: Date.now(),
+            code,
+            type: 'balance',
+            ok: false,
+            msg: 'Preview Fehler: ' + msg,
+          });
+          h?.resume?.();
+        },
+      });
+  }
+
+  cancelBalanceConfirm(): void {
+    this.confirmModalOpen = false;
+
+    const h = this.pendingResumeHandle;
+    this.pendingResumeHandle = null;
+
+    this.confirmCode = '';
+    this.confirmAmount = null;
+    this.confirmAlreadyUsed = false;
+    this.confirmCurrentBalance = null;
+    this.confirmPreviewBalanceAfter = null;
+    this.confirmKind = null;
+
+    this.confirmInFlight = false;
+
+    h?.resume?.();
+    this.message = 'Abgebrochen.';
+  }
+
+  okBalanceConfirm(): void {
+    const code = this.confirmCode;
+    const h = this.pendingResumeHandle;
+
+    this.confirmModalOpen = false;
+    this.pendingResumeHandle = null;
+
+    this.confirmCode = '';
+    this.confirmAmount = null;
+    this.confirmAlreadyUsed = false;
+    this.confirmCurrentBalance = null;
+    this.confirmPreviewBalanceAfter = null;
+    this.confirmKind = null;
+
+    this.handleBalanceConfirm(code, h);
+  }
+
+  private handleBalanceConfirm(code: string, h: any): void {
+    this.message = 'Bestätigung läuft …';
+    this.confirmInFlight = true;
 
     this.api
       .confirm(code)
@@ -305,33 +396,31 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
           this.lastOrderResult = null;
 
           if (this.lastResult?.ok) {
-            const alreadyUsed = !!this.lastResult.alreadyUsed;
-
-            this.message = alreadyUsed
-              ? 'OK. Code wurde bereits verwendet.'
-              : 'OK. Guthaben erfolgreich geändert.';
+            const used = !!this.lastResult.alreadyUsed;
+            this.message = used
+              ? 'OK (bereits verwendet).'
+              : 'OK. Guthaben geändert.';
 
             this.pushHistory({
               at: Date.now(),
               code,
               type: 'balance',
               ok: true,
-              alreadyUsed,
+              alreadyUsed: used,
               userId: this.lastResult.userId,
               delta: this.lastResult.delta,
               balanceAfter: this.lastResult.balanceAfter,
-              msg: alreadyUsed ? 'Bereits verwendet' : 'Guthaben bestätigt',
+              msg: used ? 'OK (already used)' : 'OK',
             });
 
             this.onSuccessFeedback();
 
-            if (this.autoStopOnSuccess && !alreadyUsed) {
+            if (this.autoStopOnSuccess && !used) {
               this.stop().catch(() => {});
               return;
             }
           } else {
-            this.message =
-              this.lastResult?.error || 'Bestätigung fehlgeschlagen.';
+            this.message = this.lastResult?.error || 'Bestätigung fehlgeschlagen.';
             this.pushHistory({
               at: Date.now(),
               code,
@@ -439,19 +528,19 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
       try {
         const ctx = new (window.AudioContext ||
           (window as any).webkitAudioContext)();
-        const oscillator = ctx.createOscillator();
-        const gain = ctx.createGain();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
 
-        oscillator.type = 'sine';
-        oscillator.frequency.value = 880;
-        gain.gain.value = 0.05;
+        o.type = 'sine';
+        o.frequency.value = 880;
+        g.gain.value = 0.05;
 
-        oscillator.connect(gain);
-        gain.connect(ctx.destination);
-        oscillator.start();
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.start();
 
         setTimeout(() => {
-          oscillator.stop();
+          o.stop();
           ctx.close().catch(() => {});
         }, 120);
       } catch {}
@@ -463,8 +552,8 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
   }
 
   money(n: any): string {
-    const value = Number(n ?? 0);
-    const fixed = Number.isFinite(value) ? value.toFixed(2) : '0.00';
+    const v = Number(n ?? 0);
+    const fixed = Number.isFinite(v) ? v.toFixed(2) : '0.00';
     return fixed.replace('.', ',') + ' €';
   }
 

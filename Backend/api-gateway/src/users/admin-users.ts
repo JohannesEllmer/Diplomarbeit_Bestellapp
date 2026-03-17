@@ -1,5 +1,14 @@
-// src/admin/admin-users.controller.ts
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth.guards';
 import { UsersService } from '../users/users.service';
 import { ConfirmBalanceRequestDto } from './dto/confirm-balance.dto';
@@ -11,7 +20,13 @@ import { RolesGuard } from '../roles.guard';
 export class AdminUsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Patch('balance/confirm')
+  @Post('balance/preview')
+  @Roles('ADMIN', 'INHABER')
+  previewBalance(@Body() dto: ConfirmBalanceRequestDto) {
+    return this.usersService.previewBalanceRequestByQr(dto.code);
+  }
+
+  @Post('balance/confirm')
   @Roles('ADMIN', 'INHABER')
   confirmBalance(@Req() req: any, @Body() dto: ConfirmBalanceRequestDto) {
     const actor = String(req.user?.id ?? req.user?.sub ?? 'admin');
@@ -32,7 +47,11 @@ export class AdminUsersController {
 
   @Delete(':id/purge')
   @Roles('ADMIN', 'INHABER')
-  purgeConfirm(@Req() req: any, @Param('id') id: string, @Body() body: { confirmText: string }) {
+  purgeConfirm(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body: { confirmText: string },
+  ) {
     const actor = String(req.user?.id ?? req.user?.sub ?? 'admin');
     return this.usersService.purgeConfirm(String(id), String(body?.confirmText ?? ''), actor);
   }

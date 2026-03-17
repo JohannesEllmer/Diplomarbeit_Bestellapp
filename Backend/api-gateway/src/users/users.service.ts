@@ -19,7 +19,6 @@ export class UsersService {
     private readonly repo: UsersRepo,
   ) {}
 
-  // 400-Tage-Inaktivitäts-Policy erzwingen
   async enforceLoginPolicy(userId: string) {
     const id = String(userId ?? '').trim();
     if (!id) return null;
@@ -102,6 +101,53 @@ export class UsersService {
     const id = await this.repo.insertBalanceFlushRequest(this.db, userId);
     const code = `BalanceReq-${id}`;
     return { id, code, qrCodeUrl: this.generateQrCode(code) };
+  }
+
+  async previewBalanceRequestByQr(code: string) {
+    const m = /^BalanceReq-([0-9a-fA-F-]{36})$/.exec(String(code || '').trim());
+    if (!m) {
+      return { ok: false, error: 'INVALID_QR' };
+    }
+
+    const reqId = m[1];
+    const rRes = await this.repo.getBalanceRequestById(this.db, reqId);
+    if (rRes.rowCount === 0) {
+      throw new NotFoundException('REQUEST_NOT_FOUND');
+    }
+
+    const reqRow = rRes.rows[0];
+    const userId = String(reqRow.user_id);
+
+    const u = await this.repo.getUserForBalanceRequests(this.db, userId);
+    if (!u) throw new NotFoundException('USER_NOT_FOUND');
+    if (u.blocked) throw new ForbiddenException('USER_BLOCKED');
+
+    let delta = 0;
+
+    if (reqRow.kind === 'add') {
+      delta = Number(reqRow.delta ?? 0);
+      if (!Number.isFinite(delta) || delta <= 0) {
+        throw new ForbiddenException('INVALID_DELTA');
+      }
+    } else if (reqRow.kind === 'flush') {
+      const balance = Number(u.balance ?? 0);
+      delta = balance > 0 ? -balance : 0;
+    } else {
+      throw new ForbiddenException('INVALID_KIND');
+    }
+
+    return {
+      ok: true,
+      userId,
+      delta,
+      alreadyUsed: !!reqRow.is_used,
+      kind: String(reqRow.kind),
+      currentBalance: Number(u.balance ?? 0),
+      previewBalanceAfter:
+        reqRow.kind === 'add'
+          ? Number(u.balance ?? 0) + delta
+          : 0,
+    };
   }
 
   async confirmBalanceRequestByQr(code: string, actorId: string) {
@@ -231,7 +277,6 @@ export class UsersService {
     }
   }
 
-  // Header laden + Aktivität aktualisieren
   async getMyHeader(jwtUser: any) {
     const userId = String(jwtUser?.id ?? jwtUser?.sub);
 
@@ -252,7 +297,6 @@ export class UsersService {
     };
   }
 
-  // Profil laden + Aktivität aktualisieren
   async getMyProfile(userId: string) {
     await this.enforceLoginPolicy(userId);
     await this.repo.touchLastLogin(this.db, userId);
@@ -278,7 +322,6 @@ export class UsersService {
     };
   }
 
-  // Aktivität laden + Aktivität aktualisieren
   async getMyActivity(userId: string) {
     await this.enforceLoginPolicy(userId);
     await this.repo.touchLastLogin(this.db, userId);
