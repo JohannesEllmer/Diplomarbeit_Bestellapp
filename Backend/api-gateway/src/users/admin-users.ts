@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   Param,
-  Patch,
   Post,
   Req,
   UseGuards,
@@ -53,6 +52,10 @@ export class AdminUsersController {
     @Body() body: { confirmText: string },
   ) {
     const actor = String(req.user?.id ?? req.user?.sub ?? 'admin');
-    return this.usersService.purgeConfirm(String(id), String(body?.confirmText ?? ''), actor);
+    return this.usersService.purgeConfirm(
+      String(id),
+      String(body?.confirmText ?? ''),
+      actor,
+    );
   }
 }

@@ -483,6 +483,8 @@ export class UsersRepo {
     await client.query(`DELETE FROM app.users WHERE id = $1`, [userId]);
   }
 
+
+
   async touchLastLogin(db: Pool | PoolClient, userId: string) {
     await db.query(
       `

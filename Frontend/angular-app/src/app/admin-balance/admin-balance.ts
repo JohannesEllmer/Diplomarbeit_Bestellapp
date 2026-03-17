@@ -322,18 +322,27 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
           }
 
           this.confirmCode = code;
-          this.confirmAmount = Number(preview?.delta ?? 0);
-          this.confirmAlreadyUsed = !!preview?.alreadyUsed;
-          this.confirmCurrentBalance = Number(preview?.currentBalance ?? 0);
-          this.confirmPreviewBalanceAfter = Number(preview?.previewBalanceAfter ?? 0);
-          this.confirmKind = preview?.kind ?? null;
+          this.confirmAmount = Number(preview.delta ?? 0);
+          this.confirmAlreadyUsed = !!preview.alreadyUsed;
+          this.confirmCurrentBalance =
+            preview.currentBalance != null ? Number(preview.currentBalance) : null;
+          this.confirmPreviewBalanceAfter =
+            preview.previewBalanceAfter != null
+              ? Number(preview.previewBalanceAfter)
+              : null;
+          this.confirmKind = preview.kind ?? null;
 
           this.pendingResumeHandle = h;
           this.confirmModalOpen = true;
           this.message = 'Bitte bestätige den Betrag.';
         },
         error: (err) => {
-          const msg = err?.error?.message || err?.message || String(err);
+          const msg =
+            err?.error?.message ||
+            err?.error?.error ||
+            err?.message ||
+            String(err);
+
           this.message = 'Fehler: ' + msg;
           this.pushHistory({
             at: Date.now(),
@@ -436,7 +445,12 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
           this.lastResult = { ok: false };
           this.lastOrderResult = null;
 
-          const msg = err?.error?.message || err?.message || String(err);
+          const msg =
+            err?.error?.message ||
+            err?.error?.error ||
+            err?.message ||
+            String(err);
+
           this.message = 'Fehler: ' + msg;
 
           this.pushHistory({
@@ -496,7 +510,12 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
           this.lastOrderResult = { ok: false };
           this.lastResult = null;
 
-          const msg = err?.error?.message || err?.message || String(err);
+          const msg =
+            err?.error?.message ||
+            err?.error?.error ||
+            err?.message ||
+            String(err);
+
           this.message = 'Fehler: ' + msg;
 
           this.pushHistory({
@@ -530,15 +549,12 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
           (window as any).webkitAudioContext)();
         const o = ctx.createOscillator();
         const g = ctx.createGain();
-
         o.type = 'sine';
         o.frequency.value = 880;
         g.gain.value = 0.05;
-
         o.connect(g);
         g.connect(ctx.destination);
         o.start();
-
         setTimeout(() => {
           o.stop();
           ctx.close().catch(() => {});
