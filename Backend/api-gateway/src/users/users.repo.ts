@@ -430,7 +430,7 @@ export class UsersRepo {
   return db.query(
     `
       SELECT id, user_id, kind, delta, is_used, used_at, used_by
-      FROM app.balance_requests
+      FROM app.balance_change_requests
       WHERE id = $1
       LIMIT 1
     `,
