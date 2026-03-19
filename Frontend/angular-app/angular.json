@@ -26,7 +26,7 @@
             ],
             "styles": [
               "src/styles.css"
-              
+
             ]
           },
           "configurations": {
@@ -71,6 +71,11 @@
         "test": {
           "builder": "@angular/build:karma",
           "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "main": "src/test.ts",
             "tsConfig": "tsconfig.spec.json",
             "assets": [
               {

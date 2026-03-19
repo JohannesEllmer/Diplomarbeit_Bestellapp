@@ -1,4 +1,3 @@
-/// <reference types="jest" />
 import { TestBed } from '@angular/core/testing';
 import { OrderService } from './order-overview.service';
 import { HttpClient } from '@angular/common/http';
@@ -29,12 +28,12 @@ const mockOrders = [
 
 describe('OrderService', () => {
   let service: OrderService;
-  let http: jest.Mocked<HttpClient>;
-  let auth: jest.Mocked<AuthService>;
+  let http: { get: jasmine.Spy };
+  let auth: { getCurrentUserId: jasmine.Spy };
 
   beforeEach(() => {
-    http = { get: jest.fn() } as any;
-    auth = { getCurrentUserId: jest.fn() } as any;
+    http = jasmine.createSpyObj('HttpClient', ['get']);
+    auth = jasmine.createSpyObj('AuthService', ['getCurrentUserId']);
 
     TestBed.configureTestingModule({
       providers: [
@@ -48,12 +47,12 @@ describe('OrderService', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    // No global mocks to restore
   });
 
   it('should filter orders by current user and attach QR to open orders', (done) => {
-    auth.getCurrentUserId.mockReturnValue('user123');
-    http.get.mockReturnValue(of(mockOrders));
+    auth.getCurrentUserId.and.returnValue('user123');
+    http.get.and.returnValue(of(mockOrders));
 
     service.getMyOrders().subscribe(filteredWithQr => {
       expect(filteredWithQr.length).toBe(2); // Only orders of user123
@@ -93,18 +92,18 @@ describe('OrderService', () => {
   });
 
   it('should handle http errors in getMyOrders', (done) => {
-    auth.getCurrentUserId.mockReturnValue('user123');
-    http.get.mockReturnValue(throwError(() => new Error('network error')));
-    const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+    auth.getCurrentUserId.and.returnValue('user123');
+    http.get.and.returnValue(throwError(() => new Error('network error')));
+    spyOn(console, 'error').and.callFake(() => {});
 
     service.getMyOrders().subscribe({
       next: () => {
         // Should not be called
-        expect(false).toBe(true);
+        fail('Should not emit next');
       },
       error: (err) => {
-        expect(err).toBeInstanceOf(Error);
-        expect(log).toHaveBeenCalled();
+        expect(err).toEqual(jasmine.any(Error));
+        expect(console.error).toHaveBeenCalled();
         done();
       },
     });
