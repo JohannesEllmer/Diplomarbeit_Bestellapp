@@ -33,13 +33,13 @@ export const routes: Routes = [
   { path: 'user-profile', component: UserPageComponent, canActivate: [authGuard()] },
   { path: 'me', redirectTo: 'user-profile', pathMatch: 'full' },
   { path: 'change-password', component: ChangePasswordPage, canActivate: [authGuard()] },
+  { path: 'warenkorb', component: CartPageComponent, canActivate: [authGuard()] },
+  { path: 'my-orders', component: OrderOverviewComponent, canActivate: [authGuard()] },
   // Admin
   { path: 'admin/balance-scan', component: BalanceScanComponent, canActivate: [authGuard(['ADMIN', 'INHABER'])] },
   { path: '', component: MenuPlanComponent, canActivate: [authGuard()] },
-  { path: 'warenkorb', component: CartPageComponent, canActivate: [authGuard()] },
 
   { path: 'user', component: UserManagementComponent, canActivate: [authGuard(['ADMIN', 'INHABER'])] },
-  { path: 'my-orders', component: OrderOverviewComponent, canActivate: [authGuard(['KUNDE', 'ADMIN'])] },
   { path: 'orders', component: OrderListComponent, canActivate: [authGuard(['INHABER', 'ADMIN'])] },
 
   { path: 'statistics', component: StatisticsPageComponent, canActivate: [authGuard(['ADMIN', 'INHABER'])] },

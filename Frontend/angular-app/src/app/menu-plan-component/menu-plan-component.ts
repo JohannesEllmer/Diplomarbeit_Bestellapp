@@ -29,7 +29,7 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
   activeFilter = 'Alle';
   searchTerm = '';
 
-  categories = ['Alle', 'Menü', 'Hauptgericht', 'Dessert', 'Getränk'];
+  categories = ['Alle', 'Menü', 'Hauptgericht', 'Dessert'];
   filters = ['Alle', 'Vegetarisch'];
 
   menuItems: MenuItem[] = [];
