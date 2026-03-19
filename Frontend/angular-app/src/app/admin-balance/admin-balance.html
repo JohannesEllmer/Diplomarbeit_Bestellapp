@@ -190,38 +190,47 @@
         </div>
 
         <div class="confirm-body">
-          <div class="confirm-amount">{{ money(confirmAmount) }}</div>
+          <ng-container *ngIf="!confirmLoading; else loadingState">
+            <div class="confirm-amount">{{ money(confirmAmount) }}</div>
 
-          <div class="confirm-info-block">
-            <div class="confirm-text" *ngIf="confirmKind === 'add'">
-              Dieser Betrag wird dem Guthaben gutgeschrieben. Bitte prüfe den Betrag vor der Bestätigung.
+            <div class="confirm-info-block">
+              <div class="confirm-text" *ngIf="confirmKind === 'add'">
+                Dieser Betrag wird dem Guthaben gutgeschrieben. Bitte prüfe den Betrag vor der Bestätigung.
+              </div>
+
+              <div class="confirm-text" *ngIf="confirmKind === 'flush'">
+                Dieser Betrag wird ausgezahlt und das Guthaben auf 0 gesetzt. Bitte prüfe den Betrag vor der Bestätigung.
+              </div>
+
+              <div class="confirm-meta" *ngIf="confirmCurrentBalance != null">
+                <span>Aktuelles Guthaben</span>
+                <strong>{{ money(confirmCurrentBalance) }}</strong>
+              </div>
+
+              <div class="confirm-meta" *ngIf="confirmPreviewBalanceAfter != null">
+                <span>Neuer Kontostand</span>
+                <strong>{{ money(confirmPreviewBalanceAfter) }}</strong>
+              </div>
             </div>
 
-            <div class="confirm-text" *ngIf="confirmKind === 'flush'">
-              Dieser Betrag wird ausgezahlt und das Guthaben auf 0 gesetzt. Bitte prüfe den Betrag vor der Bestätigung.
+            <div class="confirm-warn" *ngIf="confirmAlreadyUsed">
+              Hinweis: Dieser Code wurde laut System bereits verwendet.
             </div>
+          </ng-container>
 
-            <div class="confirm-meta" *ngIf="confirmCurrentBalance != null">
-              <span>Aktuelles Guthaben</span>
-              <strong>{{ money(confirmCurrentBalance) }}</strong>
+          <ng-template #loadingState>
+            <div class="confirm-loading">
+              <div class="confirm-spinner"></div>
+              <div class="confirm-loading-text">Betrag wird geladen …</div>
             </div>
-
-            <div class="confirm-meta" *ngIf="confirmPreviewBalanceAfter != null">
-              <span>Neuer Kontostand</span>
-              <strong>{{ money(confirmPreviewBalanceAfter) }}</strong>
-            </div>
-          </div>
-
-          <div class="confirm-warn" *ngIf="confirmAlreadyUsed">
-            Hinweis: Dieser Code wurde laut System bereits verwendet.
-          </div>
+          </ng-template>
         </div>
 
         <div class="confirm-foot">
           <button class="btn btn-secondary" type="button" (click)="cancelBalanceConfirm()">
             Abbrechen
           </button>
-          <button class="btn btn-primary" type="button" (click)="okBalanceConfirm()">
+          <button class="btn btn-primary" type="button" (click)="okBalanceConfirm()" [disabled]="confirmLoading || confirmAmount == null">
             Bestätigen
           </button>
         </div>

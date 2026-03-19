@@ -55,6 +55,8 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
   history: HistoryItem[] = [];
 
   confirmModalOpen = false;
+  confirmLoading = false;
+
   confirmAmount: number | null = null;
   confirmCode = '';
   confirmAlreadyUsed = false;
@@ -87,7 +89,9 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
   }
 
   async start(): Promise<void> {
-    if (this.scanning || this.scanningInProgress || this.confirmModalOpen) return;
+    if (this.scanning || this.scanningInProgress || this.confirmModalOpen) {
+      return;
+    }
 
     this.scanning = true;
     this.message = 'Kamera wird initialisiert …';
@@ -293,6 +297,7 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
     }
 
     const now = Date.now();
+
     if (this.confirmInFlight) return;
     if (code === this.lastConfirmedCode && now - this.lastConfirmedAt < 2000) {
       return;
@@ -303,7 +308,7 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
     this.lastConfirmedAt = now;
 
     if (type === 'balance') {
-      this.handleBalance(code);
+      void this.handleBalance(code);
       return;
     }
 
@@ -311,9 +316,20 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
   }
 
   private async handleBalance(code: string): Promise<void> {
-    this.message = 'Guthaben-QR erkannt … Vorschau wird geladen.';
+    this.message = 'Guthaben-QR erkannt …';
 
     this.restartScannerAfterModal = this.scanning;
+
+    this.confirmCode = code;
+    this.confirmAmount = null;
+    this.confirmAlreadyUsed = false;
+    this.confirmCurrentBalance = null;
+    this.confirmPreviewBalanceAfter = null;
+    this.confirmKind = null;
+
+    this.confirmLoading = true;
+    this.confirmModalOpen = true;
+    document.body.classList.add('modal-open');
 
     try {
       if (this.scanning) {
@@ -324,10 +340,18 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
 
     this.api
       .preview(code)
-      .pipe(finalize(() => (this.confirmInFlight = false)))
+      .pipe(
+        finalize(() => {
+          this.confirmInFlight = false;
+          this.confirmLoading = false;
+        })
+      )
       .subscribe({
         next: (preview: BalancePreviewResult) => {
           if (!preview?.ok) {
+            this.confirmModalOpen = false;
+            document.body.classList.remove('modal-open');
+
             this.message = preview?.error || 'Ungültiger Guthaben-Code.';
             this.pushHistory({
               at: Date.now(),
@@ -343,7 +367,6 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
             return;
           }
 
-          this.confirmCode = code;
           this.confirmAmount = Number(preview.delta ?? 0);
           this.confirmAlreadyUsed = !!preview.alreadyUsed;
           this.confirmCurrentBalance =
@@ -356,11 +379,12 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
               : null;
           this.confirmKind = preview.kind ?? null;
 
-          this.confirmModalOpen = true;
-          document.body.classList.add('modal-open');
           this.message = '';
         },
         error: (err) => {
+          this.confirmModalOpen = false;
+          document.body.classList.remove('modal-open');
+
           const msg =
             err?.error?.message ||
             err?.error?.error ||
@@ -385,6 +409,7 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
 
   cancelBalanceConfirm(): void {
     this.confirmModalOpen = false;
+    this.confirmLoading = false;
     document.body.classList.remove('modal-open');
 
     this.confirmCode = '';
@@ -403,9 +428,12 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
   }
 
   okBalanceConfirm(): void {
+    if (this.confirmLoading || !this.confirmCode) return;
+
     const code = this.confirmCode;
 
     this.confirmModalOpen = false;
+    this.confirmLoading = false;
     document.body.classList.remove('modal-open');
 
     this.confirmCode = '';
@@ -452,6 +480,7 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
             this.onSuccessFeedback();
 
             if (this.autoStopOnSuccess && !used) {
+              this.restartScannerAfterModal = false;
               this.scanning = false;
               return;
             }
