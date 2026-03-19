@@ -558,3 +558,14 @@
   font-weight: 700;
   text-align: right;
 }
+
+.ordering-toggle.ordering-on {
+  background-color: #22c55e !important;
+  color: #fff;
+  border: 1px solid #22c55e;
+}
+.ordering-toggle.ordering-off {
+  background-color: #ef4444 !important;
+  color: #fff;
+  border: 1px solid #ef4444;
+}

@@ -97,10 +97,10 @@
     </button>
 
     <button
-      class="add-menu-button"
+      class="add-menu-button ordering-toggle"
       type="button"
       style="margin-left: 12px;"
-      [class.danger]="orderingEnabled"
+      [ngClass]="orderingEnabled ? 'ordering-on' : 'ordering-off'"
       (click)="toggleOrdering()"
       [disabled]="togglingOrdering"
       title="Bestellen global aktivieren/deaktivieren"
@@ -108,7 +108,7 @@
       <span class="material-icons">
         {{ orderingEnabled ? 'lock_open' : 'lock' }}
       </span>
-      {{ orderingEnabled ? 'Bestellen deaktivieren' : 'Bestellen aktivieren' }}
+      {{ orderingEnabled ? 'Bestellen aktiviert' : 'Bestellen deaktiviert' }}
     </button>
   </div>
 </div>
