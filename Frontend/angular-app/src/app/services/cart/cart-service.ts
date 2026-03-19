@@ -181,7 +181,7 @@ export class CartService {
         const filtered = (before ?? []).filter(ci => {
           const id = String(ci?.menuItem?.id ?? '').trim();
           if (!id) return false;
-          if (!allowed.has(id)) return false;           
+          if (!allowed.has(id)) return false;
           if (allowed.get(id) === false) return false;  // nicht verfügbar
           return true;
         });
