@@ -64,12 +64,16 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
   confirmPreviewBalanceAfter: number | null = null;
   confirmKind: string | null = null;
 
+  orderInfoModalOpen = false;
+  orderInfoCode = '';
+
   private html5?: Html5Qrcode;
   private scanningInProgress = false;
   private confirmInFlight = false;
   private lastConfirmedCode = '';
   private lastConfirmedAt = 0;
   private restartScannerAfterModal = false;
+  private restartScannerAfterOrderModal = false;
 
   private readonly STORAGE_CAM = 'admin_balance_scan_camera';
 
@@ -89,7 +93,12 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
   }
 
   async start(): Promise<void> {
-    if (this.scanning || this.scanningInProgress || this.confirmModalOpen) {
+    if (
+      this.scanning ||
+      this.scanningInProgress ||
+      this.confirmModalOpen ||
+      this.orderInfoModalOpen
+    ) {
       return;
     }
 
@@ -200,12 +209,8 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
     if (!this.cameras.length) return;
 
     const backCam =
-      this.cameras.find((c) =>
-        (c.label || '').toLowerCase().includes('back')
-      ) ||
-      this.cameras.find((c) =>
-        (c.label || '').toLowerCase().includes('rear')
-      ) ||
+      this.cameras.find((c) => (c.label || '').toLowerCase().includes('back')) ||
+      this.cameras.find((c) => (c.label || '').toLowerCase().includes('rear')) ||
       this.cameras[0];
 
     this.selectedCameraId = backCam.id;
@@ -529,17 +534,18 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
 
   private handleOrder(code: string): void {
     this.message = 'Order-QR erkannt. Bestellung wird abgeschlossen …';
+    this.restartScannerAfterOrderModal = this.scanning;
 
     this.adminOrders
       .completeByQrCode(code)
       .pipe(finalize(() => (this.confirmInFlight = false)))
       .subscribe({
-        next: (res) => {
+        next: async (res) => {
           this.lastOrderResult = res ?? { ok: false };
           this.lastResult = null;
 
           if (this.lastOrderResult?.ok) {
-            this.message = 'Bestellung erfolgreich abgeschlossen.';
+            this.message = '';
             this.pushHistory({
               at: Date.now(),
               code,
@@ -550,10 +556,18 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
 
             this.onSuccessFeedback();
 
-            if (this.autoStopOnSuccess) {
-              this.stop().catch(() => {});
-              return;
-            }
+            this.orderInfoCode = code;
+            this.orderInfoModalOpen = true;
+            document.body.classList.add('modal-open');
+
+            try {
+              if (this.scanning) {
+                await this.stopScanner();
+                this.scanning = false;
+              }
+            } catch {}
+
+            return;
           } else {
             this.message = 'Abschluss fehlgeschlagen.';
             this.pushHistory({
@@ -563,6 +577,10 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
               ok: false,
               msg: 'Backend: ok=false',
             });
+          }
+
+          if (this.autoStopOnSuccess) {
+            this.stop().catch(() => {});
           }
         },
         error: (err) => {
@@ -588,6 +606,24 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
           this.confirmInFlight = false;
         },
       });
+  }
+
+  closeOrderInfoModal(): void {
+    this.orderInfoModalOpen = false;
+    this.orderInfoCode = '';
+    document.body.classList.remove('modal-open');
+
+    this.message = 'Bestellung erfolgreich abgeschlossen.';
+
+    if (this.autoStopOnSuccess) {
+      this.restartScannerAfterOrderModal = false;
+      this.scanning = false;
+      return;
+    }
+
+    if (this.restartScannerAfterOrderModal) {
+      this.start().catch(() => {});
+    }
   }
 
   private onSuccessFeedback(): void {

@@ -583,6 +583,23 @@
 .manual-row .field-input {
   min-height: 54px;
 }
+.confirm-modal--info .confirm-card {
+  max-width: 420px;
+}
+
+.info-modal-wrap .confirm-card {
+  max-width: 380px;
+}
+
+.info-modal-wrap .confirm-body {
+  padding-top: 0.75rem;
+  padding-bottom: 0.5rem;
+}
+
+.confirm-amount--success {
+  font-size: 3rem;
+  line-height: 1;
+}
 
 @media (max-width: 760px) {
   .manual-row {
