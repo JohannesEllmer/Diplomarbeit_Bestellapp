@@ -17,6 +17,7 @@ import { JwtAuthGuard } from '../auth.guards';
 import { Roles } from '../roles.decorator';
 import { RolesGuard } from '../roles.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('menu-items')
 export class MenuItemsController {
   constructor(private readonly svc: MenuItemsService) {}

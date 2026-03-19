@@ -16,6 +16,7 @@ import { JwtAuthGuard } from '../auth.guards';
 import { CreateBalanceRequestDto } from './dto/create-balance.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
 
+@UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
