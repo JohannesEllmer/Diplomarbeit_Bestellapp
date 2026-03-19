@@ -39,7 +39,7 @@ export const routes: Routes = [
   { path: 'warenkorb', component: CartPageComponent, canActivate: [authGuard()] },
 
   { path: 'user', component: UserManagementComponent, canActivate: [authGuard(['ADMIN', 'INHABER'])] },
-  { path: 'my-orders', component: OrderOverviewComponent, canActivate: [authGuard(['KUNDE', 'ADMIN'])] },
+  { path: 'my-orders', component: OrderOverviewComponent, canActivate: [authGuard()] },
   { path: 'orders', component: OrderListComponent, canActivate: [authGuard(['INHABER', 'ADMIN'])] },
 
   { path: 'statistics', component: StatisticsPageComponent, canActivate: [authGuard(['ADMIN', 'INHABER'])] },
