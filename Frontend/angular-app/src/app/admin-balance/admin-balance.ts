@@ -62,14 +62,12 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
   confirmPreviewBalanceAfter: number | null = null;
   confirmKind: string | null = null;
 
-  private pendingResumeHandle: any = null;
-
   private html5?: Html5Qrcode;
   private scanningInProgress = false;
-
   private confirmInFlight = false;
   private lastConfirmedCode = '';
   private lastConfirmedAt = 0;
+  private restartScannerAfterModal = false;
 
   private readonly STORAGE_CAM = 'admin_balance_scan_camera';
 
@@ -84,11 +82,12 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    document.body.classList.remove('modal-open');
     this.stopScanner().catch(() => {});
   }
 
   async start(): Promise<void> {
-    if (this.scanning || this.scanningInProgress) return;
+    if (this.scanning || this.scanningInProgress || this.confirmModalOpen) return;
 
     this.scanning = true;
     this.message = 'Kamera wird initialisiert …';
@@ -99,7 +98,7 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
       await this.loadCamerasSafe(true);
       this.pickDefaultCameraIfMissing();
       await this.startScanner();
-      this.message = 'Halte einen QR-Code (Guthaben oder Order) vor die Kamera.';
+      this.message = 'Halte einen QR-Code vor die Kamera.';
     } catch (e: any) {
       this.message =
         'Kamera konnte nicht gestartet werden: ' + (e?.message || String(e));
@@ -110,11 +109,12 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
   async stop(): Promise<void> {
     await this.stopScanner();
     this.scanning = false;
-    this.message = '';
+    this.message = 'Scanner wurde gestoppt.';
   }
 
   async changeCamera(id: string): Promise<void> {
     this.selectedCameraId = id || null;
+
     if (this.selectedCameraId) {
       localStorage.setItem(this.STORAGE_CAM, this.selectedCameraId);
     }
@@ -122,8 +122,8 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
     if (this.scanning) {
       this.message = 'Wechsle Kamera …';
       await this.stopScanner();
-      await this.startScanner();
-      this.message = 'Halte einen QR-Code (Guthaben oder Order) vor die Kamera.';
+      this.scanning = false;
+      await this.start();
     }
   }
 
@@ -132,33 +132,34 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
       const txt = await navigator.clipboard.readText();
       this.manualCode = (txt || '').trim();
       this.message = this.manualCode
-        ? 'Code aus Zwischenablage eingefügt.'
+        ? 'Code aus der Zwischenablage eingefügt.'
         : 'Zwischenablage ist leer.';
     } catch {
-      this.message = 'Zwischenablage nicht verfügbar (Browser/HTTPS).';
+      this.message = 'Zwischenablage nicht verfügbar.';
     }
   }
 
   submitManual(): void {
     const code = (this.manualCode || '').trim();
     if (!code) {
-      this.message = 'Bitte einen Code einfügen.';
+      this.message = 'Bitte zuerst einen Code eingeben.';
       return;
     }
+
     this.onScanSuccess(code, true);
   }
 
   clearHistory(): void {
     this.history = [];
-    this.message = 'History geleert.';
+    this.message = 'Verlauf wurde geleert.';
   }
 
   copy(text: string): void {
-    const v = (text || '').trim();
-    if (!v) return;
+    const value = (text || '').trim();
+    if (!value) return;
 
-    navigator.clipboard?.writeText(v).then(
-      () => (this.message = 'Kopiert.'),
+    navigator.clipboard?.writeText(value).then(
+      () => (this.message = 'Code kopiert.'),
       () => (this.message = 'Kopieren nicht möglich.')
     );
   }
@@ -179,7 +180,9 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
 
   private restoreCamera(): void {
     const saved = localStorage.getItem(this.STORAGE_CAM);
-    if (saved) this.selectedCameraId = saved;
+    if (saved) {
+      this.selectedCameraId = saved;
+    }
   }
 
   private pickDefaultCameraIfMissing(): void {
@@ -192,11 +195,16 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
 
     if (!this.cameras.length) return;
 
-    const back = this.cameras.find((c) =>
-      (c.label || '').toLowerCase().includes('back')
-    );
+    const backCam =
+      this.cameras.find((c) =>
+        (c.label || '').toLowerCase().includes('back')
+      ) ||
+      this.cameras.find((c) =>
+        (c.label || '').toLowerCase().includes('rear')
+      ) ||
+      this.cameras[0];
 
-    this.selectedCameraId = (back || this.cameras[0]).id;
+    this.selectedCameraId = backCam.id;
     localStorage.setItem(this.STORAGE_CAM, this.selectedCameraId);
   }
 
@@ -226,7 +234,7 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
           fps: 12,
           qrbox: (vw: number, vh: number) => {
             const minEdge = Math.min(vw, vh);
-            const size = Math.floor(minEdge * 0.78);
+            const size = Math.floor(minEdge * 0.76);
             return { width: size, height: size };
           },
         },
@@ -240,10 +248,13 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
 
   private async stopScanner(): Promise<void> {
     this.scanningInProgress = false;
+
     if (!this.html5) return;
 
     try {
-      if (this.html5.isScanning) await this.html5.stop();
+      if (this.html5.isScanning) {
+        await this.html5.stop();
+      }
       await this.html5.clear();
     } catch {}
 
@@ -263,7 +274,9 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
     const code = (decodedText || '').trim();
     if (!code) return;
 
-    if (!fromManual) this.manualCode = code;
+    if (!fromManual) {
+      this.manualCode = code;
+    }
 
     const type = this.detectType(code);
 
@@ -289,79 +302,90 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
     this.lastConfirmedCode = code;
     this.lastConfirmedAt = now;
 
-    const h: any = this.html5 as any;
-    h?.pause?.(true);
-
     if (type === 'balance') {
-      this.handleBalance(code, h);
+      this.handleBalance(code);
       return;
     }
 
-    this.handleOrder(code, h);
+    this.handleOrder(code);
   }
 
-  private handleBalance(code: string, h: any): void {
-  this.message = 'Guthaben-QR erkannt…';
-  h?.pause?.(true);
+  private async handleBalance(code: string): Promise<void> {
+    this.message = 'Guthaben-QR erkannt … Vorschau wird geladen.';
 
-  this.api
-    .preview(code)
-    .pipe(finalize(() => (this.confirmInFlight = false)))
-    .subscribe({
-      next: (preview: BalancePreviewResult) => {
-        if (!preview?.ok) {
-          this.message = preview?.error || 'Ungültiger Guthaben-Code.';
+    this.restartScannerAfterModal = this.scanning;
+
+    try {
+      if (this.scanning) {
+        await this.stopScanner();
+        this.scanning = false;
+      }
+    } catch {}
+
+    this.api
+      .preview(code)
+      .pipe(finalize(() => (this.confirmInFlight = false)))
+      .subscribe({
+        next: (preview: BalancePreviewResult) => {
+          if (!preview?.ok) {
+            this.message = preview?.error || 'Ungültiger Guthaben-Code.';
+            this.pushHistory({
+              at: Date.now(),
+              code,
+              type: 'balance',
+              ok: false,
+              msg: preview?.error || 'Preview: ok=false',
+            });
+
+            if (this.restartScannerAfterModal) {
+              this.start().catch(() => {});
+            }
+            return;
+          }
+
+          this.confirmCode = code;
+          this.confirmAmount = Number(preview.delta ?? 0);
+          this.confirmAlreadyUsed = !!preview.alreadyUsed;
+          this.confirmCurrentBalance =
+            preview.currentBalance != null
+              ? Number(preview.currentBalance)
+              : null;
+          this.confirmPreviewBalanceAfter =
+            preview.previewBalanceAfter != null
+              ? Number(preview.previewBalanceAfter)
+              : null;
+          this.confirmKind = preview.kind ?? null;
+
+          this.confirmModalOpen = true;
+          document.body.classList.add('modal-open');
+          this.message = '';
+        },
+        error: (err) => {
+          const msg =
+            err?.error?.message ||
+            err?.error?.error ||
+            err?.message ||
+            String(err);
+
+          this.message = 'Fehler: ' + msg;
           this.pushHistory({
             at: Date.now(),
             code,
             type: 'balance',
             ok: false,
-            msg: preview?.error || 'Preview: ok=false',
+            msg: 'Preview Fehler: ' + msg,
           });
-          h?.resume?.();
-          return;
-        }
 
-        this.confirmCode = code;
-        this.confirmAmount = Number(preview.delta ?? 0);
-        this.confirmAlreadyUsed = !!preview.alreadyUsed;
-        this.confirmCurrentBalance =
-          preview.currentBalance != null ? Number(preview.currentBalance) : null;
-        this.confirmPreviewBalanceAfter =
-          preview.previewBalanceAfter != null
-            ? Number(preview.previewBalanceAfter)
-            : null;
-        this.confirmKind = preview.kind ?? null;
-
-        this.pendingResumeHandle = h;
-        this.confirmModalOpen = true;
-        this.message = '';
-      },
-      error: (err) => {
-        const msg =
-          err?.error?.message ||
-          err?.error?.error ||
-          err?.message ||
-          String(err);
-
-        this.message = 'Fehler: ' + msg;
-        this.pushHistory({
-          at: Date.now(),
-          code,
-          type: 'balance',
-          ok: false,
-          msg: 'Preview Fehler: ' + msg,
-        });
-        h?.resume?.();
-      },
-    });
-}
+          if (this.restartScannerAfterModal) {
+            this.start().catch(() => {});
+          }
+        },
+      });
+  }
 
   cancelBalanceConfirm(): void {
     this.confirmModalOpen = false;
-
-    const h = this.pendingResumeHandle;
-    this.pendingResumeHandle = null;
+    document.body.classList.remove('modal-open');
 
     this.confirmCode = '';
     this.confirmAmount = null;
@@ -371,17 +395,18 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
     this.confirmKind = null;
 
     this.confirmInFlight = false;
+    this.message = 'Bestätigung abgebrochen.';
 
-    h?.resume?.();
-    this.message = 'Abgebrochen.';
+    if (this.restartScannerAfterModal) {
+      this.start().catch(() => {});
+    }
   }
 
   okBalanceConfirm(): void {
     const code = this.confirmCode;
-    const h = this.pendingResumeHandle;
 
     this.confirmModalOpen = false;
-    this.pendingResumeHandle = null;
+    document.body.classList.remove('modal-open');
 
     this.confirmCode = '';
     this.confirmAmount = null;
@@ -390,10 +415,10 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
     this.confirmPreviewBalanceAfter = null;
     this.confirmKind = null;
 
-    this.handleBalanceConfirm(code, h);
+    this.handleBalanceConfirm(code);
   }
 
-  private handleBalanceConfirm(code: string, h: any): void {
+  private handleBalanceConfirm(code: string): void {
     this.message = 'Bestätigung läuft …';
     this.confirmInFlight = true;
 
@@ -407,9 +432,10 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
 
           if (this.lastResult?.ok) {
             const used = !!this.lastResult.alreadyUsed;
+
             this.message = used
-              ? 'OK (bereits verwendet).'
-              : 'OK. Guthaben geändert.';
+              ? 'Bestätigung erfolgreich. Code war bereits verwendet.'
+              : 'Bestätigung erfolgreich. Guthaben wurde geändert.';
 
             this.pushHistory({
               at: Date.now(),
@@ -420,17 +446,18 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
               userId: this.lastResult.userId,
               delta: this.lastResult.delta,
               balanceAfter: this.lastResult.balanceAfter,
-              msg: used ? 'OK (already used)' : 'OK',
+              msg: used ? 'OK (bereits verwendet)' : 'OK',
             });
 
             this.onSuccessFeedback();
 
             if (this.autoStopOnSuccess && !used) {
-              this.stop().catch(() => {});
+              this.scanning = false;
               return;
             }
           } else {
-            this.message = this.lastResult?.error || 'Bestätigung fehlgeschlagen.';
+            this.message =
+              this.lastResult?.error || 'Bestätigung fehlgeschlagen.';
             this.pushHistory({
               at: Date.now(),
               code,
@@ -440,7 +467,9 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
             });
           }
 
-          h?.resume?.();
+          if (this.restartScannerAfterModal) {
+            this.start().catch(() => {});
+          }
         },
         error: (err) => {
           this.lastResult = { ok: false };
@@ -462,12 +491,14 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
             msg: 'Fehler: ' + msg,
           });
 
-          h?.resume?.();
+          if (this.restartScannerAfterModal) {
+            this.start().catch(() => {});
+          }
         },
       });
   }
 
-  private handleOrder(code: string, h: any): void {
+  private handleOrder(code: string): void {
     this.message = 'Order-QR erkannt. Bestellung wird abgeschlossen …';
 
     this.adminOrders
@@ -479,7 +510,7 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
           this.lastResult = null;
 
           if (this.lastOrderResult?.ok) {
-            this.message = 'OK. Bestellung abgeschlossen.';
+            this.message = 'Bestellung erfolgreich abgeschlossen.';
             this.pushHistory({
               at: Date.now(),
               code,
@@ -504,8 +535,6 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
               msg: 'Backend: ok=false',
             });
           }
-
-          h?.resume?.();
         },
         error: (err) => {
           this.lastOrderResult = { ok: false };
@@ -528,7 +557,6 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
           });
 
           this.confirmInFlight = false;
-          h?.resume?.();
         },
       });
   }
@@ -546,16 +574,20 @@ export class BalanceScanComponent implements OnInit, OnDestroy {
 
     if (this.soundOnSuccess) {
       try {
-        const ctx = new (window.AudioContext ||
-          (window as any).webkitAudioContext)();
+        const AudioCtx =
+          window.AudioContext || (window as any).webkitAudioContext;
+        const ctx = new AudioCtx();
         const o = ctx.createOscillator();
         const g = ctx.createGain();
+
         o.type = 'sine';
         o.frequency.value = 880;
         g.gain.value = 0.05;
+
         o.connect(g);
         g.connect(ctx.destination);
         o.start();
+
         setTimeout(() => {
           o.stop();
           ctx.close().catch(() => {});

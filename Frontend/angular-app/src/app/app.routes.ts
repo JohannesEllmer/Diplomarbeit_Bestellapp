@@ -27,12 +27,12 @@ export const routes: Routes = [
   { path: 'verify-email', component: VerifyEmailPage },
   { path: 'forgot-password', component: ForgotPasswordPage },
   { path: 'reset-password', component: ResetPasswordPage },
+  { path: 'impressum', component: ImpressumPageComponent },
 
   // User
   { path: 'user-profile', component: UserPageComponent, canActivate: [authGuard()] },
   { path: 'me', redirectTo: 'user-profile', pathMatch: 'full' },
   { path: 'change-password', component: ChangePasswordPage, canActivate: [authGuard()] },
-  { path: 'impressum', component: ImpressumPageComponent, canActivate: [authGuard()] },
   // Admin
   { path: 'admin/balance-scan', component: BalanceScanComponent, canActivate: [authGuard(['ADMIN', 'INHABER'])] },
   { path: '', component: MenuPlanComponent, canActivate: [authGuard()] },

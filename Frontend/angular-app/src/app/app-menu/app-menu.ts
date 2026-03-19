@@ -12,6 +12,7 @@ interface NavLink {
   label: string;
   route: string;
   roles: string[];
+  public?: boolean;
   section: 'customer' | 'management';
   shortLabel?: string;
 }
@@ -58,7 +59,7 @@ export class AppMenuComponent implements OnInit, OnDestroy {
     { label: 'Warenkorb', route: '/warenkorb', roles: ['USER', 'KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
     { label: 'Meine Bestellungen', route: '/my-orders', roles: ['USER', 'KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
     { label: 'Mein Profil', route: '/me', roles: ['USER', 'KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
-     { label: 'Impressum', route: '/impressum', roles: ['USER', 'KUNDE', 'INHABER', 'ADMIN'], section: 'customer' },
+    { label: 'Impressum', route: '/impressum', roles: ['USER', 'KUNDE', 'INHABER', 'ADMIN'], section: 'customer', public: true },
 
     { label: 'Bestellübersicht', route: '/orders', roles: ['INHABER', 'ADMIN'], section: 'management', shortLabel: 'Bestellungen' },
     { label: 'Statistiken', route: '/statistics', roles: ['INHABER', 'ADMIN'], section: 'management' },
@@ -206,15 +207,20 @@ export class AppMenuComponent implements OnInit, OnDestroy {
   }
 
   //Rollenprüfung für Navigation 
-  hasAnyRole(roles: string[]): boolean {
+  hasAnyRole(roles: string[] = []): boolean {
     const role = this.effectiveRole;
-    return role ? roles.includes(role) : false;
+    return !!role && roles.includes(role);
   }
 
   getNavLinks(section: 'customer' | 'management'): NavLink[] {
     const role = this.effectiveRole;
-    if (!role) return [];
-    return this.NAV_CONFIG.filter(link => link.section === section && link.roles.includes(role));
+
+    return this.NAV_CONFIG.filter(link => {
+      if (link.section !== section) return false;
+      if (link.public) return true;
+      if (!role || !link.roles) return false;
+      return link.roles.includes(role);
+    });
   }
 
   getCustomerLinks(): NavLink[] {

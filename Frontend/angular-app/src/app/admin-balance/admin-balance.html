@@ -1,157 +1,230 @@
-<div class="page">
-  <div class="card">
+<div class="scan-page">
+  <div class="scan-shell-page">
 
-    <div class="header">
-      <div class="title">
-        <div class="badge">ADMIN</div>
-        <div>
-          <h1>Guthaben · QR Scan</h1>
-          <p>BalanceReq Codes bestätigen</p>
+    <section class="scan-card">
+      <div class="scan-header">
+        <div class="scan-title-wrap">
+          <div class="scan-badge">ADMIN · SCANNER</div>
+          <div>
+            <h1>Guthaben · QR-Scanner</h1>
+            <p>BalanceReq-Codes prüfen, bestätigen und Bestellungen per QR abschließen.</p>
+          </div>
+        </div>
+
+        <div class="scan-header-actions">
+          <button class="btn btn-primary" (click)="start()" [disabled]="scanning || confirmModalOpen">
+            <span class="status-dot" [class.on]="scanning"></span>
+            Scanner starten
+          </button>
+
+          <button class="btn btn-secondary" (click)="stop()" [disabled]="!scanning">
+            Stoppen
+          </button>
         </div>
       </div>
 
-      <div class="header-actions">
-        <button class="btn primary" (click)="start()" [disabled]="scanning">
-          <span class="dot" [class.on]="scanning"></span>
-          Start
-        </button>
-        <button class="btn ghost" (click)="stop()" [disabled]="!scanning">Stop</button>
+      <div class="scan-toolbar">
+        <div class="toolbar-card">
+          <label class="field-label">Kamera</label>
+          <select
+            class="field-select"
+            [ngModel]="selectedCameraId"
+            (ngModelChange)="changeCamera($event)"
+          >
+            <option [ngValue]="null">— Kamera auswählen —</option>
+            <option *ngFor="let c of cameras" [ngValue]="c.id">{{ c.label }}</option>
+          </select>
+        </div>
+
+        <div class="toolbar-card toolbar-card--toggles">
+          <label class="toggle-pill">
+            <input type="checkbox" [(ngModel)]="autoStopOnSuccess" />
+            <span>Auto-Stop bei Erfolg</span>
+          </label>
+
+          <label class="toggle-pill">
+            <input type="checkbox" [(ngModel)]="soundOnSuccess" />
+            <span>Sound</span>
+          </label>
+
+          <label class="toggle-pill">
+            <input type="checkbox" [(ngModel)]="vibrateOnSuccess" />
+            <span>Vibration</span>
+          </label>
+        </div>
       </div>
-    </div>
 
-    <div class="toolbar">
-      <div class="row">
-        <label class="lbl">Kamera</label>
-        <select class="select" [ngModel]="selectedCameraId" (ngModelChange)="changeCamera($event)">
-          <option [ngValue]="null">— auswählen —</option>
-          <option *ngFor="let c of cameras" [ngValue]="c.id">{{ c.label }}</option>
-        </select>
-      </div>
+      <div class="scan-content">
+        <div class="scan-message" *ngIf="message">
+          {{ message }}
+        </div>
 
-      <div class="toggles">
-        <label class="toggle">
-          <input type="checkbox" [(ngModel)]="autoStopOnSuccess" />
-          <span>Auto-Stop bei Erfolg</span>
-        </label>
+        <div class="scan-grid">
+          <div class="scan-left">
+            <div class="scanner-panel">
+              <div class="panel-head">
+                <div>
+                  <div class="panel-kicker">Live Scan</div>
+                  <div class="panel-title">QR-Erkennung</div>
+                </div>
 
-        <label class="toggle">
-          <input type="checkbox" [(ngModel)]="soundOnSuccess" />
-          <span>Sound</span>
-        </label>
+                <div class="panel-state" [class.active]="scanning">
+                  {{ scanning ? 'Aktiv' : 'Gestoppt' }}
+                </div>
+              </div>
 
-        <label class="toggle">
-          <input type="checkbox" [(ngModel)]="vibrateOnSuccess" />
-          <span>Vibration</span>
-        </label>
-      </div>
-    </div>
+              <div class="scanner-box" [class.off]="!scanning">
+                <div id="qr-reader"></div>
 
-    <div class="content">
-      <div class="hint" *ngIf="message">{{ message }}</div>
+                <div class="scanner-overlay" *ngIf="scanning">
+                  <div class="scanner-frame">
+                    <span class="corner tl"></span>
+                    <span class="corner tr"></span>
+                    <span class="corner bl"></span>
+                    <span class="corner br"></span>
+                  </div>
+                  <div class="scanner-line"></div>
+                </div>
 
-      <div class="grid">
-        <div class="scan-col">
-          <div class="scan-shell" [class.off]="!scanning">
-            <div id="qr-reader"></div>
-
-            <div class="scan-overlay">
-              <div class="frame"></div>
-              <div class="scanline"></div>
+                <div class="scanner-off" *ngIf="!scanning && !confirmModalOpen">
+                  <div class="scanner-off-card">
+                    <div class="scanner-off-title">Scanner gestoppt</div>
+                    <div class="scanner-off-text">
+                      Starte den Scanner, um Guthaben- oder Bestellcodes zu verarbeiten.
+                    </div>
+                    <button class="btn btn-primary btn-small" (click)="start()">
+                      Jetzt starten
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div class="overlay" *ngIf="!scanning">
-              <div class="overlay-inner">
-                <div class="overlay-title">Scanner gestoppt</div>
+            <div class="manual-panel">
+              <div class="panel-head">
+                <div>
+                  <div class="panel-kicker">Manuell</div>
+                  <div class="panel-title">Code eingeben</div>
+                </div>
+              </div>
+
+              <div class="manual-row">
+                <input
+                  class="field-input"
+                  [(ngModel)]="manualCode"
+                  placeholder="Code einfügen oder scannen…"
+                />
+                <button class="btn btn-secondary" (click)="pasteFromClipboard()">Einfügen</button>
+                <button class="btn btn-primary" (click)="submitManual()">Senden</button>
               </div>
             </div>
           </div>
 
-          <div class="manual">
-            <div class="manual-row">
-              <input class="input" [(ngModel)]="manualCode" placeholder="Code einfügen oder scannen…" />
-              <button class="btn" (click)="pasteFromClipboard()">Einfügen</button>
-              <button class="btn primary" (click)="submitManual()">Senden</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="side-col">
-          <div class="side-card">
-            <div class="side-title">History</div>
-
-            <button class="btn ghost" (click)="clearHistory()">History leeren</button>
-
-            <div class="history" *ngIf="history?.length; else nohist">
-              <div class="h-item" *ngFor="let h of history">
-                <div class="h-top">
-                  <div class="h-time">{{ time(h.at) }}</div>
-                  <div class="h-type">{{ h.type }}</div>
-                  <div class="h-ok" [class.bad]="!h.ok">{{ h.ok ? 'OK' : 'FAIL' }}</div>
+          <aside class="scan-right">
+            <div class="history-panel">
+              <div class="panel-head panel-head--history">
+                <div>
+                  <div class="panel-kicker">Verlauf</div>
+                  <div class="panel-title">Letzte Scans</div>
                 </div>
-                <div class="h-code">
-                  {{ h.code }}
-                  <button class="btn mini" (click)="copy(h.code)">Copy</button>
-                </div>
-                <div class="h-msg">{{ h.msg }}</div>
-                <div class="h-amt" *ngIf="h.type==='balance' && h.delta != null">
-                  Betrag: {{ money(h.delta) }}
-                </div>
-                <div class="h-amt" *ngIf="h.type==='balance' && h.balanceAfter != null">
-                  Kontostand: {{ money(h.balanceAfter) }}
+
+                <button class="btn btn-secondary btn-small" (click)="clearHistory()">
+                  Leeren
+                </button>
+              </div>
+
+              <div class="history-list" *ngIf="history?.length; else nohist">
+                <div class="history-item" *ngFor="let h of history">
+                  <div class="history-top">
+                    <div class="history-time">{{ time(h.at) }}</div>
+
+                    <div class="history-tags">
+                      <span class="history-type">{{ h.type }}</span>
+                      <span class="history-state" [class.bad]="!h.ok">
+                        {{ h.ok ? 'OK' : 'FAIL' }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="history-code-row">
+                    <div class="history-code">{{ h.code }}</div>
+                    <button class="btn btn-ghost btn-tiny" (click)="copy(h.code)">Copy</button>
+                  </div>
+
+                  <div class="history-msg">{{ h.msg }}</div>
+
+                  <div class="history-amount" *ngIf="h.type === 'balance' && h.delta != null">
+                    Betrag: <strong>{{ money(h.delta) }}</strong>
+                  </div>
+
+                  <div class="history-amount" *ngIf="h.type === 'balance' && h.balanceAfter != null">
+                    Kontostand: <strong>{{ money(h.balanceAfter) }}</strong>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <ng-template #nohist>
-              <div class="empty">Noch keine Scans.</div>
-            </ng-template>
-          </div>
+              <ng-template #nohist>
+                <div class="history-empty">
+                  Noch keine Scans vorhanden.
+                </div>
+              </ng-template>
+            </div>
+          </aside>
         </div>
       </div>
-    </div>
-
+    </section>
   </div>
 
-  <div class="modal-backdrop" *ngIf="confirmModalOpen"></div>
+  <div class="confirm-modal-wrap" *ngIf="confirmModalOpen">
+    <div class="confirm-backdrop" (click)="cancelBalanceConfirm()"></div>
 
-  <div class="modal" *ngIf="confirmModalOpen">
-    <div class="modal-card">
-      <div class="modal-head">
-        <div class="modal-title">Guthaben bestätigen</div>
-        <button class="modal-close" (click)="cancelBalanceConfirm()">✕</button>
-      </div>
+    <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+      <div class="confirm-card" (click)="$event.stopPropagation()">
+        <div class="confirm-head">
+          <div>
+            <div class="confirm-kicker">Bestätigung erforderlich</div>
+            <div class="confirm-title" id="confirm-title">Guthaben bestätigen</div>
+          </div>
 
-      <div class="modal-body">
-        <div class="confirm-amount">
-          {{ money(confirmAmount) }}
+          <button class="confirm-close" type="button" (click)="cancelBalanceConfirm()">✕</button>
         </div>
 
-        <div class="confirm-text" *ngIf="confirmKind === 'add'">
-          Dieser Betrag wird dem Guthaben gutgeschrieben.
-          Bitte nur bestätigen, wenn der Betrag korrekt ist.
+        <div class="confirm-body">
+          <div class="confirm-amount">{{ money(confirmAmount) }}</div>
+
+          <div class="confirm-info-block">
+            <div class="confirm-text" *ngIf="confirmKind === 'add'">
+              Dieser Betrag wird dem Guthaben gutgeschrieben. Bitte prüfe den Betrag vor der Bestätigung.
+            </div>
+
+            <div class="confirm-text" *ngIf="confirmKind === 'flush'">
+              Dieser Betrag wird ausgezahlt und das Guthaben auf 0 gesetzt. Bitte prüfe den Betrag vor der Bestätigung.
+            </div>
+
+            <div class="confirm-meta" *ngIf="confirmCurrentBalance != null">
+              <span>Aktuelles Guthaben</span>
+              <strong>{{ money(confirmCurrentBalance) }}</strong>
+            </div>
+
+            <div class="confirm-meta" *ngIf="confirmPreviewBalanceAfter != null">
+              <span>Neuer Kontostand</span>
+              <strong>{{ money(confirmPreviewBalanceAfter) }}</strong>
+            </div>
+          </div>
+
+          <div class="confirm-warn" *ngIf="confirmAlreadyUsed">
+            Hinweis: Dieser Code wurde laut System bereits verwendet.
+          </div>
         </div>
 
-        <div class="confirm-text" *ngIf="confirmKind === 'flush'">
-          Dieser Betrag wird ausgezahlt und das Guthaben auf 0 gesetzt.
-          Bitte nur bestätigen, wenn der Betrag korrekt ist.
+        <div class="confirm-foot">
+          <button class="btn btn-secondary" type="button" (click)="cancelBalanceConfirm()">
+            Abbrechen
+          </button>
+          <button class="btn btn-primary" type="button" (click)="okBalanceConfirm()">
+            Bestätigen
+          </button>
         </div>
-
-        <div class="confirm-text" *ngIf="confirmCurrentBalance != null">
-          Aktuelles Guthaben: {{ money(confirmCurrentBalance) }}
-        </div>
-
-        <div class="confirm-text" *ngIf="confirmPreviewBalanceAfter != null">
-          Neuer Kontostand: {{ money(confirmPreviewBalanceAfter) }}
-        </div>
-
-        <div class="confirm-warn" *ngIf="confirmAlreadyUsed">
-          Hinweis: Dieser Code wurde laut System bereits verwendet.
-        </div>
-      </div>
-
-      <div class="modal-foot">
-        <button class="btn ghost" (click)="cancelBalanceConfirm()">Abbrechen</button>
-        <button class="btn primary" (click)="okBalanceConfirm()">OK</button>
       </div>
     </div>
   </div>
