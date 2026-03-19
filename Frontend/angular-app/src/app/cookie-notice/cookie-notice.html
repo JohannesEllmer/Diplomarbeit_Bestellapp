@@ -1,0 +1,12 @@
+<div *ngIf="isVisible" class="cookie-notice" role="region" aria-label="Cookie-Hinweis">
+  <div class="cookie-notice__content">
+    <span class="cookie-notice__icon">🍪</span>
+    <p>
+      Diese Website verwendet ausschließlich <strong>notwendige Cookies</strong>,
+      um Ihre Anmeldung und Ihre Bestellsitzung aufrechtzuerhalten. Es werden
+      keine Tracking- oder Werbe-Cookies verwendet.
+      <a routerLink="/impressum">Mehr erfahren</a>
+    </p>
+  </div>
+  <button class="cookie-notice__btn" (click)="dismiss()">Verstanden</button>
+</div>
