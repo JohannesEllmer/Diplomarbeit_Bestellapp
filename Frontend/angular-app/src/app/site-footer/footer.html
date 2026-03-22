@@ -1,15 +1,35 @@
 <footer class="menu-footer">
   <div class="footer-inner">
-    <div class="footer-actions-area">
-      <ng-content select="[footer-actions]"></ng-content>
+    <div class="footer-main-row">
+      <div class="footer-stat">
+        <span class="footer-label">Guthaben</span>
+        <strong class="footer-value">{{ availableBalance | number:'1.2-2' }} €</strong>
+      </div>
+
+      <button
+        class="checkout-btn"
+        type="button"
+        [disabled]="cartCount <= 0"
+        (click)="onCheckout()"
+      >
+        Zum Warenkorb
+        <span class="badge">{{ cartCount }}</span>
+      </button>
+
+      <div class="footer-stat">
+        <span class="footer-label">Summe</span>
+        <strong class="footer-value">{{ totalAmount | number:'1.2-2' }} €</strong>
+      </div>
     </div>
 
-    <div class="footer-content">
-     
-
-      <div class="footer-links">
-        <a routerLink="/user-profile" class="footer-link">Guthaben aufladen</a>
-      </div>
+    <div class="footer-secondary-row">
+      <button
+        class="topup-btn"
+        type="button"
+        (click)="onTopup()"
+      >
+        Guthaben aufladen
+      </button>
     </div>
   </div>
 </footer>
