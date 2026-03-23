@@ -231,12 +231,18 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
 
     this.cartService.saveCartItems(items);
   }
+  
 
   navigateToCart(): void {
     this.router.navigate(['/warenkorb']);
   }
 
-  get cartItemCount(): number {
+   openTopup(): void {
+    this.router.navigate(['/me']);
+  }
+
+   get cartItemCount(): number {
     return this.cartService.getItemCount(this.cartService.getCartItems());
   }
+
 }

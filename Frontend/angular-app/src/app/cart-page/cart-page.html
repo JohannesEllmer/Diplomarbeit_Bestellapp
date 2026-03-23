@@ -62,23 +62,18 @@
     </div>
   </div>
 
-  <app-site-footer>
-    <div footer-actions class="footer-center">
-      <button
-        type="button"
-        class="checkout-btn"
-        (click)="onOrder()"
-        [disabled]="!canOrder"
-        [class.disabled]="!canOrder"
-      >
-        Bestellen
-      </button>
-
-      <div class="hint-disabled" *ngIf="!orderingEnabled">
-        Bestellen ist aktuell deaktiviert.
-      </div>
-    </div>
-  </app-site-footer>
+<app-site-footer
+  [availableBalance]="balance"
+  [totalAmount]="getTotal()"
+  [cartCount]="cartItems.length"
+  [showBalance]="true"
+  [showTotal]="true"
+  [showCheckout]="true"
+  [showTopup]="true"
+  [showImpressum]="false"
+  (checkoutClick)="onOrder()"
+  (topupClick)="openTopup()"
+></app-site-footer>
 
   <button class="back-fab" (click)="navigateBack()" aria-label="Zurück zum Menüplan">
     <span class="back-fab-icon">←</span>

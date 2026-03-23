@@ -366,6 +366,10 @@ export class UserPageComponent implements OnInit {
     return rest > 0 ? `${parts.join(', ')} (+${rest} weitere)` : parts.join(', ');
   }
 
+  goToProfile(): void {
+  this.router.navigate(['/me']);
+}
+
   formatReason(code: any): string {
     const c = String(code ?? '').trim();
     const map: Record<string, string> = {
