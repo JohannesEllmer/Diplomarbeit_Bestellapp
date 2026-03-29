@@ -4,37 +4,60 @@ import {
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
   GOOGLE_REFRESH_TOKEN
-} from './config';
+} from './config.js';
 
-function encodeBase64Url(str: string) {
-  return Buffer.from(str, 'utf8')
+function encodeBase64Url(input: string | Buffer) {
+  const buffer = Buffer.isBuffer(input) ? input : Buffer.from(input, 'utf8');
+  return buffer
     .toString('base64')
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/g, '');
 }
 
+function encodeMimeWord(text: string) {
+  // RFC 2047 für Betreff mit Umlauten/Sonderzeichen
+  const base64 = Buffer.from(text, 'utf8').toString('base64');
+  return `=?UTF-8?B?${base64}?=`;
+}
+
+function escapeHeaderValue(value: string) {
+  return String(value).replace(/[\r\n]+/g, ' ').trim();
+}
+
 function buildRawEmail(params: { to: string; subject: string; html: string }) {
-  const from = GMAIL_SENDER ? `HungerSatt <${GMAIL_SENDER}>` : 'HungerSatt';
+  const fromName = 'HungerSatt';
+  const fromAddress = escapeHeaderValue(GMAIL_SENDER);
+  const to = escapeHeaderValue(params.to);
+  const subject = encodeMimeWord(params.subject);
+
+  const from = `${encodeMimeWord(fromName)} <${fromAddress}>`;
+
+  // HTML separat Base64-kodieren, damit Sonderzeichen sicher transportiert werden
+  const htmlBase64 = Buffer.from(params.html, 'utf8').toString('base64');
+
   const headers = [
     `From: ${from}`,
-    `To: ${params.to}`,
-    `Subject: ${params.subject}`,
-    `MIME-Version: 1.0`,
-    `Content-Type: text/html; charset="UTF-8"`,
+    `To: ${to}`,
+    `Subject: ${subject}`,
+    'MIME-Version: 1.0',
+    'Content-Type: text/html; charset=UTF-8',
+    'Content-Transfer-Encoding: base64',
   ];
 
-  const message = `${headers.join('\r\n')}\r\n\r\n${params.html}`;
+  const message = `${headers.join('\r\n')}\r\n\r\n${htmlBase64}`;
   return encodeBase64Url(message);
 }
 
 function getOAuth() {
-  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN) return null;
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN) {
+    return null;
+  }
 
   const oauth2 = new google.auth.OAuth2(
     GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET,
-    'urn:ietf:wg:oauth:2.0:oob' // für manche Token-Flows ok; kann auch weggelassen werden
+    'urn:ietf:wg:oauth:2.0:oob'
   );
 
   oauth2.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
@@ -42,12 +65,11 @@ function getOAuth() {
 }
 
 function explainOAuthError(e: any) {
-  const msgExplain =
+  return (
     `GMAIL OAuth Fehler: ${e?.message ?? e}\n` +
     `Typisch bei "invalid_grant": Refresh-Token widerrufen/abgelaufen oder falsche Client-ID/Secret/Scopes.\n` +
-    `Fix: Refresh-Token neu erzeugen und in .env setzen.`;
-
-  return msgExplain;
+    `Fix: Refresh-Token neu erzeugen und in .env setzen.`
+  );
 }
 
 export async function verifyMailer() {
@@ -69,7 +91,9 @@ export async function verifyMailer() {
 
 export async function sendMail(to: string, subject: string, html: string) {
   const oauth = getOAuth();
-  if (!oauth) throw new Error('GMAIL_API_NOT_CONFIGURED');
+  if (!oauth) {
+    throw new Error('GMAIL_API_NOT_CONFIGURED');
+  }
 
   try {
     const gmail = google.gmail({ version: 'v1', auth: oauth });
@@ -95,14 +119,14 @@ export async function sendAdminDeletionWarningMail(params: {
   plannedDeletionAtIso: string;
 }) {
   const html = `
-  <div style="font-family: Arial">
-    <h2>DSGVO Löschung angekündigt</h2>
+  <div style="font-family: Arial, sans-serif; line-height: 1.5;">
+    <h2>DSGVO-Löschung angekündigt</h2>
 
     <p>Ein deaktivierter Nutzer steht zur Löschung an.</p>
 
     <ul>
       <li><b>Name:</b> ${params.name}</li>
-      <li><b>Email:</b> ${params.email}</li>
+      <li><b>E-Mail:</b> ${params.email}</li>
       <li><b>Klasse:</b> ${params.class}</li>
     </ul>
 
@@ -128,7 +152,7 @@ export async function sendUserDataDeletedMail(
   name: string
 ) {
   const html = `
-  <div style="font-family: Arial">
+  <div style="font-family: Arial, sans-serif; line-height: 1.5;">
     <p>Hallo ${name},</p>
 
     <p>

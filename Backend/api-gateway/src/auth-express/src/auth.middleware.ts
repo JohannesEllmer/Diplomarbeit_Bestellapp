@@ -3,10 +3,10 @@ import type { Request, Response, NextFunction } from 'express';
 import { JWT_SECRET } from './config.js';
 
 export interface AuthJwtPayload {
-  sub: string;         // userId
+  sub: string; // userId
   email: string;
   role: string;
-  sid: string;         
+  sid: string;
   iat?: number;
   exp?: number;
 }

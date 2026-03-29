@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Pool } from 'pg';
 
 import { JWT_SECRET, JWT_EXPIRES_IN, APP_BASE_URL } from './config.js';
-import { sendMail } from './mailer.js'; 
+import { sendMail } from './mailer.js';
 import { createRandomToken, hashToken } from './tokenHelper.js';
 import { requireAuth } from './auth.middleware.js';
 
@@ -17,32 +17,53 @@ declare global {
   }
 }
 
+function escapeHtml(value: string) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function createJwt(payload: { userId: string; email: string; role: string; sessionId: string }) {
   return jwt.sign(
-    { sub: payload.userId, email: payload.email, role: payload.role, sid: payload.sessionId },
+    {
+      sub: payload.userId,
+      email: payload.email,
+      role: payload.role,
+      sid: payload.sessionId
+    },
     JWT_SECRET as jwt.Secret,
     { expiresIn: JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'] },
   );
 }
 
 function buildVerifyEmailHtml(params: { firstName: string; lastName: string; link: string }) {
+  const firstName = escapeHtml(params.firstName);
+  const lastName = escapeHtml(params.lastName);
+  const link = escapeHtml(params.link);
+
   return `
-  <div style="font-family: Arial, sans-serif; line-height: 1.5;">
-    <p>Hallo ${params.firstName} ${params.lastName},</p>
+  <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827;">
+    <p>Hallo ${firstName} ${lastName},</p>
 
     <p>
       bitte bestätige deine E-Mail-Adresse, um dein <b>HungerSatt</b>-Konto zu aktivieren.
     </p>
 
     <p style="margin: 16px 0;">
-      <a href="${params.link}" style="display:inline-block;padding:10px 14px;border-radius:6px;text-decoration:none;">
+      <a
+        href="${link}"
+        style="display:inline-block; padding:10px 14px; border-radius:6px; text-decoration:none; background:#2563eb; color:#ffffff;"
+      >
         E-Mail bestätigen
       </a>
     </p>
 
-    <p style="font-size: 13px;">
+    <p style="font-size: 13px; color: #374151;">
       Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:<br/>
-      <a href="${params.link}">${params.link}</a>
+      <a href="${link}">${link}</a>
     </p>
 
     <p style="font-size: 13px; color: #666;">
@@ -53,23 +74,29 @@ function buildVerifyEmailHtml(params: { firstName: string; lastName: string; lin
 }
 
 function buildResetPasswordHtml(params: { name: string; link: string }) {
+  const name = escapeHtml(params.name);
+  const link = escapeHtml(params.link);
+
   return `
-  <div style="font-family: Arial, sans-serif; line-height: 1.5;">
-    <p>Hallo ${params.name},</p>
+  <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827;">
+    <p>Hallo ${name},</p>
 
     <p>
-      du hast ein Zurücksetzen deines Passworts angefordert. Über den folgenden Link kannst du ein neues Passwort setzen:
+      du hast ein Zurücksetzen deines Passworts angefordert. Über den folgenden Link kannst du ein neues Passwort setzen.
     </p>
 
     <p style="margin: 16px 0;">
-      <a href="${params.link}" style="display:inline-block;padding:10px 14px;border-radius:6px;text-decoration:none;">
+      <a
+        href="${link}"
+        style="display:inline-block; padding:10px 14px; border-radius:6px; text-decoration:none; background:#2563eb; color:#ffffff;"
+      >
         Passwort zurücksetzen
       </a>
     </p>
 
-    <p style="font-size: 13px;">
+    <p style="font-size: 13px; color: #374151;">
       Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:<br/>
-      <a href="${params.link}">${params.link}</a>
+      <a href="${link}">${link}</a>
     </p>
 
     <p style="font-size: 13px; color: #666;">
@@ -82,18 +109,28 @@ function buildResetPasswordHtml(params: { name: string; link: string }) {
 export function authRouter(pool: Pool) {
   const router = express.Router();
 
-  // CHECK-EMAIL
   router.get('/check-email', async (req, res) => {
     try {
       const email = ((req.query.email as string) || '').toLowerCase().trim();
-      if (!email) return res.status(400).json({ error: 'EMAIL_REQUIRED' });
+      if (!email) {
+        return res.status(400).json({ error: 'EMAIL_REQUIRED' });
+      }
 
-      const user = await pool.query(`SELECT 1 FROM app.users WHERE LOWER(email)=$1 LIMIT 1`, [email]);
-      if ((user.rowCount ?? 0) > 0) return res.json({ exists: true });
+      const user = await pool.query(
+        `SELECT 1 FROM app.users WHERE LOWER(email) = $1 LIMIT 1`,
+        [email]
+      );
+
+      if ((user.rowCount ?? 0) > 0) {
+        return res.json({ exists: true });
+      }
 
       const pending = await pool.query(
-        `SELECT 1 FROM app.pending_registrations
-         WHERE LOWER(email)=$1 AND used_at IS NULL AND expires_at > now()
+        `SELECT 1
+         FROM app.pending_registrations
+         WHERE LOWER(email) = $1
+           AND used_at IS NULL
+           AND expires_at > now()
          LIMIT 1`,
         [email],
       );
@@ -105,7 +142,6 @@ export function authRouter(pool: Pool) {
     }
   });
 
-  // REGISTER (creates pending_registrations + sends verify mail)
   router.post('/register', async (req, res) => {
     try {
       const { email, password, firstName, lastName, class: userClass, schoolType, isTeacher } = req.body;
@@ -113,14 +149,21 @@ export function authRouter(pool: Pool) {
       if (!email || !password || !firstName || !lastName || !schoolType) {
         return res.status(400).json({ error: 'MISSING_FIELDS' });
       }
+
       if (String(password).length < 6) {
         return res.status(400).json({ error: 'WEAK_PASSWORD' });
       }
 
       const emailLower = String(email).toLowerCase().trim();
 
-      const existsUser = await pool.query(`SELECT 1 FROM app.users WHERE LOWER(email)=$1 LIMIT 1`, [emailLower]);
-      if ((existsUser.rowCount ?? 0) > 0) return res.status(409).json({ error: 'ACCOUNT_EXISTS' });
+      const existsUser = await pool.query(
+        `SELECT 1 FROM app.users WHERE LOWER(email) = $1 LIMIT 1`,
+        [emailLower]
+      );
+
+      if ((existsUser.rowCount ?? 0) > 0) {
+        return res.status(409).json({ error: 'ACCOUNT_EXISTS' });
+      }
 
       const payload = {
         firstName: String(firstName).trim(),
@@ -151,6 +194,7 @@ export function authRouter(pool: Pool) {
       console.log('[AUTH] sending verify mail to', emailLower);
 
       let emailVerificationSent = false;
+
       try {
         await sendMail(
           emailLower,
@@ -177,22 +221,23 @@ export function authRouter(pool: Pool) {
     }
   });
 
-  // FORGOT PASSWORD (creates auth_tokens + sends reset mail)
   router.post('/forgot-password', async (req, res) => {
     try {
       const email = String(req.body?.email ?? '').toLowerCase().trim();
-      if (!email) return res.status(400).json({ error: 'EMAIL_REQUIRED' });
+      if (!email) {
+        return res.status(400).json({ error: 'EMAIL_REQUIRED' });
+      }
 
       const userRes = await pool.query(
-        `SELECT id, email, name FROM app.users WHERE LOWER(email)=$1 LIMIT 1`,
+        `SELECT id, email, name FROM app.users WHERE LOWER(email) = $1 LIMIT 1`,
         [email],
       );
 
-      // Security: immer ok
-      if ((userRes.rowCount ?? 0) === 0) return res.json({ ok: true });
+      if ((userRes.rowCount ?? 0) === 0) {
+        return res.json({ ok: true });
+      }
 
       const user = userRes.rows[0];
-
       const resetToken = createRandomToken();
       const tokenHash = hashToken(resetToken);
 
@@ -221,13 +266,17 @@ export function authRouter(pool: Pool) {
     }
   });
 
-  // RESET PASSWORD (uses auth_tokens)
   router.post('/reset-password', async (req, res) => {
     const token = String(req.body?.token ?? '').trim();
     const newPassword = String(req.body?.newPassword ?? '');
 
-    if (!token) return res.status(400).json({ error: 'TOKEN_REQUIRED' });
-    if (!newPassword || newPassword.length < 6) return res.status(400).json({ error: 'WEAK_PASSWORD' });
+    if (!token) {
+      return res.status(400).json({ error: 'TOKEN_REQUIRED' });
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'WEAK_PASSWORD' });
+    }
 
     const tokenHash = hashToken(token);
     const client = await pool.connect();
@@ -238,8 +287,8 @@ export function authRouter(pool: Pool) {
       const tok = await client.query(
         `SELECT id, user_id
          FROM app.auth_tokens
-         WHERE token_type='PASSWORD_RESET'
-           AND token_hash=$1
+         WHERE token_type = 'PASSWORD_RESET'
+           AND token_hash = $1
            AND used_at IS NULL
            AND expires_at > now()
          LIMIT 1`,
@@ -256,12 +305,15 @@ export function authRouter(pool: Pool) {
 
       await client.query(
         `UPDATE app.auth_credentials
-         SET password_hash=$1, last_used_at=now()
-         WHERE user_id=$2`,
+         SET password_hash = $1, last_used_at = now()
+         WHERE user_id = $2`,
         [passwordHash, row.user_id],
       );
 
-      await client.query(`UPDATE app.auth_tokens SET used_at=now() WHERE id=$1`, [row.id]);
+      await client.query(
+        `UPDATE app.auth_tokens SET used_at = now() WHERE id = $1`,
+        [row.id]
+      );
 
       await client.query('COMMIT');
       return res.json({ ok: true });
@@ -274,28 +326,40 @@ export function authRouter(pool: Pool) {
     }
   });
 
-  // CHANGE PASSWORD (requires auth)
   router.post('/change-password', requireAuth, async (req, res) => {
     try {
       const userId = req.auth!.sub;
       const currentPassword = String(req.body?.currentPassword ?? '');
       const newPassword = String(req.body?.newPassword ?? '');
 
-      if (!currentPassword || !newPassword) return res.status(400).json({ error: 'MISSING_FIELDS' });
-      if (newPassword.length < 6) return res.status(400).json({ error: 'WEAK_PASSWORD' });
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'MISSING_FIELDS' });
+      }
 
-      const cred = await pool.query(`SELECT password_hash FROM app.auth_credentials WHERE user_id=$1 LIMIT 1`, [userId]);
-      if ((cred.rowCount ?? 0) === 0) return res.status(404).json({ error: 'USER_NOT_FOUND' });
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: 'WEAK_PASSWORD' });
+      }
+
+      const cred = await pool.query(
+        `SELECT password_hash FROM app.auth_credentials WHERE user_id = $1 LIMIT 1`,
+        [userId]
+      );
+
+      if ((cred.rowCount ?? 0) === 0) {
+        return res.status(404).json({ error: 'USER_NOT_FOUND' });
+      }
 
       const ok = await bcrypt.compare(currentPassword, cred.rows[0].password_hash);
-      if (!ok) return res.status(401).json({ error: 'INVALID_CURRENT_PASSWORD' });
+      if (!ok) {
+        return res.status(401).json({ error: 'INVALID_CURRENT_PASSWORD' });
+      }
 
       const passwordHash = await bcrypt.hash(newPassword, 10);
 
       await pool.query(
         `UPDATE app.auth_credentials
-         SET password_hash=$1, last_used_at=now()
-         WHERE user_id=$2`,
+         SET password_hash = $1, last_used_at = now()
+         WHERE user_id = $2`,
         [passwordHash, userId],
       );
 
@@ -306,10 +370,12 @@ export function authRouter(pool: Pool) {
     }
   });
 
-  // VERIFY EMAIL (finalize pending_registrations -> users + auth_credentials)
   router.post('/verify-email', async (req, res) => {
     const { token } = req.body as { token?: string };
-    if (!token) return res.status(400).json({ error: 'TOKEN_REQUIRED' });
+
+    if (!token) {
+      return res.status(400).json({ error: 'TOKEN_REQUIRED' });
+    }
 
     const tokenHash = hashToken(token);
     const client = await pool.connect();
@@ -320,7 +386,9 @@ export function authRouter(pool: Pool) {
       const pr = await client.query(
         `SELECT id, email, payload, password_hash
          FROM app.pending_registrations
-         WHERE token_hash=$1 AND used_at IS NULL AND expires_at > now()
+         WHERE token_hash = $1
+           AND used_at IS NULL
+           AND expires_at > now()
          LIMIT 1`,
         [tokenHash],
       );
@@ -333,12 +401,16 @@ export function authRouter(pool: Pool) {
       const row = pr.rows[0];
       const payload = row.payload as any;
 
-      const already = await client.query(`SELECT 1 FROM app.users WHERE LOWER(email)=$1 LIMIT 1`, [
-        String(row.email).toLowerCase(),
-      ]);
+      const already = await client.query(
+        `SELECT 1 FROM app.users WHERE LOWER(email) = $1 LIMIT 1`,
+        [String(row.email).toLowerCase()],
+      );
 
       if ((already.rowCount ?? 0) > 0) {
-        await client.query(`UPDATE app.pending_registrations SET used_at=now() WHERE id=$1`, [row.id]);
+        await client.query(
+          `UPDATE app.pending_registrations SET used_at = now() WHERE id = $1`,
+          [row.id]
+        );
         await client.query('COMMIT');
         return res.json({ ok: true });
       }
@@ -359,9 +431,12 @@ export function authRouter(pool: Pool) {
         [userResult.rows[0].id, row.password_hash, sessionId],
       );
 
-      await client.query(`UPDATE app.pending_registrations SET used_at=now() WHERE id=$1`, [row.id]);
-      await client.query('COMMIT');
+      await client.query(
+        `UPDATE app.pending_registrations SET used_at = now() WHERE id = $1`,
+        [row.id]
+      );
 
+      await client.query('COMMIT');
       return res.json({ ok: true });
     } catch (e) {
       await client.query('ROLLBACK');
@@ -372,12 +447,14 @@ export function authRouter(pool: Pool) {
     }
   });
 
-  // LOGIN
   router.post('/login', async (req, res) => {
     try {
       const { email, password } = req.body;
       const emailLower = String(email || '').toLowerCase().trim();
-      if (!emailLower || !password) return res.status(400).json({ error: 'MISSING_FIELDS' });
+
+      if (!emailLower || !password) {
+        return res.status(400).json({ error: 'MISSING_FIELDS' });
+      }
 
       const result = await pool.query(
         `SELECT
@@ -389,22 +466,40 @@ export function authRouter(pool: Pool) {
         [emailLower],
       );
 
-      if ((result.rowCount ?? 0) === 0) return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
+      if ((result.rowCount ?? 0) === 0) {
+        return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
+      }
 
       const row = result.rows[0];
-      if (row.blocked) return res.status(403).json({ error: 'USER_BLOCKED' });
-      if (!row.email_verified) return res.status(403).json({ error: 'EMAIL_NOT_VERIFIED' });
+
+      if (row.blocked) {
+        return res.status(403).json({ error: 'USER_BLOCKED' });
+      }
+
+      if (!row.email_verified) {
+        return res.status(403).json({ error: 'EMAIL_NOT_VERIFIED' });
+      }
 
       const ok = await bcrypt.compare(String(password), row.password_hash);
-      if (!ok) return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
+      if (!ok) {
+        return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
+      }
 
       const newSessionId = uuidv4();
-      await pool.query(`UPDATE app.auth_credentials SET auth_token=$1, last_used_at=now() WHERE user_id=$2`, [
-        newSessionId,
-        row.id,
-      ]);
 
-      const tokenJwt = createJwt({ userId: row.id, email: row.email, role: row.role, sessionId: newSessionId });
+      await pool.query(
+        `UPDATE app.auth_credentials
+         SET auth_token = $1, last_used_at = now()
+         WHERE user_id = $2`,
+        [newSessionId, row.id],
+      );
+
+      const tokenJwt = createJwt({
+        userId: row.id,
+        email: row.email,
+        role: row.role,
+        sessionId: newSessionId
+      });
 
       const user = {
         id: row.id,
