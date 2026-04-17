@@ -47,7 +47,7 @@ export class CartPageComponent implements OnInit {
   infoMsg = '';
 
   private readonly ORDER_START = { h: 6, m: 0 };   // 06:00
-  private readonly ORDER_END   = { h: 11, m: 35 }; // 11:35
+  private readonly ORDER_END   = { h: 10, m: 35 }; // 11:35
 
   constructor(
     private router: Router,
