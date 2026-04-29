@@ -22,14 +22,25 @@
       </div>
 
       <!-- Passwort -->
-      <div class="form-group" [class.invalid]="password?.invalid && (password?.touched || password?.dirty)">
+     <div class="form-group" [class.invalid]="password?.invalid && (password?.touched || password?.dirty)">
         <label for="password">Passwort</label>
-        <input
-          id="password"
-          type="password"
-          formControlName="password"
-          placeholder="Passwort"
-        />
+
+        <div class="password-field">
+          <input
+            id="password"
+            [type]="showPassword ? 'text' : 'password'"
+            formControlName="password"
+            placeholder="Passwort"
+          />
+
+          <span
+            class="material-icons password-toggle"
+            (click)="togglePasswordVisibility()"
+          >
+            {{ showPassword ? 'visibility_off' : 'visibility' }}
+          </span>
+        </div>
+
         <div class="error" *ngIf="password?.errors && (password?.touched || password?.dirty)">
           <span *ngIf="password?.errors?.['required']">Passwort ist erforderlich.</span>
         </div>

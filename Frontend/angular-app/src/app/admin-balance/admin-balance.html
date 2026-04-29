@@ -1,18 +1,24 @@
 <div class="scan-page">
   <div class="scan-shell-page">
-
     <section class="scan-card">
       <div class="scan-header">
         <div class="scan-title-wrap">
           <div class="scan-badge">ADMIN · SCANNER</div>
           <div>
             <h1>Guthaben · QR-Scanner</h1>
-            <p>BalanceReq-Codes prüfen, bestätigen und Bestellungen per QR abschließen.</p>
+            <p>
+              BalanceReq-Codes prüfen, bestätigen und Bestellungen per QR
+              abschließen.
+            </p>
           </div>
         </div>
 
         <div class="scan-header-actions">
-          <button class="btn btn-primary" (click)="start()" [disabled]="scanning || confirmModalOpen">
+          <button
+            class="btn btn-primary"
+            (click)="start()"
+            [disabled]="scanning || confirmModalOpen || orderInfoModalOpen"
+          >
             <span class="status-dot" [class.on]="scanning"></span>
             Scanner starten
           </button>
@@ -32,7 +38,9 @@
             (ngModelChange)="changeCamera($event)"
           >
             <option [ngValue]="null">— Kamera auswählen —</option>
-            <option *ngFor="let c of cameras" [ngValue]="c.id">{{ c.label }}</option>
+            <option *ngFor="let c of cameras" [ngValue]="c.id">
+              {{ c.label }}
+            </option>
           </select>
         </div>
 
@@ -86,11 +94,15 @@
                   <div class="scanner-line"></div>
                 </div>
 
-                <div class="scanner-off" *ngIf="!scanning && !confirmModalOpen">
+                <div
+                  class="scanner-off"
+                  *ngIf="!scanning && !confirmModalOpen && !orderInfoModalOpen"
+                >
                   <div class="scanner-off-card">
                     <div class="scanner-off-title">Scanner gestoppt</div>
                     <div class="scanner-off-text">
-                      Starte den Scanner, um Guthaben- oder Bestellcodes zu verarbeiten.
+                      Starte den Scanner, um Guthaben- oder Bestellcodes zu
+                      verarbeiten.
                     </div>
                     <button class="btn btn-primary btn-small" (click)="start()">
                       Jetzt starten
@@ -158,25 +170,31 @@
 
                   <div class="history-code-row">
                     <div class="history-code">{{ h.code }}</div>
-                    <button class="btn btn-ghost btn-tiny" (click)="copy(h.code)">Copy</button>
+                    <button class="btn btn-ghost btn-tiny" (click)="copy(h.code)">
+                      Copy
+                    </button>
                   </div>
 
                   <div class="history-msg">{{ h.msg }}</div>
 
-                  <div class="history-amount" *ngIf="h.type === 'balance' && h.delta != null">
+                  <div
+                    class="history-amount"
+                    *ngIf="h.type === 'balance' && h.delta != null"
+                  >
                     Betrag: <strong>{{ money(h.delta) }}</strong>
                   </div>
 
-                  <div class="history-amount" *ngIf="h.type === 'balance' && h.balanceAfter != null">
+                  <div
+                    class="history-amount"
+                    *ngIf="h.type === 'balance' && h.balanceAfter != null"
+                  >
                     Kontostand: <strong>{{ money(h.balanceAfter) }}</strong>
                   </div>
                 </div>
               </div>
 
               <ng-template #nohist>
-                <div class="history-empty">
-                  Noch keine Scans vorhanden.
-                </div>
+                <div class="history-empty">Noch keine Scans vorhanden.</div>
               </ng-template>
             </div>
           </aside>
@@ -188,15 +206,28 @@
   <div class="confirm-modal-wrap" *ngIf="confirmModalOpen">
     <div class="confirm-backdrop" (click)="cancelBalanceConfirm()"></div>
 
-    <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div
+      class="confirm-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-title"
+    >
       <div class="confirm-card" (click)="$event.stopPropagation()">
         <div class="confirm-head">
           <div>
             <div class="confirm-kicker">Bestätigung erforderlich</div>
-            <div class="confirm-title" id="confirm-title">Guthaben bestätigen</div>
+            <div class="confirm-title" id="confirm-title">
+              Guthaben bestätigen
+            </div>
           </div>
 
-          <button class="confirm-close" type="button" (click)="cancelBalanceConfirm()">✕</button>
+          <button
+            class="confirm-close"
+            type="button"
+            (click)="cancelBalanceConfirm()"
+          >
+            ✕
+          </button>
         </div>
 
         <div class="confirm-body">
@@ -205,11 +236,13 @@
 
             <div class="confirm-info-block">
               <div class="confirm-text" *ngIf="confirmKind === 'add'">
-                Dieser Betrag wird dem Guthaben gutgeschrieben. Bitte prüfe den Betrag vor der Bestätigung.
+                Dieser Betrag wird dem Guthaben gutgeschrieben. Bitte prüfe den
+                Betrag vor der Bestätigung.
               </div>
 
               <div class="confirm-text" *ngIf="confirmKind === 'flush'">
-                Dieser Betrag wird ausgezahlt und das Guthaben auf 0 gesetzt. Bitte prüfe den Betrag vor der Bestätigung.
+                Dieser Betrag wird ausgezahlt und das Guthaben auf 0 gesetzt.
+                Bitte prüfe den Betrag vor der Bestätigung.
               </div>
 
               <div class="confirm-meta" *ngIf="confirmCurrentBalance != null">
@@ -217,7 +250,10 @@
                 <strong>{{ money(confirmCurrentBalance) }}</strong>
               </div>
 
-              <div class="confirm-meta" *ngIf="confirmPreviewBalanceAfter != null">
+              <div
+                class="confirm-meta"
+                *ngIf="confirmPreviewBalanceAfter != null"
+              >
                 <span>Neuer Kontostand</span>
                 <strong>{{ money(confirmPreviewBalanceAfter) }}</strong>
               </div>
@@ -237,11 +273,71 @@
         </div>
 
         <div class="confirm-foot">
-          <button class="btn btn-secondary" type="button" (click)="cancelBalanceConfirm()">
+          <button
+            class="btn btn-secondary"
+            type="button"
+            (click)="cancelBalanceConfirm()"
+          >
             Abbrechen
           </button>
-          <button class="btn btn-primary" type="button" (click)="okBalanceConfirm()" [disabled]="confirmLoading || confirmAmount == null">
+          <button
+            class="btn btn-primary"
+            type="button"
+            (click)="okBalanceConfirm()"
+            [disabled]="confirmLoading || confirmAmount == null"
+          >
             Bestätigen
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-modal-wrap" *ngIf="orderInfoModalOpen">
+    <div class="confirm-backdrop" (click)="closeOrderInfoModal()"></div>
+
+    <div
+      class="confirm-modal confirm-modal--info"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="order-info-title"
+    >
+      <div class="confirm-card" (click)="$event.stopPropagation()">
+        <div class="confirm-head">
+          <div>
+            <div class="confirm-kicker">Information</div>
+            <div class="confirm-title" id="order-info-title">
+              Bestellung abgeschlossen
+            </div>
+          </div>
+
+          <button
+            class="confirm-close"
+            type="button"
+            (click)="closeOrderInfoModal()"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="confirm-body">
+          <div class="confirm-amount confirm-amount--success">✓</div>
+
+          <div class="confirm-info-block">
+            <div class="confirm-text">
+              Die Bestellung wurde erfolgreich abgeschlossen.
+            </div>
+
+            <div class="confirm-meta" *ngIf="orderInfoCode">
+              <span>Code</span>
+              <strong>{{ orderInfoCode }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="confirm-foot">
+          <button class="btn btn-primary" type="button" (click)="closeOrderInfoModal()">
+            OK
           </button>
         </div>
       </div>

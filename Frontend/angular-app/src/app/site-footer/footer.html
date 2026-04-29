@@ -1,15 +1,57 @@
 <footer class="menu-footer">
   <div class="footer-inner">
-    <div class="footer-actions-area">
-      <ng-content select="[footer-actions]"></ng-content>
-    </div>
+    @if (showMainRow) {
+      <div class="footer-main-row">
+        @if (showBalance) {
+          <div class="footer-stat">
+            <span class="footer-label">Guthaben</span>
+            <strong class="footer-value">{{ availableBalance | number:'1.2-2' }} €</strong>
+          </div>
+        }
 
-    <div class="footer-content">
-     
+        @if (showCheckout) {
+          <button
+            class="checkout-btn"
+            type="button"
+            [disabled]="cartCount <= 0"
+            (click)="onCheckout()"
+          >
+            {{ checkoutLabel }}
+            <span class="badge">{{ cartCount }}</span>
+          </button>
+        }
 
-      <div class="footer-links">
-        <a routerLink="/user-profile" class="footer-link">Guthaben aufladen</a>
+        @if (showTotal) {
+          <div class="footer-stat">
+            <span class="footer-label">Summe</span>
+            <strong class="footer-value">{{ totalAmount | number:'1.2-2' }} €</strong>
+          </div>
+        }
       </div>
-    </div>
+    }
+
+    @if (showTopup || showImpressum) {
+      <div class="footer-secondary-row">
+        @if (showTopup) {
+          <button
+            class="topup-btn"
+            type="button"
+            (click)="onTopup()"
+          >
+            {{ topupLabel }}
+          </button>
+        }
+
+        @if (showImpressum) {
+          <button
+            class="impressum-btn"
+            type="button"
+            (click)="onImpressum()"
+          >
+            Impressum
+          </button>
+        }
+      </div>
+    }
   </div>
 </footer>

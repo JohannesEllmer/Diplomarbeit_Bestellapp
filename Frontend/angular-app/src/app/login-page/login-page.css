@@ -124,3 +124,28 @@
     font-size: 1.5rem;
   }
 }
+.password-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-field input {
+  width: 100%;
+  padding-right: 45px; /* Platz für Icon */
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  cursor: pointer;
+  font-size: 22px;
+  color: #64748b;
+  transition: 0.2s;
+  user-select: none;
+}
+
+.password-toggle:hover {
+  color: #0f172a;
+  transform: scale(1.1);
+}

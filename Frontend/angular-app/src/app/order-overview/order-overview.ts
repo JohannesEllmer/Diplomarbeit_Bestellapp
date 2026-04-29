@@ -80,4 +80,8 @@ export class OrderOverviewComponent implements OnInit {
   navigateBack(): void {
     this.router.navigate(['/']);
   }
+
+  goToProfile(): void {
+  this.router.navigate(['/me']);
+}
 }

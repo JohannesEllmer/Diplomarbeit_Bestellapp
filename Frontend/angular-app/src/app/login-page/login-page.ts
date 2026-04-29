@@ -15,6 +15,7 @@ export class LoginPageComponent {
   loginForm: FormGroup;
   isSubmitting = false;
   errorMessage = '';
+  showPassword = false; // 👁️ wichtig
 
   constructor(
     private fb: FormBuilder,
@@ -27,8 +28,17 @@ export class LoginPageComponent {
     });
   }
 
-  get email() { return this.loginForm.get('email'); }
-  get password() { return this.loginForm.get('password'); }
+  get email() {
+    return this.loginForm.get('email');
+  }
+
+  get password() {
+    return this.loginForm.get('password');
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
+  }
 
   onSubmit(): void {
     if (this.loginForm.invalid) {
@@ -38,10 +48,14 @@ export class LoginPageComponent {
 
     this.isSubmitting = true;
     this.errorMessage = '';
-    
-    const { email, password } = this.loginForm.value as { email: string; password: string };
+
+    const { email, password } = this.loginForm.value as {
+      email: string;
+      password: string;
+    };
+
     localStorage.setItem('last_login_email', (email ?? '').trim());
-    
+
     this.auth.login(email, password).subscribe({
       next: () => {
         this.isSubmitting = false;
@@ -54,21 +68,24 @@ export class LoginPageComponent {
 
         if (code === 'EMAIL_NOT_VERIFIED') {
           this.errorMessage =
-            'Bitte bestätige zuerst deine E-Mail-Adresse (Link in deiner Mail bzw. in der Backend-Konsole).';
+            'Bitte bestätige zuerst deine E-Mail-Adresse.';
           return;
         }
 
         if (code === 'USER_BLOCKED') {
-          this.errorMessage = 'Dein Account ist gesperrt. Bitte wende dich an die Verwaltung.';
+          this.errorMessage =
+            'Dein Account ist gesperrt.';
           return;
         }
 
         if (code === 'INVALID_CREDENTIALS') {
-          this.errorMessage = 'Ungültige Login-Daten.';
+          this.errorMessage =
+            'Ungültige Login-Daten.';
           return;
         }
 
-        this.errorMessage = 'Login fehlgeschlagen. Bitte versuche es erneut.';
+        this.errorMessage =
+          'Login fehlgeschlagen. Bitte versuche es erneut.';
         console.error(err);
       }
     });

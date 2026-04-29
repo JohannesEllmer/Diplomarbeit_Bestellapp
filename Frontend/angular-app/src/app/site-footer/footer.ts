@@ -1,18 +1,46 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-site-footer',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule],
   templateUrl: './footer.html',
-  styleUrls: ['./footer.css'],
+  styleUrls: ['./footer.css']
 })
 export class SiteFooterComponent {
-  @Input() companyName = 'HungerSatt Schulbistro';
-  @Input() inhaber = 'Markus Gruber';
-  @Input() address = 'Alte Bundesstraße 11, 5600 St. Johann';
-  @Input() uid = 'UID: 68016602';
-  @Input() email = 'mahlzeit.hungersatt@gmail.com';
+  @Input() availableBalance = 0;
+  @Input() totalAmount = 0;
+  @Input() cartCount = 0;
+
+  @Input() showCheckout = true;
+  @Input() showTopup = false;
+  @Input() showImpressum = false;
+
+  @Input() showBalance = false;
+  @Input() showTotal = false;
+
+  @Input() checkoutLabel = 'Bestellen';
+  @Input() topupLabel = 'Guthaben aufladen';
+
+  @Output() checkoutClick = new EventEmitter<void>();
+  @Output() topupClick = new EventEmitter<void>();
+  @Output() impressumClick = new EventEmitter<void>();
+
+  onCheckout(): void {
+    if (this.cartCount <= 0) return;
+    this.checkoutClick.emit();
+  }
+
+  onTopup(): void {
+    this.topupClick.emit();
+  }
+
+  onImpressum(): void {
+    this.impressumClick.emit();
+  }
+
+  get showMainRow(): boolean {
+    return this.showBalance || this.showTotal || this.showCheckout;
+  }
 }

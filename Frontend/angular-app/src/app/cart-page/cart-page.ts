@@ -47,7 +47,7 @@ export class CartPageComponent implements OnInit {
   infoMsg = '';
 
   private readonly ORDER_START = { h: 6, m: 0 };   // 06:00
-  private readonly ORDER_END   = { h: 15, m: 35 }; // 11:35
+  private readonly ORDER_END   = { h: 10, m: 35 }; // 11:35
 
   constructor(
     private router: Router,
@@ -84,6 +84,10 @@ export class CartPageComponent implements OnInit {
     end.setHours(this.ORDER_END.h, this.ORDER_END.m, 0, 0);
 
     return date >= start && date <= end;
+  }
+
+    openTopup(): void {
+    this.router.navigate(['/me']);
   }
 
   get canOrder(): boolean {

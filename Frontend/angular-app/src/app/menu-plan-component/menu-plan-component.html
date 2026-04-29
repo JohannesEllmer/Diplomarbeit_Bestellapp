@@ -83,35 +83,16 @@
     </section>
   </div>
 
-  <app-site-footer>
-    <div footer-actions class="footer-grid">
-      <div class="footer-item">
-        <i class="icon-wallet"></i>
-        <div class="footer-text">
-          <span>Guthaben</span>
-          <strong>{{ formatBalance() }} €</strong>
-        </div>
-      </div>
-
-      <div class="footer-item">
-        <i class="icon-receipt"></i>
-        <div class="footer-text">
-          <span>Summe</span>
-          <strong>{{ totalCost | currency: 'EUR' }}</strong>
-        </div>
-      </div>
-
-      <button
-        class="checkout-btn"
-        type="button"
-        (click)="navigateToCart()"
-        [disabled]="cartItemCount === 0"
-        [class.pulse]="cartItemCount > 0"
-      >
-        <i class="icon-shopping-cart"></i>
-        <span>Bestellen</span>
-        <div class="badge">{{ cartItemCount }}</div>
-      </button>
-    </div>
-  </app-site-footer>
+<app-site-footer
+  [availableBalance]="balance"
+  [totalAmount]="totalCost"
+  [cartCount]="cartItemCount"
+  [showBalance]="true"
+  [showTotal]="true"
+  [showCheckout]="true"
+  [showTopup]="true"
+  [showImpressum]="false"
+  (checkoutClick)="navigateToCart()"
+  (topupClick)="openTopup()"
+></app-site-footer>
 </div>

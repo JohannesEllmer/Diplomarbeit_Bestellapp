@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { jsPDF } from 'jspdf';
 import { SiteFooterComponent } from '../site-footer/footer';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-impressum-page',
@@ -11,6 +12,7 @@ import { SiteFooterComponent } from '../site-footer/footer';
   styleUrls: ['./impressum-page.component.css'],
 })
 export class ImpressumPageComponent {
+   private router = inject(Router);
   readonly datenschutzText = `
 Erklärung zur Informationspflicht
 
@@ -214,6 +216,10 @@ E-Mail: mahlzeit.hungersatt@gmail.com
       this.datenschutzText,
       'datenschutzerklaerung-hungersatt.pdf'
     );
+  }
+
+  goToProfile(): void {
+    this.router.navigate(['/me']);
   }
 
   downloadAgb(): void {

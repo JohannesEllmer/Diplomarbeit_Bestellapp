@@ -302,5 +302,12 @@
     </div>
   </div>
 
-  <app-site-footer></app-site-footer>
+<app-site-footer
+  [showBalance]="false"
+  [showTotal]="false"
+  [showCheckout]="false"
+  [showTopup]="true"
+  [showImpressum]="false"
+  (topupClick)="goToProfile()"
+></app-site-footer>
 </div>
