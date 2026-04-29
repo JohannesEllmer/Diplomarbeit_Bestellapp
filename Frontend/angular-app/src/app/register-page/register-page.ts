@@ -45,11 +45,11 @@ export class RegisterPageComponent implements OnDestroy {
     { pattern: RegExp; map: (match: RegExpMatchArray) => { firstName: string; lastName: string } }
   > = {
     HTL: {
-      pattern: /^([A-Za-zÄÖÜäöüß1-9]+)\.([A-Za-zÄÖÜäöüß]+)@htl-saalfelden\.at$/i,
+      pattern: /^([a-z0-9]+(?:\.[a-z0-9]+)*)@htl-saalfelden\.at$/i,
       map: (m) => ({ firstName: this.capitalize(m[1]), lastName: this.capitalize(m[2]) })
     },
     HAK: {
-      pattern: /^([A-Za-zÄÖÜäöüß1-9]+)\.([A-Za-zÄÖÜäöüß]+)@johak\.at$/i,
+      pattern: /^([a-z0-9]+(?:\.[a-z0-9]+)*)@johak\.at$/i,
       map: (m) => ({ lastName: this.capitalize(m[1]), firstName: this.capitalize(m[2]) })
     }
   };
@@ -120,7 +120,7 @@ export class RegisterPageComponent implements OnDestroy {
       ctrl.enable({ emitEvent: false });
     } else {
       ctrl.disable({ emitEvent: false });
-      ctrl.setValue('KUNDE', { emitEvent: false }); 
+      ctrl.setValue('KUNDE', { emitEvent: false });
     }
   }
 
