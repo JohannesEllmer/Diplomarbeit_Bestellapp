@@ -2,8 +2,6 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { JwtService } from '@nestjs/jwt';
-
-// Optionaler Fallback, wenn du direkt auf pg Pool zugreifen willst
 import { Pool } from 'pg';
 
 import { AppModule } from '../../src/app.module';
@@ -46,10 +44,6 @@ function extractId(body: any): string | undefined {
   );
 }
 
-/**
- * Falls deine POST /api/users keine ID zurückliefert, holen wir sie aus der DB.
- * Das funktioniert, wenn dein Backend einen pg Pool als Provider im DI hat.
- */
 async function findUserIdByEmailFallback(app: INestApplication, email: string): Promise<string> {
   // strict:false => wenn kein Provider existiert, kommt undefined statt Exception
   const pool = app.get(Pool as any, { strict: false }) as Pool | undefined;
@@ -65,13 +59,6 @@ async function findUserIdByEmailFallback(app: INestApplication, email: string): 
     );
   }
 
-  // ⚠️ HIER ggf. Schema/Table anpassen:
-  // Beispiele:
-  // - app.users
-  // - public.users
-  // - app.user_accounts
-  //
-  // Nutze die Tabelle, in der deine User wirklich liegen.
   const q = `SELECT id FROM app.users WHERE email = $1 LIMIT 1`;
   const r = await pool.query(q, [email]);
 
@@ -80,14 +67,6 @@ async function findUserIdByEmailFallback(app: INestApplication, email: string): 
   return String(id);
 }
 
-/**
- * Token-Generation GENAU wie im Backend:
- * - sub: userId
- * - roles: ['user'] / ['admin']
- * - secret/exp über ENV / JwtModule Config
- * /
- * 
- * */
 function signAccessToken(jwt: JwtService, payload: any): string {
   const secret = process.env.JWT_SECRET;
 
@@ -97,19 +76,14 @@ function signAccessToken(jwt: JwtService, payload: any): string {
     );
   }
 
-  // Nutzt JwtModule signOptions (expiresIn) aus deiner App-Konfiguration
   return jwt.sign(payload, { secret } as any);
 }
 
-/**
- * Legt User + Admin an und generiert Tokens direkt via JwtService.sign().
- * Kein Login-Endpoint nötig.
- */
 export async function bootstrapUsersAndTokens(app: INestApplication): Promise<Tokens> {
   const http = app.getHttpServer();
   const jwt = app.get(JwtService);
 
-  // 1) User anlegen (real, damit /me etc. DB findet)
+  //User anlegen 
   const unique = Date.now();
   const userEmail = `user_${unique}@test.local`;
   const adminEmail = `admin_${unique}@test.local`;
@@ -122,8 +96,6 @@ export async function bootstrapUsersAndTokens(app: INestApplication): Promise<To
     .send({
       email: userEmail,
       password: userPassword,
-      // ggf. weitere Pflichtfelder:
-      // name: 'Test User',
     })
     .expect((res) => {
       if (![200, 201].includes(res.status)) throw new Error(`Unexpected status ${res.status}`);
@@ -134,7 +106,6 @@ export async function bootstrapUsersAndTokens(app: INestApplication): Promise<To
     .send({
       email: adminEmail,
       password: adminPassword,
-      // ggf. weitere Pflichtfelder
     })
     .expect((res) => {
       if (![200, 201].includes(res.status)) throw new Error(`Unexpected status ${res.status}`);
@@ -143,13 +114,9 @@ export async function bootstrapUsersAndTokens(app: INestApplication): Promise<To
   let userId = extractId(userCreateRes.body);
   let adminId = extractId(adminCreateRes.body);
 
-  // 2) Falls keine ID in Response: DB-Fallback
   if (!userId) userId = await findUserIdByEmailFallback(app, userEmail);
   if (!adminId) adminId = await findUserIdByEmailFallback(app, adminEmail);
 
-  // 3) Token-Payload wie bei dir: roles Claim + sub
-  // Falls dein Backend andere Claim-Namen nutzt (z.B. "userId" statt "sub"),
-  // dann hier anpassen.
   const userPayload = {
     sub: userId,
     roles: ['user'],
@@ -170,10 +137,3 @@ export function auth(token: string) {
   return { Authorization: `Bearer ${token}` };
 }
 
-/**
- * Optional: DB reset zwischen Tests
- * -> wenn du Soft-Delete nutzt, würde ich eher TRUNCATE in Test-DB machen.
- */
-export async function resetDb(_app: INestApplication): Promise<void> {
-  // Implementierung projektabhängig
-}

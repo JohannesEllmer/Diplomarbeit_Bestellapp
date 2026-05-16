@@ -22,7 +22,7 @@ describe('MenuManagerComponent', () => {
         { id: 'm1', title: 'Mittagsmenü', menuItems: [] },
         { id: 'm2', title: 'Abendkarte', menuItems: [] }
       ])),
-      getSelectedMealPlan: jasmine.createSpy('getSelectedMealPlan').and.returnValue(of({ id: 'm1' })), // ✅ also set active menu
+      getSelectedMealPlan: jasmine.createSpy('getSelectedMealPlan').and.returnValue(of({ id: 'm1' })), 
       setSelected: jasmine.createSpy('setSelected').and.returnValue(of({ ok: true })),
       deleteMenu: jasmine.createSpy('deleteMenu').and.returnValue(of({})),
     };

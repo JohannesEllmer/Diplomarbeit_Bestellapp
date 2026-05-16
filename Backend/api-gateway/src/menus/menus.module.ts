@@ -1,13 +1,8 @@
 import { Module } from '@nestjs/common';
-
 import { MenuItemsController } from './menu-item.controller';
 import { MenuItemsService } from './menu-item.service';
-
 import { MenusController } from './menus.controller';
 import { MenusService } from './menus.service';
-
-
-
 import { MealPlansController } from './mealplan.controller';
 import { MealPlansService } from './mealplan.services';
 import { ParseUuidAllPipe } from '../common/parse-uuid-all.pipe';

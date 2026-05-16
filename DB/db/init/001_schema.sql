@@ -3,9 +3,6 @@ SET search_path TO app, public;
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-----------------------
--- USERS
-----------------------
 CREATE TABLE users (
   id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name       TEXT NOT NULL,
@@ -15,7 +12,7 @@ CREATE TABLE users (
   balance    NUMERIC(10,2) NOT NULL DEFAULT 0,
   blocked    BOOLEAN NOT NULL DEFAULT FALSE,
   email_verified BOOLEAN NOT NULL DEFAULT FALSE,
-  role       TEXT NOT NULL,            -- KUNDE | INHABER | ADMIN 
+  role       TEXT NOT NULL,            
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

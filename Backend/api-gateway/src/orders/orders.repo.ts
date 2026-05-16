@@ -3,7 +3,7 @@ import type { Pool, PoolClient } from 'pg';
 export type Db = Pool | PoolClient;
 
 export class OrdersRepo {
-  // -------- listing ids --------
+  
   async listIdsByUser(db: Db, userId: string) {
     const r = await db.query(
       `SELECT id FROM app.orders WHERE user_id=$1 ORDER BY created_at DESC`,
@@ -41,7 +41,7 @@ export class OrdersRepo {
     await db.query(`UPDATE app.users SET balance = balance - $2 WHERE id=$1`, [userId, total]);
   }
 
-  // -------- order close (qr) --------
+  //bestellungen abschließen
   async lockOrder(db: Db, orderId: string) {
     return db.query(
       `SELECT id, status FROM app.orders WHERE id=$1 FOR UPDATE`,
@@ -62,7 +62,7 @@ export class OrdersRepo {
     );
   }
 
-  // -------- items + validation helpers --------
+  // Validierungen
   async getActiveMealPlanId(db: Db): Promise<string | null> {
     const r = await db.query(
       `SELECT selected_meal_plan_id AS id FROM app.app_settings LIMIT 1`,
@@ -112,7 +112,6 @@ export class OrdersRepo {
     await db.query(`DELETE FROM app.orders WHERE id=$1`, [orderId]);
   }
 
-  // -------- response building --------
   async loadOrderHeader(db: Db, orderId: string) {
     return db.query(
       `SELECT o.id,o.user_id,o.total_price,o.created_at,o.status,o.qr_code_url,

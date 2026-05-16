@@ -25,7 +25,6 @@ export class UserManagementComponent implements OnInit {
   searchTerm = '';
   showImpressumPopup = false;
 
-  // ---- Datenschutz / Pending deletion UI ----
   pendingDeletions: PendingDeletionItem[] = [];
 
   purgeModalOpen = false;
@@ -44,10 +43,7 @@ export class UserManagementComponent implements OnInit {
     this.loadUsers();
     this.loadPendingDeletions();
   }
-
-  // ---------------------------
   // Users
-  // ---------------------------
   loadUsers(): void {
     this.userService.getUsers().subscribe(users => {
       this.users = users ?? [];
@@ -170,15 +166,11 @@ export class UserManagementComponent implements OnInit {
       const index = this.users.findIndex(u => u.id === updated.id);
       if (index !== -1) this.users[index] = updated;
       this.filterUsers();
-
-      // optional: nach Block/Unblock neu laden, falls disabledAt/Policy relevant
       this.loadPendingDeletions();
     });
   }
 
-  // ---------------------------
   // Datenschutz: 3 Jahre deaktiviert → Löschpopup
-  // ---------------------------
   loadPendingDeletions(): void {
     this.userService.getPendingDeletions().subscribe({
       next: (rows) => {
@@ -191,7 +183,6 @@ export class UserManagementComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        // nicht hart nerven – nur dezent in status (optional)
         this.setStatus('warning', 'Hinweis', 'Löschwarnungen konnten nicht geladen werden.');
       }
     });

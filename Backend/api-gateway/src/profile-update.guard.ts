@@ -22,7 +22,7 @@ export class ClassPolicyGuard implements CanActivate {
     if (!dbUser.blocked) return true;
 
     const path = String(req.originalUrl || req.url || '');
-
+    //Erlaubte Pfade ohne Tokens und bei Einschrenkungen
     const allowed =
       path.startsWith('/api/users/me/profile') ||
       path.startsWith('/api/users/me/activity') ||

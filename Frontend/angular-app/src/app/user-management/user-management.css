@@ -423,8 +423,6 @@
   }
 }
 
-/* Deine bestehenden Styles bleiben – hier sind Ergänzungen für Datenschutz + Modal + Status */
-
 .status-card {
   display: flex;
   gap: 10px;

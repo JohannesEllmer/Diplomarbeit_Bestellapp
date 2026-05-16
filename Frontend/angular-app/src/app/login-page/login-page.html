@@ -6,7 +6,6 @@
     </div>
 
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
-      <!-- E-Mail -->
       <div class="form-group" [class.invalid]="email?.invalid && (email?.touched || email?.dirty)">
         <label for="email">E-Mail-Adresse</label>
         <input
@@ -21,7 +20,6 @@
         </div>
       </div>
 
-      <!-- Passwort -->
      <div class="form-group" [class.invalid]="password?.invalid && (password?.touched || password?.dirty)">
         <label for="password">Passwort</label>
 
@@ -46,7 +44,6 @@
         </div>
       </div>
 
-      <!-- Passwort vergessen -->
       <div class="auth-links">
        <a [routerLink]="['/forgot-password']" [state]="{ email: email?.value }">Passwort vergessen?</a>
       </div>

@@ -69,7 +69,6 @@ async function bootstrap() {
     res.status(200).send('OK');
   });
 
-  // Mailer nur prüfen, wenn Gmail envs vorhanden
   try {
     await verifyMailer();
   } catch (e) {

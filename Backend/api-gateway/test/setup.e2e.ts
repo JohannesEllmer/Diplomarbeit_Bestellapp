@@ -1,11 +1,8 @@
-// test/setup-e2e.ts
 import { beforeAll, afterAll } from '@jest/globals';
 import { PostgreSqlContainer } from '@testcontainers/postgresql';
 
 declare global {
-  // eslint-disable-next-line no-var
   var __E2E_PG__: PostgreSqlContainer | undefined;
-  // eslint-disable-next-line no-var
   var __E2E_DB_URL__: string | undefined;
 }
 

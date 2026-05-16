@@ -143,7 +143,6 @@
   transform: translateY(0);
 }
 
-/* Primärer Button */
 .btn-primary {
   color: #ffffff;
   background: linear-gradient(135deg, #2563eb, #1d4ed8);
@@ -159,7 +158,6 @@
   filter: brightness(1.03);
 }
 
-/* Sekundärer Button */
 .btn-secondary {
   color: #243a5e;
   background: linear-gradient(180deg, #ffffff, #f8fafc);
@@ -172,14 +170,12 @@
   box-shadow: 0 12px 22px rgba(15, 23, 42, 0.08);
 }
 
-/* Ghost optional */
 .btn-ghost {
   color: #1d4ed8;
   background: rgba(37, 99, 235, 0.08);
   border: 1px solid rgba(37, 99, 235, 0.14);
 }
 
-/* Disabled sauber und absichtlich */
 .btn:disabled,
 .btn[disabled] {
   cursor: not-allowed;
@@ -189,7 +185,6 @@
   opacity: 1;
 }
 
-/* Disabled Primary */
 .btn-primary:disabled,
 .btn-primary[disabled] {
   color: rgba(255, 255, 255, 0.9);

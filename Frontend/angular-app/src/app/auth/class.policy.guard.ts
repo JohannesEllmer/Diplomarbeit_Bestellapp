@@ -9,10 +9,8 @@ export class ClassPolicyGuard implements CanActivate {
   canActivate(): boolean | UrlTree {
     const user = this.auth.getCurrentUser();
 
-    // nicht eingeloggt ->  Guards entscheidet
     if (!this.auth.isLoggedIn() || !user) return true;
 
-    // blocked -> nur Profilseite
     if ((user as any).blocked) {
       return this.router.createUrlTree(['/user-profile']);
     }

@@ -338,8 +338,6 @@
   transform: none;
 }
 
-/* Buttons */
-
 .buttons-container {
   display: flex;
   justify-content: flex-start;

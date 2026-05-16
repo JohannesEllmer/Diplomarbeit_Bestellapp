@@ -1,4 +1,3 @@
-// test/e2e/users-cleanup-delete.e2e-spec.ts
 import { INestApplication } from '@nestjs/common';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import request from 'supertest';
@@ -14,7 +13,6 @@ import {
   expectUserFullyDeleted,
 } from '../utils/db.e2e';
 
-// Mailer mock (keine echten E-Mails)
 jest.mock('../../src/mailer', () => ({
   sendAdminDeletionWarningMail: jest.fn(async () => true),
   sendUserDataDeletedMail: jest.fn(async () => true),
@@ -67,13 +65,11 @@ describe('DSGVO Cleanup + Purge (e2e)', () => {
     const cleanup = app.get(CleanupPolicyService);
     await cleanup.runCleanupPolicy();
 
-    // 3) pending_deletions muss existieren
     const pending = await getPendingDeletion(pool, userId);
     expect(pending).toBeTruthy();
     expect(String(pending.user_id)).toBe(String(userId));
     expect(String(pending.status)).toBe('PENDING');
 
-    // 4) Admin kann pending-deletions abrufen
     const listRes = await request(http)
       .get('/api/admin/users/pending-deletions')
       .set(auth(tokenAdmin))
@@ -82,7 +78,6 @@ describe('DSGVO Cleanup + Purge (e2e)', () => {
     expect(Array.isArray(listRes.body)).toBe(true);
     expect(listRes.body.some((x: any) => String(x.userId) === String(userId))).toBe(true);
 
-    // 5) Preview Endpoint
     const prevRes = await request(http)
       .post(`/api/admin/users/${userId}/purge/preview`)
       .set(auth(tokenAdmin))
@@ -93,7 +88,6 @@ describe('DSGVO Cleanup + Purge (e2e)', () => {
     expect(prevRes.body?.user?.id).toBeTruthy();
     expect(String(prevRes.body.user.email).toLowerCase()).toBe(String(userEmail).toLowerCase());
 
-    // 6) Purge Confirm (confirmText muss exakt "LÖSCHEN" sein)
     const purgeRes = await request(http)
       .delete(`/api/admin/users/${userId}/purge`)
       .set(auth(tokenAdmin))
@@ -102,10 +96,8 @@ describe('DSGVO Cleanup + Purge (e2e)', () => {
 
     expect(purgeRes.body?.ok).toBe(true);
 
-    // 7) DB: User + Daten weg
     await expectUserFullyDeleted(pool, userId);
 
-    // 8) pending_deletions status CONFIRMED
     const conf = await pool.query(
       `SELECT status FROM app.pending_deletions WHERE user_id=$1 LIMIT 1`,
       [userId],
@@ -117,7 +109,7 @@ describe('DSGVO Cleanup + Purge (e2e)', () => {
   it('Cleanup soll NICHT doppelt pending_deletion anlegen', async () => {
     const pool = getDbPool(app);
 
-    // Neuen user erzeugen (über deinen create Endpoint)
+    // Neuen user erzeugen 
     const unique = Date.now();
     const res = await request(http)
       .post('/api/users')

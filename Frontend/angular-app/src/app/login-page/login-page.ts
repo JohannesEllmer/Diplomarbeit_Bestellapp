@@ -15,7 +15,7 @@ export class LoginPageComponent {
   loginForm: FormGroup;
   isSubmitting = false;
   errorMessage = '';
-  showPassword = false; // 👁️ wichtig
+  showPassword = false; 
 
   constructor(
     private fb: FormBuilder,

@@ -133,8 +133,6 @@ export class CartService {
   isValidTimeFormat(hhmm: string): boolean {
     return /^([01]\d|2[0-3]):([0-5]\d)$/.test(String(hhmm ?? '').trim());
   }
-
-  // Cart validieren gegen aktives Menü
   validateCartAgainstActiveMenu(): Observable<{
     clearedBecauseMenuChanged: boolean;
     removedItemsCount: number;

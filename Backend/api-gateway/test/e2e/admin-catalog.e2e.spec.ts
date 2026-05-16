@@ -88,7 +88,7 @@ describe('AdminOrders + Catalog (MenuItems, Menus, MealPlans) (e2e)', () => {
   describe('Menus', () => {
     it('POST /api/menus (admin create)', async () => {
       const body: any = { title: 'Test Menu' };
-      if (menuItemId) body.menuItemIds = [menuItemId]; // ggf. an DTO anpassen
+      if (menuItemId) body.menuItemIds = [menuItemId]; 
 
       const res = await request(http)
         .post('/api/menus')

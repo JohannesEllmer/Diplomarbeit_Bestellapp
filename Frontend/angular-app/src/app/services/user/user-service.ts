@@ -20,7 +20,7 @@ export class UserService {
 
   private readonly usersEndpoint = `${this.apiBase}/users`;
 
-  // Datenschutz / Admin Endpoints (wie im Backend-Teil zuvor)
+  // Datenschutz / Admin Endpoints 
   private readonly adminUsersEndpoint = `${this.apiBase}/admin/users`;
 
   private mockUsers: (User & { password?: string })[] = [
