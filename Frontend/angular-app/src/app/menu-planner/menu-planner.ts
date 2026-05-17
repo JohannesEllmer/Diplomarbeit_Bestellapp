@@ -28,12 +28,15 @@ const UUID_RE =
   styleUrls: ['./menu-planner.css']
 })
 export class MenuPlanner implements OnInit, OnDestroy {
+  // Titel des aktuellen Menüs im Editor
   menuTitle = '';
   titleError = '';
 
+  // Ausgewählte und noch nicht ausgewählte Gerichte
   selectedDishes: MenuItem[] = [];
   unselectedDishes: MenuItem[] = [];
 
+  // Das aktuell geladene Menüobjekt
   menu: MealPlan = { id: 'new', title: '', menuItems: [] };
 
   private isDragging = false;
@@ -48,6 +51,7 @@ export class MenuPlanner implements OnInit, OnDestroy {
   showDeleteDialog = false;
   dishToDelete: MenuItem | null = null;
 
+  // Subject zum Aufräumen bei Zerstörung der Komponente
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -56,10 +60,12 @@ export class MenuPlanner implements OnInit, OnDestroy {
     private menuItems: MenuItemsApiService
   ) {}
 
+  // Initialisiert die Seite und befüllt den Editor mit einem bestehenden Menü, falls vorhanden.
   ngOnInit(): void {
     const stateMenu = history.state.menu as MealPlan | undefined;
 
     if (stateMenu?.id) {
+      // Menüobjekt aus dem Navigationszustand übernehmen und mögliche Varianten der Items-Felder abdecken
       const rawItems =
         Array.isArray((stateMenu as any).menuItems) ? (stateMenu as any).menuItems :
         Array.isArray((stateMenu as any).menu_items) ? (stateMenu as any).menu_items :
@@ -82,6 +88,7 @@ export class MenuPlanner implements OnInit, OnDestroy {
 
     this.loadAllMenuItemsAndSplit();
 
+    // Validiert die ID des geladenen MenuItem
     const edited = history.state.menuItem as MenuItem | undefined;
     if (edited?.id && UUID_RE.test(edited.id)) {
       this.applyUpdatedMenuItem(edited);
@@ -93,6 +100,7 @@ export class MenuPlanner implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  // Lädt alle Gerichte und teilt sie in ausgewählte und nicht ausgewählte Gruppen auf.
   private loadAllMenuItemsAndSplit(): void {
     this.loadingDishes = true;
     this.loadError = null;
@@ -134,6 +142,7 @@ export class MenuPlanner implements OnInit, OnDestroy {
     this.toggleById(item, isSelectedList);
   }
 
+  // Verschiebt ein Gericht zwischen ausgewählter und nicht ausgewählter Liste.
   private toggleById(item: MenuItem, fromSelectedList: boolean): void {
     if (!item?.id) return;
 
@@ -143,6 +152,7 @@ export class MenuPlanner implements OnInit, OnDestroy {
     if (fromSelectedList) {
       this.selectedDishes = (this.selectedDishes ?? []).filter(x => x.id !== item.id);
 
+      // Item zurück in die nicht ausgewählte Liste verschieben
       if (!this.unselectedDishes.some(x => x.id === item.id)) {
         this.unselectedDishes = [item, ...(this.unselectedDishes ?? [])];
       }
@@ -155,6 +165,7 @@ export class MenuPlanner implements OnInit, OnDestroy {
     } else {
       this.unselectedDishes = (this.unselectedDishes ?? []).filter(x => x.id !== item.id);
 
+      // Item in die ausgewählte Liste übernehmen und bei Bedarf als verfügbar markieren
       if (!this.selectedDishes.some(x => x.id === item.id)) {
         this.selectedDishes = [{ ...item, available: item.available !== false }, ...(this.selectedDishes ?? [])];
       }
@@ -167,6 +178,7 @@ export class MenuPlanner implements OnInit, OnDestroy {
     }
   }
 
+  // Behandelt Drag & Drop zwischen den beiden Listen und synchronisiert verschobene Items mit dem Server.
   drop(event: CdkDragDrop<MenuItem[]>): void {
     if (!event?.container?.data) return;
 
@@ -201,12 +213,13 @@ export class MenuPlanner implements OnInit, OnDestroy {
     if (this.menuTitle.trim()) this.titleError = '';
   }
 
+  // Schaltet die Verfügbarkeit eines Gerichts im Menü um
   toggleAvailable(item: MenuItem, ev?: Event): void {
     ev?.stopPropagation();
     if (!item?.id) return;
 
     const id = item.id;
-    const nextAvailable = !(item.available === false);
+    const nextAvailable = item.available;
 
     this.selectedDishes = (this.selectedDishes ?? []).map(x =>
       x.id === id ? { ...x, available: nextAvailable } : x
@@ -243,57 +256,59 @@ export class MenuPlanner implements OnInit, OnDestroy {
     this.dishToDelete = null;
   }
 
- confirmDelete(): void {
-  const item = this.dishToDelete;
-  if (!item?.id) {
-    this.cancelDelete();
-    return;
+  // Führt das Löschen eines Gerichts aus, nachdem die Bestätigung erfolgt ist
+  confirmDelete(): void {
+    const item = this.dishToDelete;
+    if (!item?.id) {
+      this.cancelDelete();
+      return;
+    }
+
+    console.log('[MenuPlanner] confirmDelete clicked for id:', item.id);
+
+    this.saveError = null;
+    this.deletingId = item.id;
+
+    const prevSelected = [...this.selectedDishes];
+    const prevUnselected = [...this.unselectedDishes];
+
+    // Optimistische UI: das Gericht sofort entfernen, solange der Löschauftrag läuft
+    this.selectedDishes = (this.selectedDishes ?? []).filter(x => x.id !== item.id);
+    this.unselectedDishes = (this.unselectedDishes ?? []).filter(x => x.id !== item.id);
+
+    this.menuItems.delete(String(item.id))
+      .pipe(finalize(() => {
+        this.deletingId = null;
+        this.cancelDelete();
+      }))
+      .subscribe({
+        next: () => {
+          console.log('[MenuPlanner] delete OK');
+        },
+        error: (err) => {
+          console.error('[MenuPlanner] deleteMenuItem failed:', err);
+
+          // rollback UI
+          this.selectedDishes = prevSelected;
+          this.unselectedDishes = prevUnselected;
+
+          const msg = (err as any)?.error?.message;
+          this.saveError =
+            msg === 'MENU_ITEM_IN_USE'
+              ? 'Dieses Gericht kann nicht gelöscht werden, weil es bereits in Bestellungen verwendet wurde.'
+              : 'Menu-Item konnte nicht gelöscht werden.';
+        }
+      });
   }
 
-  console.log('[MenuPlanner] confirmDelete clicked for id:', item.id);
-
-  this.saveError = null;
-  this.deletingId = item.id;
-
-  const prevSelected = [...this.selectedDishes];
-  const prevUnselected = [...this.unselectedDishes];
-
-  this.selectedDishes = (this.selectedDishes ?? []).filter(x => x.id !== item.id);
-  this.unselectedDishes = (this.unselectedDishes ?? []).filter(x => x.id !== item.id);
-
-  this.menuItems.delete(String(item.id))
-    .pipe(finalize(() => {
-      this.deletingId = null;
-      this.cancelDelete();
-    }))
-    .subscribe({
-      next: () => {
-        console.log('[MenuPlanner] delete OK');
-      },
-      error: (err) => {
-        console.error('[MenuPlanner] deleteMenuItem failed:', err);
-
-        // rollback UI
-        this.selectedDishes = prevSelected;
-        this.unselectedDishes = prevUnselected;
-
-        const msg = (err as any)?.error?.message;
-        this.saveError =
-          msg === 'MENU_ITEM_IN_USE'
-            ? 'Dieses Gericht kann nicht gelöscht werden, weil es bereits in Bestellungen verwendet wurde.'
-            : 'Menu-Item konnte nicht gelöscht werden.';
-      }
-    });
-}
-
-
-
+  // Baut aus den ausgewählten Gerichten eine Liste gültiger IDs für die Speicherung.
   private buildMenuItemIds(): string[] {
     return (this.selectedDishes ?? [])
       .map(x => String(x?.id ?? '').trim())
       .filter(id => UUID_RE.test(id));
   }
 
+  // Speichert den Menüplan mit Titel und ausgewählten Gerichten
   saveMenu(): void {
     const trimmedTitle = this.menuTitle.trim();
 
@@ -306,10 +321,12 @@ export class MenuPlanner implements OnInit, OnDestroy {
     this.saveError = null;
     this.saving = true;
 
+    const menuItemIds = this.buildMenuItemIds();
+
     const req$ =
       this.menu?.id && this.menu.id !== 'new'
-        ? this.mealPlans.update(this.menu.id, { title: trimmedTitle })
-        : this.mealPlans.create({ title: trimmedTitle, menuItemIds: this.buildMenuItemIds() });
+        ? this.mealPlans.update(this.menu.id, { title: trimmedTitle, menuItemIds })
+        : this.mealPlans.create({ title: trimmedTitle, menuItemIds });
 
     req$
       .pipe(finalize(() => (this.saving = false)))
@@ -324,10 +341,12 @@ export class MenuPlanner implements OnInit, OnDestroy {
       });
   }
 
+  // Öffnet den Gerichte-Editor und übergibt aktuellen Rückkehr-Zustand
   goToDishDesigner(): void {
     this.router.navigate(['/gericht-verwaltung'], { state: { returnTo: '/menuplaner', returnState: { menu: this.menu } } });
   }
 
+  // Aktualisiert die Anzeige eines bearbeiteten Gerichts in beiden Listen
   private applyUpdatedMenuItem(updated: MenuItem): void {
     this.selectedDishes = (this.selectedDishes ?? []).map(x => x.id === updated.id ? { ...x, ...updated } : x);
     this.unselectedDishes = (this.unselectedDishes ?? []).map(x => x.id === updated.id ? { ...x, ...updated } : x);

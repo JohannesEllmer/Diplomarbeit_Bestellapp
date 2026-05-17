@@ -132,7 +132,7 @@
         Abbrechen
       </button>
 
-      @if (saveError) {
+      @if (saveError !== null) {
         <div class="save-error">
           {{ saveError }}
         </div>

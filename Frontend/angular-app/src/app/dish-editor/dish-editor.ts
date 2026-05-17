@@ -17,7 +17,6 @@ import { MenuItemsApiService } from '../services/menu/menu-item-service';
 export class DishEditor implements OnInit {
   readonly categoryOptions = ['Hauptgericht', 'Menü', 'Dessert', 'Getränk'] as const;
 
-
   dish: MenuItem = {
     id: '0',
     name: '',
@@ -31,12 +30,15 @@ export class DishEditor implements OnInit {
     dessert: '',
   };
 
+  // Temporäre Formularfelder
   allergenTemp = '';
   imageTemp: string | ArrayBuffer | null = null;
 
+  // Status / Fehleranzeigen für Speichern
   saving = false;
   saveError: string | null = null;
 
+  // Navigationsziel nach Abschluss (Standard: Menuplaner)
   private returnTo = '/menuplaner';
   private returnState: any = null;
 
@@ -46,11 +48,13 @@ export class DishEditor implements OnInit {
     private menuItemsApi: MenuItemsApiService
   ) {}
 
+  // Lädt beim Start ggf. ein bestehendes Gericht und merkt sich den Rückweg
   ngOnInit(): void {
     const st = history.state ?? {};
 
     const prefill = st.dish as MenuItem | undefined;
     if (prefill?.id) {
+      // Vorbefüllung aus Navigation übernehmen und typkonform anreichern
       this.dish = {
         ...this.dish,
         ...prefill,
@@ -59,6 +63,7 @@ export class DishEditor implements OnInit {
         allergens: Array.isArray(prefill.allergens) ? prefill.allergens : [],
         available: prefill.available !== false,
         vegetarian: !!prefill.vegetarian,
+        // Kategorie normalisieren (z.B. zahlreiche Schreibweisen abfangen)
         category: this.normalizeCategory((prefill as any).category),
         drink: (prefill.drink ?? '') as any,
         dessert: (prefill.dessert ?? '') as any,
@@ -92,11 +97,12 @@ export class DishEditor implements OnInit {
     }
   }
 
-  
+  // Normalisiert die Kategorieangabe auf die verfügbaren Optionen
   private normalizeCategory(value: any): string {
     const s = String(value ?? '').trim();
     if (!s) return '';
 
+    // Mapping für verschiedene Schreibweisen auf eine standardisierte Kategorie
     const map: Record<string, (typeof this.categoryOptions)[number]> = {
       hauptgericht: 'Hauptgericht',
       hauptspeise: 'Hauptgericht',
@@ -122,6 +128,7 @@ export class DishEditor implements OnInit {
     this.clearMenuFieldsIfNotMenu();
   }
 
+  // Löscht Menü-spezifische Felder, wenn die Kategorie kein Menü ist
   private clearMenuFieldsIfNotMenu(): void {
     const cat = this.normalizeCategory(this.dish.category);
     if (cat !== 'Menü') {
@@ -137,6 +144,7 @@ export class DishEditor implements OnInit {
     return this.normalizeCategory(this.dish.category) === 'Menü';
   }
 
+  // Prüft die Eingaben und liefert Fehlermeldungen zurück
   private validateDish(): string[] {
     const errors: string[] = [];
 
@@ -162,18 +170,7 @@ export class DishEditor implements OnInit {
     return this.validateDish().length === 0 && !this.saving;
   }
 
-  onImageSelected(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.imageTemp = reader.result;
-      this.cdr.detectChanges();
-    };
-    reader.readAsDataURL(file);
-  }
-
+  // Neuer Allergen-Eintrag aus dem Eingabefeld übernehmen
   addAllergen(): void {
     const allergen = this.allergenTemp?.trim();
     if (!allergen) return;
@@ -185,11 +182,13 @@ export class DishEditor implements OnInit {
     this.allergenTemp = '';
   }
 
+  // Entfernt ein Allergen aus der Liste
   removeAllergen(allergen: string): void {
     const list = Array.isArray(this.dish.allergens) ? this.dish.allergens : [];
     this.dish = { ...this.dish, allergens: list.filter((a) => a !== allergen) };
   }
 
+  // Speichert das Gericht und navigiert nach dem Speichern zurück
   onSave(): void {
     this.saveError = null;
 
@@ -208,12 +207,13 @@ export class DishEditor implements OnInit {
       ...this.dish,
       name: (this.dish.name ?? '').trim(),
       description: (this.dish.description ?? '').trim(),
-      category, 
+      category,
       price: Number(this.dish.price ?? 0),
       allergens: Array.isArray(this.dish.allergens) ? this.dish.allergens : [],
       available: this.dish.available !== false,
       vegetarian: !!this.dish.vegetarian,
 
+      // Nur für Kategorie 'Menü' werden drink/dessert gesetzt, sonst undefined
       drink: category === 'Menü' ? (this.dish.drink ?? '').trim() || undefined : undefined,
       dessert: category === 'Menü' ? (this.dish.dessert ?? '').trim() || undefined : undefined,
     };
@@ -241,6 +241,7 @@ export class DishEditor implements OnInit {
   }
 
   onCancel(): void {
+    // Abbruch: zurück zur vorherigen Seite mit gespeichertem Zustand
     this.router.navigate([this.returnTo], { state: this.returnState ?? {} });
   }
 }

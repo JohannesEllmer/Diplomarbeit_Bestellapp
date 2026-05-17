@@ -15,7 +15,7 @@ export class MealPlanService {
     return this.http.post<any>(this.endpoint, payload);
   }
 
-  update(id: string, payload: { title?: string }): Observable<any> {
+  update(id: string, payload: { title?: string; menuItemIds?: string[] }): Observable<any> {
     if (environment.useMockData) return of({ id, ...payload });
     return this.http.patch<any>(`${this.endpoint}/${encodeURIComponent(id)}`, payload);
   }

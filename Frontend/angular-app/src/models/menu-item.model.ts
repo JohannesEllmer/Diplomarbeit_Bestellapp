@@ -1,17 +1,3 @@
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  class: string;
-  orderCount: number;
-  balance: number;
-  blocked: boolean;
-  showDetails?: boolean;
-  editingBalance?: boolean;
-  newBalance?: number;
-}
-
-
 export interface DailyStats {
   date: string; // YYYY-MM-DD
   revenue: number;
