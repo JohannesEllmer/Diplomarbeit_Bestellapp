@@ -21,7 +21,6 @@ export class AutoLogoutInterceptor implements HttpInterceptor {
         const message = (err as any)?.error?.message;
         const code = (err as any)?.error?.error;
 
-        // 401 -> Token ungültig/abgelaufen => logout
         if (err.status === 401) {
               this.auth.logoutIfNeeded();
         }

@@ -120,7 +120,7 @@ export class AppMenuComponent implements OnInit, OnDestroy {
     document.removeEventListener('click', this.onDocClickBound, true);
   }
 
-  // ---------- User ----------
+  //User 
   get currentUser(): any | null {
     return this.auth.getCurrentUser();
   }
@@ -236,14 +236,12 @@ export class AppMenuComponent implements OnInit, OnDestroy {
     return link.shortLabel || link.label;
   }
 
-  // ✅ Admin-only Navigation action
   goToCreateAdmin(): void {
     this.closeUserMenu();
     this.closeMobile();
-    this.router.navigate(['/register-admin']); // z.B. neue Route
+    this.router.navigate(['/register-admin']); 
   }
 
-  // ---------- Mobile ----------
   @HostListener('window:resize')
   onResize(): void {
     this.updateMobileState();
@@ -278,7 +276,6 @@ export class AppMenuComponent implements OnInit, OnDestroy {
     return this.userRoleConfig?.color || '#6b7280';
   }
 
-  // ---------- Desktop Dropdown ----------
   toggleUserMenu(ev?: MouseEvent): void {
     if (ev) ev.stopPropagation();
     this.userMenuOpen = !this.userMenuOpen;

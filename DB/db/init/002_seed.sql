@@ -1,6 +1,5 @@
 SET search_path TO app, public;
 
--- Extensions (falls noch nicht vorhanden)
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 

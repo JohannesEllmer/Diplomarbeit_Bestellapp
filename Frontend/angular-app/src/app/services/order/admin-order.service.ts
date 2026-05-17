@@ -59,7 +59,6 @@ export class AdminOrderService {
     );
   }
 
-  // Falls du das noch brauchst, kannst du es lassen:
   createOrderFromItem(orderItem: any): Observable<Order> {
     if (environment.useMockData) return of({} as any);
 

@@ -70,7 +70,6 @@ export class OrderService {
 
     return this.http.patch<Order>(`${this.ordersEndpoint}/${orderId}`, { delivered }).pipe(
       map(updatedOrder => {
-        // Versuche, ein Item aus der Antwort zu nehmen – ansonsten Mock updaten.
         const updatedItem = (updatedOrder?.items?.[0] as OrderItem | undefined);
         if (updatedItem) {
           return updatedItem;

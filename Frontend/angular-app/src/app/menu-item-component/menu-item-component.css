@@ -15,7 +15,6 @@
   box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
 
-/* ✅ neues Label rechts oben */
 .type-label {
   position: absolute;
   top: 10px;
@@ -28,8 +27,6 @@
   font-size: 0.75rem;
   z-index: 2;
 }
-
-/* ✅ unavailable-label nach unten verschieben, damit es nicht kollidiert */
 .unavailable-label {
   position: absolute;
   top: 44px;          /* vorher 10px */

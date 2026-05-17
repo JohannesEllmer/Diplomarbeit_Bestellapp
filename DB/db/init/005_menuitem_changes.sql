@@ -1,8 +1,6 @@
 ALTER TABLE app.meal_plan_dishes
 ADD COLUMN IF NOT EXISTS is_available boolean NOT NULL DEFAULT true;
 
--- optional (empfohlen), falls nicht vorhanden:
--- sorgt dafür, dass ein Dish nicht doppelt im gleichen Plan ist
 DO $$
 BEGIN
   IF NOT EXISTS (

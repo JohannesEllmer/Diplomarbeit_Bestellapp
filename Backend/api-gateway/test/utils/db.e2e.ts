@@ -4,11 +4,9 @@ import { PG_POOL } from '../../src/db';
 import { expect } from '@jest/globals';
 
 export function getDbPool(app: INestApplication): Pool {
-  // 1) bevorzugt deinen PG_POOL Token
   const viaToken = app.get(PG_POOL as any, { strict: false }) as Pool | undefined;
   if (viaToken) return viaToken;
 
-  // 2) fallback: Pool als class provider (wie in deinem bestehenden util)
   const viaClass = app.get((require('pg').Pool as any) as any, { strict: false }) as Pool | undefined;
   if (viaClass) return viaClass;
 

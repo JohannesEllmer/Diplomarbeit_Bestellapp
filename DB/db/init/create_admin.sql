@@ -1,20 +1,13 @@
--- Erstellt einen Admin-Benutzer in der Datenbank
-
 SET search_path TO app, public;
 
--- Anzeigename
 \set admin_name 'System Administrator'
 
--- Mailadresse
 \set admin_email 'admin.test@htl-saalfelden.at'
 
--- Klasse
 \set admin_class 'ADMIN'
 
--- Schultyp
 \set admin_school 'HTL'
 
--- Beispiel-Hash für Passwort "admin123"
 \set admin_hash '$2b$10$GvBzLfR7dNhha0tU4G/dao1Fpg/Hv0N5bC0mujWhABfA7pBEV79bi'
 
 -- Neue UUIDs generieren lassen

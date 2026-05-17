@@ -161,7 +161,7 @@ describe('Users + AdminUsers + MyOrders (e2e)', () => {
       await request(http)
         .patch('/api/admin/users/balance/confirm')
         .set('Authorization', `Bearer ${tokenAdmin}`)
-        .send({ confirm: true }) // DTO anpassen
+        .send({ confirm: true }) 
         .expect((r) => {
           if (![200, 204, 400, 404].includes(r.status)) throw new Error(`Unexpected ${r.status}`);
         });

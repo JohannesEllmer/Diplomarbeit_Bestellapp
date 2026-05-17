@@ -117,7 +117,6 @@ export class MenuPlanComponent implements OnInit, OnDestroy {
             vegetarian: !!m.vegetarian,
             available: m.available !== false,
             allergens: Array.isArray(m.allergens) ? m.allergens : [],
-            // optional: falls vorhanden, hilft für "Menü"-Badge
             drink: menuDrink || m.drink || undefined,
             dessert: menuDessert || m.dessert || undefined,
           }));

@@ -1,6 +1,5 @@
 <div class="user-management-container">
 
-  <!-- Status -->
   <div class="status-card"
        *ngIf="statusType"
        [class.is-success]="statusType==='success'"
@@ -14,7 +13,6 @@
     <button class="status-close" (click)="clearStatus()">✕</button>
   </div>
 
-  <!-- Datenschutz Warnungen (sichtbar im User-Management) -->
   <div class="privacy-section" *ngIf="pendingDeletions?.length">
     <div class="privacy-title">Datenschutz-Hinweis: Löschwarnungen</div>
     <div class="privacy-sub">
@@ -94,9 +92,6 @@
 
   <app-site-footer></app-site-footer>
 
-  <!-- =========================
-       Purge Modal (Datenschutz)
-       ========================= -->
   <div class="modal-backdrop" *ngIf="purgeModalOpen" (click)="closePurgeModal()"></div>
 
   <div class="modal" *ngIf="purgeModalOpen">

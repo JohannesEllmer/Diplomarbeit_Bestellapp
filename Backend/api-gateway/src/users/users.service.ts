@@ -511,7 +511,7 @@ export class UsersService {
       client.release();
     }
   }
-
+//Qr code generierungen für Guthabenänderungen
   private generateQrCode(data: string) {
     return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data)}`;
   }

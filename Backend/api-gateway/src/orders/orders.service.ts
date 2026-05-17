@@ -170,7 +170,6 @@ export class OrdersService {
     }
   }
 
-//internals
   private async insertItemsAndComputeTotal(
     client: PoolClient,
     orderId: string,

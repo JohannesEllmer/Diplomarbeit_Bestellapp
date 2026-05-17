@@ -132,7 +132,7 @@ export class RegisterPageComponent implements OnDestroy {
   get lastName() { return this.registerForm.get('lastName'); }
   get roleCtrl() { return this.registerForm.get('role'); }
 
-  // ---------- Parsing / Validation ----------
+  //Validierung
   private parseNameFromSchoolEmail(
     email: string,
     school: SchoolType

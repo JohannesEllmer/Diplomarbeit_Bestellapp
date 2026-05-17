@@ -204,7 +204,7 @@
   text-align: center;
 }
 
-/* Footer in beiden Karten */
+/* Footer */
 .card-footer,
 .cart-footer {
   display: flex;
@@ -214,19 +214,14 @@
   gap: 0.5rem;
   margin-top: auto;
 }
-
-/* Einzelpreis im Cart */
 .price-each {
   font-size: 0.95rem;
   color: #334155;
 }
-
-/* Footer-Preis in der Menükarte */
 .card-footer .price {
   font-size: 1rem;
 }
 
-/* Buttons: hinzufügen / entfernen */
 .add-btn,
 .remove-btn {
   border: none;
@@ -238,9 +233,6 @@
   transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
 }
 
-
-
-/* Primär-Button für "Hinzufügen" */
 .add-btn {
   background: #22c55e;
   color: white;
@@ -258,7 +250,6 @@
   box-shadow: none;
 }
 
-/* Gefahren-Button für "Entfernen" */
 .remove-btn {
   background: #ef4444;
   color: white;

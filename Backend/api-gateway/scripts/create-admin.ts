@@ -3,11 +3,9 @@ import { Pool } from 'pg';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 
-// Passe diese Imports an deine Pfade an:
 import { AppModule } from '../src/app.module';
 import { PG_POOL } from '../src/db';
 
-//falls du deine mailer.ts im Backend hast:
 import { sendMail, verifyMailer } from '../src/auth-express/src/mailer';
 
 function buildAdminCreatedHtml(params: { email: string; password: string }) {
@@ -41,7 +39,7 @@ async function main() {
 
   const email = String(emailRaw).toLowerCase().trim();
 
-  // Nest Application Context starten (nutzt DatabaseModule/Config wie im Backend)
+  // nutzt DatabaseModule/Config 
   const app = await NestFactory.createApplicationContext(AppModule, {
     logger: ['log', 'warn', 'error'],
   });
@@ -51,7 +49,7 @@ async function main() {
   try {
     pool = app.get(PG_POOL) as Pool;
 
-    // Mailer prüfen (optional: wenn nicht konfiguriert, Script läuft trotzdem)
+    // Mailer prüfen
     const mailReady = await verifyMailer().catch(() => false);
 
     // Prüfen ob User existiert
@@ -107,7 +105,6 @@ async function main() {
       console.log(`User ID: ${userId}`);
       console.log(`Passwort: ${createdPassword}`);
 
-      // Mail senden
       if (mailReady) {
         await sendMail(
           email,
@@ -121,7 +118,6 @@ async function main() {
       return;
     }
 
-    // User existiert -> role upgraden
     userId = String(uRes.rows[0].id);
 
     const client = await pool.connect();

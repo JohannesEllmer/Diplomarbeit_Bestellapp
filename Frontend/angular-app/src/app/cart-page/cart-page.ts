@@ -13,7 +13,7 @@ type CreateOrderItemDto = {
   menuItemId: string;
   quantity: number;
   note?: string;
-  deliveryTime?: string; // ISO
+  deliveryTime?: string; 
 };
 
 type CreateOrderDto = {
